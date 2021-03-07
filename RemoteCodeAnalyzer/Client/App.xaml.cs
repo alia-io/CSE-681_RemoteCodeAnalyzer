@@ -6,6 +6,7 @@ using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Windows;
+using RCALibrary;
 
 namespace Client
 {
@@ -23,7 +24,7 @@ namespace Client
         {
             lw = new LoginWindow(this);
             ChannelFactory<IAuthentication> authenticationFactory = new ChannelFactory<IAuthentication>(new WSHttpBinding(SecurityMode.None), new EndpointAddress("http://localhost:8000/Authentication/"));
-            ChannelFactory<INavigation> navigationFactory = new ChannelFactory<INavigation>(new WSHttpBinding(SecurityMode.None), new EndpointAddress("http://localhost:8000/Navigation/"));
+            ChannelFactory<INavigation> navigationFactory = new ChannelFactory<INavigation>(new WSHttpBinding(), new EndpointAddress("http://localhost:8000/Navigation/"));
             ChannelFactory<IUpload> uploadFactory = new ChannelFactory<IUpload>(new WSHttpBinding(SecurityMode.None), new EndpointAddress("http://localhost:8000/Upload/"));
 
             authenticator = authenticationFactory.CreateChannel();
@@ -38,11 +39,11 @@ namespace Client
         public void Main_Application(string user)
         {
             User = user;
-            DirectoryData initialDirectory = null;
+            DirectoryData directory = null;
 
             try
             {
-                initialDirectory = navigator.Initialize(User);
+                directory = navigator.Initialize(User);
             }
             catch (Exception e)
             {
@@ -50,9 +51,9 @@ namespace Client
                 return;
             }
 
-            if (initialDirectory != null)
+            if (directory != null)
             {
-                mw = new MainWindow(this, initialDirectory.CurrentDirectory, initialDirectory.Children);
+                mw = new MainWindow(this, directory.CurrentDirectory, directory.Children);
                 lw.Close();
                 mw.Show();
             }

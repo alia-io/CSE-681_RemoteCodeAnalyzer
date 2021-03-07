@@ -1,9 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Client
+namespace RCALibrary
 {
     public interface IFileSystemItem { }
 
+    [Serializable]
     public class UserDirectory : IFileSystemItem
     {
         public string Name { get; private set; } // user name
@@ -17,6 +22,7 @@ namespace Client
         }
     }
 
+    [Serializable]
     public class ProjectDirectory : IFileSystemItem
     {
         public string Name { get; private set; } // project name
@@ -32,6 +38,7 @@ namespace Client
         }
     }
 
+    [Serializable]
     public class VersionDirectory : IFileSystemItem
     {
         public string Name { get; private set; } // project name
@@ -47,6 +54,7 @@ namespace Client
         }
     }
 
+    [Serializable]
     public class CodeFile : IFileSystemItem
     {
         public string Name { get; private set; } // file name
@@ -66,6 +74,7 @@ namespace Client
         }
     }
 
+    [Serializable]
     public class AnalysisFile : IFileSystemItem
     {
         public string FType { get; private set; } // function or relationship

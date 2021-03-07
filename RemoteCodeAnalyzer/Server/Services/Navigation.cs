@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.ServiceModel.Channels;
+using RCALibrary;
 
 namespace Server
 {
@@ -39,7 +40,6 @@ namespace Server
 
             lock (RootLock)
             {
-                // TODO: might need to change element.Name.Equals to element.Name.ToString().Equals
                 findDirectory = from XElement element in Root.Elements()
                                 where element.Name.ToString().Equals("user")
                                 where element.Attribute("name").Value.Equals(username)

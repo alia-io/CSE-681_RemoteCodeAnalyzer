@@ -8,6 +8,7 @@ using System.Xml.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.IO;
+using RCALibrary;
 
 namespace Server
 {
@@ -73,7 +74,7 @@ namespace Server
 
             try
             {
-                navigator.AddServiceEndpoint(typeof(INavigation), new WSHttpBinding(SecurityMode.None), navigationAddress);
+                navigator.AddServiceEndpoint(typeof(INavigation), new WSHttpBinding(), navigationAddress);
                 navigator.Open();
                 Console.WriteLine("The Navigation service is ready.");
                 Console.WriteLine();

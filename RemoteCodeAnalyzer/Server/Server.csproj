@@ -48,12 +48,10 @@
     <Compile Include="CodeAnalyzer\AnalysisWriter.cs" />
     <Compile Include="CodeAnalyzer\FileAnalyzer.cs" />
     <Compile Include="CodeAnalyzer\Rules.cs" />
-    <Compile Include="FileSystem.cs" />
     <Compile Include="Services\Authentication.cs" />
     <Compile Include="Host.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CodeAnalyzer\TextParser.cs" />
-    <Compile Include="Services\Contracts.cs" />
     <Compile Include="Services\Navigation.cs" />
     <Compile Include="Services\Upload.cs" />
     <Compile Include="TypeIdentifier.cs" />
@@ -66,6 +64,12 @@
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RCALibrary\RCALibrary.csproj">
+      <Project>{2cdc6288-41d8-48f0-83f4-49f45446ab96}</Project>
+      <Name>RCALibrary</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

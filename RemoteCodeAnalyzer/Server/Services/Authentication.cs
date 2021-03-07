@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.ServiceModel.Channels;
+using RCALibrary;
 
 namespace Server
 {
