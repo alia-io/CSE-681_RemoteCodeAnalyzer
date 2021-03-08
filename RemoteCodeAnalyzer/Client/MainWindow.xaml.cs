@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml.Linq;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Controls;
@@ -17,9 +18,9 @@ namespace Client
     public partial class MainWindow : Window
     {
         private readonly App app; // Saved reference to App
-        Button LastClickedButton = null;
+        private readonly Button LastClickedButton;
         private readonly List<string> newFiles = new List<string>();
-        public MainWindow(App app, IFileSystemItem current, List<IFileSystemItem> children)
+        public MainWindow(App app, XElement current, List<XElement> children)
         {
             this.app = app;
             InitializeComponent();
@@ -28,33 +29,41 @@ namespace Client
 
         ~MainWindow() => app.RemoveNavigator();
 
-        private void SetExplorer(IFileSystemItem current, List<IFileSystemItem> children)
+        private void SetExplorer(XElement current, List<XElement> children)
         {
+            string type = current.Name.ToString();
+            int i = 0;
+            DateTime date;
+
             ExplorerHeader.Children.RemoveRange(0, ExplorerHeader.Children.Count - 1);
             DirectoryName.Text = "";
-            int i = 0;
 
-            if (current.GetType() == typeof(RootDirectory))
+            if (type.Equals("root"))
+            {
                 DirectoryName.Text = "Users";
+            }
             else
             {
-                DirectoryName.Text = ((SystemDirectory)current).Name;
                 StackPanel leftPanel = new StackPanel { Orientation = Orientation.Horizontal };
                 string left = "";
+
+                DirectoryName.Text = current.Attribute("name").Value;
 
                 DockPanel.SetDock(leftPanel, Dock.Left);
                 ExplorerHeader.Children.Insert(0, leftPanel);
 
-                if (current.GetType() == typeof(UserDirectory)) left = "User";
-                else if (current.GetType() == typeof(ProjectDirectory)) left = "Project";
-                else if (current.GetType() == typeof(VersionDirectory))
+                if (type.Equals("user") || type.Equals("project"))
+                    left = current.Name.ToString().Substring(0, 1).ToUpper() + current.Name.ToString().Substring(1);
+
+                else if (type.Equals("version"))
                 {
                     StackPanel rightPanel = new StackPanel { Orientation = Orientation.Horizontal };
-
-                    left = ((VersionDirectory)current).Number.ToString();
+                    
 
                     DockPanel.SetDock(rightPanel, Dock.Right);
                     ExplorerHeader.Children.Insert(1, rightPanel);
+
+                    left = current.Attribute("number").Value;
 
                     rightPanel.Children.Add(new Rectangle
                     {
@@ -65,7 +74,7 @@ namespace Client
 
                     rightPanel.Children.Add(new TextBlock
                     {
-                        Text = ((VersionDirectory)current).Date.ToString(),
+                        Text = DateTime.TryParseExact(current.Attribute("date").Value, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out date).ToString(),
                         FontSize = 16,
                         FontWeight = FontWeights.Bold,
                         TextWrapping = TextWrapping.Wrap,
@@ -94,7 +103,7 @@ namespace Client
                 });
             }
 
-            foreach (IFileSystemItem child in children)
+            foreach (XElement child in children)
             {
                 StackPanel outerPanel = new StackPanel { Orientation = Orientation.Horizontal };
                 StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left };
@@ -102,11 +111,13 @@ namespace Client
                 TextBlock header = new TextBlock { FontSize = 14, TextWrapping = TextWrapping.Wrap, Foreground = FindResource("TextColor") as SolidColorBrush };
                 Button button;
 
+                type = child.Name.ToString();
+
                 outerPanel.Children.Add(image);
                 outerPanel.Children.Add(innerPanel);
                 innerPanel.Children.Add(header);
 
-                if (child.GetType().IsSubclassOf(typeof(SystemDirectory)))
+                if (type.Equals("user") || type.Equals("project") || type.Equals("version"))
                 {
                     TextBlock line1 = new TextBlock { FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
                     TextBlock line2 = new TextBlock { FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
@@ -114,71 +125,72 @@ namespace Client
                     button = new Button { Content = outerPanel, Height = 75, Margin = new Thickness(10, 5, 10, 5) };
                     button.Click += DirectoryButton_Click;
                     header.MaxWidth = 286;
-                    header.Text = ((SystemDirectory)child).Name;
+                    header.Text = child.Attribute("name").Value;
                     innerPanel.Children.Add(line1);
                     innerPanel.Children.Add(line2);
 
-                    if (child.GetType() == typeof(UserDirectory))
+                    if (type.Equals("user"))
                     {
                         button.Name = "User" + i++;
                         image.Source = new BitmapImage(new Uri("/Icons/user-directory.png", UriKind.Relative));
-                        line1.Text = "Joined: " + ((UserDirectory)child).Date.ToString();
-                        line2.Text = ((UserDirectory)child).Projects + " Projects";
+                        line1.Text = "Joined: " + DateTime.TryParseExact(child.Attribute("date").Value, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out date).ToString();
+                        line2.Text = child.Attribute("projects").Value + " Projects";
                     }
-                    else if (child.GetType().IsSubclassOf(typeof(SubDirectory)))
+                    else
                     {
                         TextBlock line3 = new TextBlock { FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
 
-                        line1.Text = "Author: " + ((SubDirectory)child).Author;
+                        line1.Text = "Author: " + child.Attribute("author").Value;
                         innerPanel.Children.Add(line3);
 
-                        if (child.GetType() == typeof(ProjectDirectory))
+                        if (type.Equals("project"))
                         {
                             button.Name = "Project" + i++;
                             image.Source = new BitmapImage(new Uri("/Icons/project-directory.png", UriKind.Relative));
-                            line2.Text = "Created: " + ((ProjectDirectory)child).Date.ToString();
-                            line3.Text = "Last Upload: " + ((ProjectDirectory)child).LastEdit.ToString();
+                            line2.Text = "Created: " + DateTime.TryParseExact(child.Attribute("created").Value, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out date).ToString();
+                            line3.Text = "Last Upload: " + DateTime.TryParseExact(child.Attribute("edited").Value, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out date).ToString();
                         }
-                        else if (child.GetType() == typeof(VersionDirectory))
+                        else if (type.Equals("version"))
                         {
                             button.Name = "Version" + i++;
                             image.Source = new BitmapImage(new Uri("/Icons/version-directory.png", UriKind.Relative));
-                            line2.Text = "Uploaded: " + ((VersionDirectory)child).Date.ToString();
-                            line3.Text = "Version: " + ((VersionDirectory)child).Number;
+                            line2.Text = "Uploaded: " + DateTime.TryParseExact(child.Attribute("date").Value, "yyyyMMddHHmmss", null, System.Globalization.DateTimeStyles.None, out date).ToString();
+                            line3.Text = "Version: " + child.Attribute("number").Value;
                         }
                     }
                 }
-                else if (child.GetType().IsSubclassOf(typeof(SystemFile)))
+                else if (type.Equals("code") || type.Equals("analysis"))
                 {
                     button = new Button { Height = 100, Margin = new Thickness(15, 5, 15, 5) };
                     button.Content = outerPanel;
                     header.MaxWidth = 93;
 
-                    if (child.GetType() == typeof(CodeFile))
+                    if (type.Equals("code"))
                     {
                         TextBlock line = new TextBlock { FontSize = 10, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
-                        
+
                         button.Name = "Code" + i++;
                         button.Click += CodeButton_Click;
                         image.Source = new BitmapImage(new Uri("/Icons/file.png", UriKind.Relative));
-                        header.Text = ((CodeFile)child).Name;
+                        header.Text = child.Attribute("name").Value;
                         innerPanel.Children.Add(line);
 
-                        if (((CodeFile)child).FType.Equals("txt")) line.Text = "Text";
-                        else if (((CodeFile)child).FType.Equals("cs")) line.Text = "C#";
-                        else if (((CodeFile)child).FType.Equals("java")) line.Text = "Java";
+                        if (child.Attribute("type").Value.Equals("txt")) line.Text = "Text";
+                        else if (child.Attribute("type").Value.Equals("cs")) line.Text = "C#";
+                        else if (child.Attribute("type").Value.Equals("java")) line.Text = "Java";
                     }
-                    else if (child.GetType() == typeof(AnalysisFile))
+                    else if (type.Equals("analysis"))
                     {
                         button.Name = "Analysis" + i++;
                         button.Click += AnalysisButton_Click;
                         image.Source = new BitmapImage(new Uri("/Icons/xml-file.png", UriKind.Relative));
-                        header.Text = char.ToUpper(((AnalysisFile)child).FType[0]) + ((AnalysisFile)child).FType.Substring(1)
+                        //current.Name.ToString().Substring(0, 1).ToUpper() + current.Name.ToString().Substring(1)
+                        header.Text = char.ToUpper(child.Attribute("type").Value[0]) + child.Attribute("type").Value.Substring(1)
                             + Environment.NewLine + "Analysis";
                     }
                 }
                 else continue;
-                
+
                 Explorer.Children.Add(button);
             }
         }

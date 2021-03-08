@@ -18,22 +18,31 @@ namespace RCALibrary
         DirectoryData Initialize(string username);
 
         [OperationContract]
-        DirectoryData Navigate();
+        DirectoryData NavigateInto(string name);
+
+        [OperationContract]
+        DirectoryData NavigateBack();
 
         [OperationContract]
         void UpdateRoot(XElement newRoot);
     }
 
     [DataContract]
-    [KnownType(typeof(RootDirectory))]
+    /*[KnownType(typeof(RootDirectory))]
     [KnownType(typeof(UserDirectory))]
     [KnownType(typeof(ProjectDirectory))]
     [KnownType(typeof(VersionDirectory))]
     [KnownType(typeof(CodeFile))]
-    [KnownType(typeof(AnalysisFile))]
+    [KnownType(typeof(AnalysisFile))]*/
     public class DirectoryData
     {
-        [DataMember] public IFileSystemItem CurrentDirectory { get; set; }
-        [DataMember] public List<IFileSystemItem> Children { get; set; }
+        [DataMember] public XElement CurrentDirectory { get; set; }
+        [DataMember] public List<XElement> Children { get; set; }
+
+        public DirectoryData(XElement current)
+        {
+            CurrentDirectory = current;
+            Children = new List<XElement>();
+        }
     }
 }
