@@ -14,7 +14,7 @@
         </Grid.ColumnDefinitions>
 
         <!--Left view-->
-        <Border Grid.Column="0" Background="#2E2425" CornerRadius="30" Margin="30,30,15,30" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Column="0" Background="{StaticResource BackgroundColor}" CornerRadius="30" Margin="30,30,15,30" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <Grid>
                 <Grid.RowDefinitions>
@@ -23,34 +23,34 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Orientation="Vertical" Margin="0,20,0,5">
-                    <Rectangle Fill="#ADD8E6" HorizontalAlignment="Stretch" Height="5"/>
+                    <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5"/>
                     <DockPanel LastChildFill="True">
                         <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                            <TextBlock Text="3" Margin="10,5,10,5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="#F4F1DE"/>
-                            <Rectangle Fill="#ADD8E6" VerticalAlignment="Stretch" Width="3"/>
+                            <TextBlock Text="3" Margin="10,5,10,5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
+                            <Rectangle Fill="{StaticResource LineColor}" VerticalAlignment="Stretch" Width="3"/>
                         </StackPanel>
 
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                            <Rectangle Fill="#ADD8E6" VerticalAlignment="Stretch" Width="3"/>
-                            <TextBlock Text="2/27/2021" Margin="10,5,10,5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="#F4F1DE"/>
+                            <Rectangle Fill="{StaticResource LineColor}" VerticalAlignment="Stretch" Width="3"/>
+                            <TextBlock Text="2/27/2021" Margin="10,5,10,5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
                         </StackPanel>
 
-                        <TextBlock x:Name="ProjectName" Text="Project Name" Margin="5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="#F4F1DE"/>
+                        <TextBlock x:Name="ProjectName" Text="Project Name" Margin="5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
                     </DockPanel>
-                    <Rectangle Fill="#ADD8E6" HorizontalAlignment="Stretch" Height="3"/>
+                    <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="3"/>
 
                     <DockPanel LastChildFill="True">
                         <Border DockPanel.Dock="Left" Background="#40768C" CornerRadius="10" Margin="5,3,5,3">
-                            <TextBlock Text="C#" Margin="5,2,5,2" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="#F4F1DE"/>
+                            <TextBlock Text="C#" Margin="5,2,5,2" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
                         </Border>
 
                         <Border DockPanel.Dock="Right" Background="#40768C" CornerRadius="10" Margin="5,3,5,3">
-                            <TextBlock Text="C#" Margin="5,2,5,2" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="#F4F1DE"/>
+                            <TextBlock Text="C#" Margin="5,2,5,2" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
                         </Border>
 
-                        <TextBlock x:Name="FileName" Text="File Name" Margin="5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="#F4F1DE"/>
+                        <TextBlock x:Name="FileName" Text="File Name" Margin="5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
                     </DockPanel>
-                    <Rectangle Fill="#ADD8E6" HorizontalAlignment="Stretch" Height="5"/>
+                    <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5"/>
                 </StackPanel>
 
                 <ScrollViewer Grid.Row="1" Margin="20,5,20,20">
@@ -87,7 +87,7 @@
             <TabControl SelectionChanged="TabSelectionChanged" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent">
 
                 <TabItem x:Name="ExplorerTab" Header="Project Explorer" Grid.Column="0" IsSelected="True">
-                    <Border Background="#2E2425" CornerRadius="0,0,30,30">
+                    <Border Background="{StaticResource BackgroundColor}" CornerRadius="0,0,30,30">
                         <!--Project Explorer view-->
                         <Grid>
                             <Grid.RowDefinitions>
@@ -96,104 +96,17 @@
                             </Grid.RowDefinitions>
 
                             <StackPanel Grid.Row="0" Orientation="Vertical">
-                                <Rectangle Fill="#ADD8E6" HorizontalAlignment="Stretch" Height="5" Margin="0,0,0,0"/>
-                                <DockPanel LastChildFill="True">
-                                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                                        <TextBlock Text="3" Margin="10,5,10,5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="#F4F1DE"/>
-                                        <Rectangle Fill="#ADD8E6" VerticalAlignment="Stretch" Width="3"/>
-                                    </StackPanel>
-
-                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                        <Rectangle Fill="#ADD8E6" VerticalAlignment="Stretch" Width="3"/>
-                                        <TextBlock Text="2/27/2021" Margin="10,5,10,5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="#F4F1DE"/>
-                                    </StackPanel>
-
-                                    <TextBlock x:Name="DirectoryName" Text="Project Name" Margin="5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="#F4F1DE"/>
+                                <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5" Margin="0,0,0,0"/>
+                                <DockPanel x:Name="ExplorerHeader" LastChildFill="True">
+                                    <!--Add explorer header based on current directory-->
+                                    <TextBlock x:Name="DirectoryName" Text="Directory Name" Margin="5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
                                 </DockPanel>
-                                <Rectangle Fill="#ADD8E6" HorizontalAlignment="Stretch" Height="5"/>
+                                <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5"/>
                             </StackPanel>
 
                             <ScrollViewer Grid.Row="1" Margin="20,5,20,20" VerticalAlignment="Stretch">
                                 <WrapPanel x:Name="Explorer" Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10">
                                     <!--Populated programmatically with directories or files-->
-
-                                    <Button x:Name="UserButton" Click="UserButton_Click" Height="75" Margin="10,5,10,5">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Image Source="Icons/user-directory.png" VerticalAlignment="Center" HorizontalAlignment="Right"/>
-                                            <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Left">
-                                                <TextBlock Text="UserName" FontSize="14" MaxWidth="286" TextWrapping="Wrap" Foreground="#F4F1DE"/>
-                                                <TextBlock Text="Joined: 2/22/2021" FontSize="10" FontWeight="Light" Foreground="#F4F1DE"/>
-                                                <TextBlock Text="3 Projects" FontSize="10" FontWeight="Light" Foreground="#F4F1DE"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Button>
-
-                                    <!--Newest project on top, oldest on the bottom-->
-                                    <Button x:Name="ProjectButton" Click="ProjectButton_Click" Height="75" Margin="10,5,10,5">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Image Source="Icons/project-directory.png" VerticalAlignment="Center" HorizontalAlignment="Right"/>
-                                            <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Left">
-                                                <TextBlock Text="ProjectName" FontSize="14" MaxWidth="286" TextWrapping="Wrap" Foreground="#F4F1DE"/>
-                                                <TextBlock Text="Author: UserName" FontSize="10" MaxWidth="289" TextWrapping="Wrap" FontWeight="Light" Foreground="#F4F1DE"/>
-                                                <TextBlock Text="Created: 2/24/2021" FontSize="10" FontWeight="Light" Foreground="#F4F1DE"/>
-                                                <TextBlock Text="Last Upload: 2/28/2021" FontSize="10" FontWeight="Light" Foreground="#F4F1DE"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Button>
-
-                                    <!--Newest version on top, oldest on the bottom-->
-                                    <Button x:Name="VersionButton" Click="VersionButton_Click" Height="75" Margin="10,5,10,5">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Image Source="Icons/version-directory.png" VerticalAlignment="Center" HorizontalAlignment="Right"/>
-                                            <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Left">
-                                                <TextBlock Text="ProjectName" FontSize="14" MaxWidth="286" TextWrapping="Wrap" Foreground="#F4F1DE"/>
-                                                <TextBlock Text="Uploaded: 2/24/2021 4:42pm" FontSize="10" FontWeight="Light" Foreground="#F4F1DE"/>
-                                                <TextBlock Text="Author: UserName" FontSize="10" MaxWidth="289" TextWrapping="Wrap" FontWeight="Light" Foreground="#F4F1DE"/>
-                                                <TextBlock Text="Version: 1" FontSize="10" FontWeight="Light" Foreground="#F4F1DE"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Button>
-
-                                    <Button x:Name="AnalysisButton1" Click="AnalysisButton_Click" Margin="15,5,15,5">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Image Source="Icons/xml-file.png" Height="100" VerticalAlignment="Bottom" HorizontalAlignment="Right"/>
-                                            <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Left">
-                                                <TextBlock Text="Function" FontSize="14" Foreground="#F4F1DE"/>
-                                                <TextBlock Text="Analysis" FontSize="14" Foreground="#F4F1DE"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Button>
-
-                                    <Button x:Name="AnalysisButton2" Click="AnalysisButton_Click" Margin="15,5,15,5">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Image Source="Icons/xml-file.png" Height="100" VerticalAlignment="Bottom" HorizontalAlignment="Right"/>
-                                            <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Left">
-                                                <TextBlock Text="Relationship" FontSize="14" Foreground="#F4F1DE"/>
-                                                <TextBlock Text="Analysis" FontSize="14" Foreground="#F4F1DE"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Button>
-
-                                    <Button x:Name="CodeButton1" Click="CodeButton_Click" Margin="15,5,15,5">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Image Source="Icons/file.png" Height="100" VerticalAlignment="Center" HorizontalAlignment="Right"/>
-                                            <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Left">
-                                                <TextBlock Text="FileName" FontSize="14" MaxWidth="93" TextWrapping="Wrap" Foreground="#F4F1DE"/>
-                                                <TextBlock Text="Language: C#" FontSize="10" FontWeight="Light" Foreground="#F4F1DE"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Button>
-
-                                    <Button x:Name="CodeButton2" Click="CodeButton_Click" Margin="15,5,15,5">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Image Source="Icons/file.png" Height="100" VerticalAlignment="Center" HorizontalAlignment="Right"/>
-                                            <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Left">
-                                                <TextBlock Text="FileName" FontSize="14" MaxWidth="93" TextWrapping="Wrap" Foreground="#F4F1DE"/>
-                                                <TextBlock Text="Language: Java" FontSize="10" FontWeight="Light" Foreground="#F4F1DE"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Button>
-
                                 </WrapPanel>
                             </ScrollViewer>
                         </Grid>
@@ -201,7 +114,7 @@
                 </TabItem>
 
                 <TabItem x:Name="UploadTab" Header="Upload Project" Grid.Column="1" IsSelected="False">
-                    <Border Background="#2E2425" CornerRadius="0,0,30,30">
+                    <Border Background="{StaticResource BackgroundColor}" CornerRadius="0,0,30,30">
                         <!--Upload Project view-->
                         <Grid>
                             <Grid.RowDefinitions>
@@ -210,25 +123,25 @@
                             </Grid.RowDefinitions>
 
                             <StackPanel Grid.Row="0" Orientation="Vertical">
-                                <Rectangle Fill="#ADD8E6" HorizontalAlignment="Stretch" Height="5" Margin="0,0,0,0"/>
+                                <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5" Margin="0,0,0,0"/>
                                 <DockPanel LastChildFill="True">
                                     <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                                        <TextBlock Text="3" Margin="10,5,10,5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="#F4F1DE"/>
-                                        <Rectangle Fill="#ADD8E6" VerticalAlignment="Stretch" Width="3"/>
+                                        <TextBlock Text="3" Margin="10,5,10,5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
+                                        <Rectangle Fill="{StaticResource LineColor}" VerticalAlignment="Stretch" Width="3"/>
                                     </StackPanel>
 
                                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                        <Rectangle Fill="#ADD8E6" VerticalAlignment="Stretch" Width="3"/>
-                                        <TextBlock Text="2/27/2021" Margin="10,5,10,5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="#F4F1DE"/>
+                                        <Rectangle Fill="{StaticResource LineColor}" VerticalAlignment="Stretch" Width="3"/>
+                                        <TextBlock Text="2/27/2021" Margin="10,5,10,5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
                                     </StackPanel>
 
-                                    <ComboBox x:Name="VersionName" FontSize="16" FontWeight="Bold" MaxDropDownHeight="200" VerticalAlignment="Center" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Foreground="#F4F1DE" Margin="5,0,5,0">
+                                    <ComboBox x:Name="VersionName" FontSize="16" FontWeight="Bold" MaxDropDownHeight="200" VerticalAlignment="Center" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Foreground="{StaticResource TextColor}" Margin="5,0,5,0">
                                         <ComboBoxItem Content="Project 1" FontSize="12" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
                                         <ComboBoxItem Content="Project 2" FontSize="12" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
                                         <ComboBoxItem Content="Project 3" FontSize="12" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
                                     </ComboBox>
                                 </DockPanel>
-                                <Rectangle Fill="#ADD8E6" HorizontalAlignment="Stretch" Height="5"/>
+                                <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5"/>
                             </StackPanel>
 
                             <StackPanel Grid.Row="1">
@@ -251,11 +164,11 @@
                                             </Image>
                                         </Button.Content>
                                     </Button>
-                                    <TextBox x:Name="NewProjectName" KeyDown="NewProject_KeyDown" Text="" FontSize="18" Margin="10,0,10,0" TextWrapping="NoWrap" VerticalContentAlignment="Center" Background="#FF3F3F3F" Foreground="#F4F1DE" BorderBrush="#888888"/>
+                                    <TextBox x:Name="NewProjectName" KeyDown="NewProject_KeyDown" Text="" FontSize="18" Margin="10,0,10,0" TextWrapping="NoWrap" VerticalContentAlignment="Center" Background="#FF3F3F3F" Foreground="{StaticResource TextColor}" BorderBrush="#888888"/>
                                 </DockPanel>
 
                                 <ScrollViewer Margin="20,5,20,20" VerticalAlignment="Stretch">
-                                    <ListBox x:Name="FileList" Grid.Row="1" Background="Transparent" Foreground="#F4F1DE" BorderThickness="0">
+                                    <ListBox x:Name="FileList" Grid.Row="1" Background="Transparent" Foreground="{StaticResource TextColor}" BorderThickness="0">
                                         <!--Populated programmatically with file names-->
                                         <ListBoxItem/>
                                     </ListBox>

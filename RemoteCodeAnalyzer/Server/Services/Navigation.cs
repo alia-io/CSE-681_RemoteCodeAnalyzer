@@ -1,31 +1,24 @@
-﻿using System;
-using System.IO;
-using System.Xml.Linq;
-using System.ServiceModel;
+﻿using RCALibrary;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.ServiceModel;
 using System.ServiceModel.Channels;
-using RCALibrary;
+using System.Xml.Linq;
 
 namespace Server
 {
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerSession)]
     class Navigation : INavigation
     {
-        private object RootLock = new object();
+        private readonly object RootLock = new object();
         private XElement Root; // More thread-safe version of directory tree while in PerSession mode
         private XElement Current; // Thread-safe version of current directory
         private string User; // Username
 
-        public Navigation()
+        public void Remove()
         {
-            lock (Host.DirectoryTreeLock)
-                lock (RootLock)
-                    Root = new XElement(Host.DirectoryTree.Root); // Deep-copy of the root element of the tree
-
-            lock (Host.NavigatorsLock) Host.Navigators.Add(this);
+            lock (Host.NavigatorsLock) Host.Navigators.Remove(this);
         }
 
         public DirectoryData Initialize(string username)
@@ -33,10 +26,18 @@ namespace Server
             DirectoryData directory = null;
             IEnumerable<XElement> findDirectory;
             IEnumerable<XElement> findChildren;
+            string date;
+            string date1;
 
             Console.WriteLine("Initialize Request Received from IP Address: {0}", (OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name] as RemoteEndpointMessageProperty).Address);
 
             User = username;
+
+            lock (Host.DirectoryTreeLock)
+                lock (RootLock)
+                    Root = new XElement(Host.DirectoryTree.Root); // Deep-copy of the root element of the tree
+
+            lock (Host.NavigatorsLock) Host.Navigators.Add(this);
 
             lock (RootLock)
             {
@@ -50,15 +51,24 @@ namespace Server
                     Current = new XElement(findDirectory.First());
 
                     findChildren = from XElement element in Current.Elements()
-                                   where element.Name.Equals("project")
+                                   where element.Name.ToString().Equals("project")
                                    select element;
 
+                    date = Current.Attribute("date").Value;
                     directory = new DirectoryData();
-                    directory.CurrentDirectory = new UserDirectory(Current.Attribute("name").Value, Current.Attribute("date").Value, int.Parse(Current.Attribute("projects").Value));
+                    directory.CurrentDirectory = new UserDirectory(Current.Attribute("name").Value, 
+                        new DateTime(int.Parse(date.Substring(0, 4)), int.Parse(date.Substring(4, 2)), int.Parse(date.Substring(6, 2))), 
+                        int.Parse(Current.Attribute("projects").Value));
                     directory.Children = new List<IFileSystemItem>();
 
                     foreach (XElement child in findChildren)
-                        directory.Children.Add(new ProjectDirectory(child.Attribute("name").Value, child.Attribute("author").Value, child.Attribute("created").Value, child.Attribute("edited").Value));
+                    {
+                        date = child.Attribute("created").Value;
+                        date1 = child.Attribute("edited").Value;
+                        directory.Children.Add(new ProjectDirectory(child.Attribute("name").Value, child.Attribute("author").Value, 
+                            new DateTime(int.Parse(date.Substring(0, 4)), int.Parse(date.Substring(4, 2)), int.Parse(date.Substring(6, 2))),
+                            new DateTime(int.Parse(date1.Substring(0, 4)), int.Parse(date1.Substring(4, 2)), int.Parse(date1.Substring(6, 2)))));
+                    }
                 }
                 else Current = null;
             }

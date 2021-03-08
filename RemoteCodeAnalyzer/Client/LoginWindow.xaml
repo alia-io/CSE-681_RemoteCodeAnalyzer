@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Client"
         mc:Ignorable="d"
-        Title="Remote Code Analyzer: Login" Height="320" Width="510" Background="#2E2425" KeyDown="Window_KeyDown">
+        Title="Remote Code Analyzer: Login" Height="320" Width="510" Background="{StaticResource BackgroundColor}" KeyDown="Window_KeyDown">
 
     <Border CornerRadius="30" Background="#D6D6D6" HorizontalAlignment="Center"  VerticalAlignment="Center">
         <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10">

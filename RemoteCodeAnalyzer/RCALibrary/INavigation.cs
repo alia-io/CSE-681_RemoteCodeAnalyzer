@@ -12,6 +12,9 @@ namespace RCALibrary
     public interface INavigation
     {
         [OperationContract]
+        void Remove();
+
+        [OperationContract]
         DirectoryData Initialize(string username);
 
         [OperationContract]
@@ -22,6 +25,7 @@ namespace RCALibrary
     }
 
     [DataContract]
+    [KnownType(typeof(RootDirectory))]
     [KnownType(typeof(UserDirectory))]
     [KnownType(typeof(ProjectDirectory))]
     [KnownType(typeof(VersionDirectory))]

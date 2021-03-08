@@ -39,7 +39,7 @@ namespace Client
         public void Main_Application(string user)
         {
             User = user;
-            DirectoryData directory = null;
+            DirectoryData directory;
 
             try
             {
@@ -62,10 +62,23 @@ namespace Client
         /* Logout of the main application by loading the login window */
         public void Login_Window()
         {
+            RemoveNavigator();
             User = null;
             lw = new LoginWindow(this);
             mw.Close();
             lw.Show();
+        }
+
+        public void RemoveNavigator()
+        {
+            try
+            {
+                navigator.Remove();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Unable to connect to navigation service: {0}", e.ToString());
+            }
         }
 
         public bool RequestLogin(string username, string password)

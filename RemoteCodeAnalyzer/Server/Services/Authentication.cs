@@ -106,20 +106,13 @@ namespace Server
         {
             string date = DateTime.Now.ToString("yyyyMMdd");
             XElement newRoot;
-            StringBuilder formattedDate = new StringBuilder();
-
-            formattedDate.Append(date.Substring(4, 2));
-            formattedDate.Append("/");
-            formattedDate.Append(date.Substring(6, 2));
-            formattedDate.Append("/");
-            formattedDate.Append(date.Substring(0, 4));
 
             lock (Host.DirectoryTree)
             {
                 Host.DirectoryTree.Element("root").Add(
                     new XElement("user",
                         new XAttribute("name", credentials.Username),
-                        new XAttribute("date", formattedDate.ToString()),
+                        new XAttribute("date", date),
                         new XAttribute("projects", 0)));
                 try
                 {
