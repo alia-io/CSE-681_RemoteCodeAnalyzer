@@ -24,25 +24,23 @@ namespace Server
         public DirectoryData Initialize(string username)
         {
             DirectoryData directory = null;
-            IEnumerable<XElement> findDirectory;
+            IEnumerable<XElement> findDirectory = null;
 
             Console.WriteLine("Initialize Request Received from IP Address: {0}", (OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name] as RemoteEndpointMessageProperty).Address);
 
             User = username;
 
-            lock (Host.DirectoryTreeLock)
-                lock (ThisLock)
-                    Root = new XElement(Host.DirectoryTree.Root); // Deep-copy of the root element of the tree
-
             lock (Host.NavigatorsLock) Host.Navigators.Add(this);
 
             lock (ThisLock)
             {
+                lock (Host.DirectoryTreeLock) Root = new XElement(Host.DirectoryTree.Root); // Deep-copy of the root element of the tree
+
                 findDirectory = from XElement element in Root.Elements("user")
                                 where element.Attribute("name").Value.Equals(username)
                                 select element;
 
-                if (findDirectory.Count() == 1)
+                if (findDirectory != null && findDirectory.Count() == 1)
                 {
                     Current = new XElement(findDirectory.First());
 
@@ -57,28 +55,79 @@ namespace Server
             return directory;
         }
 
-        public DirectoryData NavigateInto(string name)
+        public DirectoryData NavigateInto(string identifier)
         {
+            DirectoryData directory = null;
+            IEnumerable<XElement> findDirectory = null;
+            string type = Current.Name.ToString();
 
-            return new DirectoryData(new XElement(""));
+            Console.WriteLine("Navigate Into Request Received from IP Address: {0}", (OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name] as RemoteEndpointMessageProperty).Address);
+
+            lock (ThisLock)
+            {
+                if (type.Equals("root") || type.Equals("user"))
+                {
+                    findDirectory = from XElement element in Current.Elements()
+                                    where element.Attribute("name").Value.Equals(identifier)
+                                    select element;
+                }
+                else if (type.Equals("version"))
+                {
+                    findDirectory = from XElement element in Current.Elements()
+                                    where element.Attribute("version").Value.Equals(identifier)
+                                    select element;
+                }
+
+                if (findDirectory != null && findDirectory.Count() == 1)
+                {
+                    Current = new XElement(findDirectory.First());
+
+                    directory = new DirectoryData(new XElement(Current));
+
+                    foreach (XElement child in Current.Elements())
+                        directory.Children.Add(child);
+                }
+            }
+
+            return directory;
         }
 
         public DirectoryData NavigateBack()
         {
             DirectoryData directory = null;
-            IEnumerable<XElement> findDirectory;
+            IEnumerable<XElement> findDirectory = null;
+            string type = Current.Name.ToString();
 
             Console.WriteLine("Navigate Back Request Received from IP Address: {0}", (OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name] as RemoteEndpointMessageProperty).Address);
 
             lock (ThisLock)
             {
-                if (!Current.Name.ToString().Equals("root"))
+                if (!type.Equals("root"))
                 {
-                    findDirectory = from XElement element in Root.Descendants(Current.Name)
-                                    where XNode.DeepEquals(element, Current)
-                                    select element.Parent;
+                    if (type.Equals("user"))
+                    {
+                        findDirectory = from XElement user in Root.Elements("user")
+                                  where user.Attribute("name").Value.Equals(Current.Attribute("name").Value)
+                                  select user.Parent;
+                    }
+                    else if (type.Equals("project"))
+                    {
+                        findDirectory = from XElement user in Root.Elements("user")
+                                  where user.Attribute("name").Value.Equals(Current.Attribute("author").Value)
+                                  from XElement project in user.Elements("project")
+                                  where project.Attribute("name").Value.Equals(Current.Attribute("name").Value)
+                                  select project.Parent;
+                    }
+                    else if (type.Equals("version"))
+                    {
+                        findDirectory = from XElement user in Root.Elements("user")
+                                  where user.Attribute("name").Value.Equals(Current.Attribute("author").Value)
+                                  from XElement version in user.Elements("project").Elements("version")
+                                  where version.Attribute("name").Value.Equals(Current.Attribute("name").Value)
+                                  select version.Parent;
+                    }
 
-                    if (findDirectory.Count() == 1)
+                    if (findDirectory != null && findDirectory.Count() == 1)
                     {
                         Current = new XElement(findDirectory.First());
 
@@ -87,7 +136,6 @@ namespace Server
                         foreach (XElement child in Current.Elements())
                             directory.Children.Add(child);
                     }
-                    else Current = null;
                 }
             }
 
@@ -96,7 +144,44 @@ namespace Server
 
         public void UpdateRoot(XElement newRoot)
         {
-            lock (ThisLock) Root = new XElement(newRoot);
+            lock (ThisLock)
+            {
+                string type = Current.Name.ToString();
+                IEnumerable<XElement> current = null;
+
+                Root = new XElement(newRoot);
+
+                // Update Current
+                if (type.Equals("root"))
+                {
+                    Current = new XElement(Root);
+                    return;
+                }
+                else if (type.Equals("user"))
+                {
+                    current = from XElement user in Root.Elements("user")
+                              where user.Attribute("name").Value.Equals(Current.Attribute("name").Value)
+                              select user;
+                }
+                else if (type.Equals("project"))
+                {
+                    current = from XElement user in Root.Elements("user")
+                              where user.Attribute("name").Value.Equals(Current.Attribute("author").Value)
+                              from XElement project in user.Elements("project")
+                              where project.Attribute("name").Value.Equals(Current.Attribute("name").Value)
+                              select project;
+                }
+                else if (type.Equals("version"))
+                {
+                    current = from XElement user in Root.Elements("user")
+                              where user.Attribute("name").Value.Equals(Current.Attribute("author").Value)
+                              from XElement version in user.Elements("project").Elements("version")
+                              where version.Attribute("name").Value.Equals(Current.Attribute("name").Value)
+                              select version;
+                }
+             
+                if (current != null && current.Count() == 1) Current = current.First();
+            }
         }
     }
 }

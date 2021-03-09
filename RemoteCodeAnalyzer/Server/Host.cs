@@ -89,6 +89,13 @@ namespace Server
             uploader.Close();
         }
 
+        public static void UpdateNavigators(XElement newRoot)
+        {
+            lock (NavigatorsLock) // Set the Root of all active Navigation instances
+                foreach (Navigation navigator in Navigators)
+                    navigator.UpdateRoot(newRoot);
+        }
+
         private static void CheckRoot()
         {
             while (!Directory.Exists(".\\root"))
@@ -154,6 +161,5 @@ namespace Server
                     }
                 }
             }
-        }
-    }
+        }    }
 }

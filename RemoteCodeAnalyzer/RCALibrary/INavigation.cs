@@ -18,7 +18,7 @@ namespace RCALibrary
         DirectoryData Initialize(string username);
 
         [OperationContract]
-        DirectoryData NavigateInto(string name);
+        DirectoryData NavigateInto(string identifier);
 
         [OperationContract]
         DirectoryData NavigateBack();

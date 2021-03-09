@@ -19,8 +19,9 @@ namespace Client
     public partial class MainWindow : Window
     {
         private readonly App app; // Saved reference to App
-        private readonly Button LastClickedButton;
         private readonly List<string> newFiles = new List<string>();
+        private (Button button, long timestamp) LastClickedButton = (null, 0);
+
         public MainWindow(App app, XElement current, List<XElement> children)
         {
             this.app = app;
@@ -38,6 +39,7 @@ namespace Client
             DateTime date;
 
             ExplorerHeader.Children.RemoveRange(0, ExplorerHeader.Children.Count - 1);
+            Explorer.Children.Clear();
             DirectoryName.Text = "";
 
             if (type.Equals("root"))
@@ -133,7 +135,7 @@ namespace Client
                     if (type.Equals("user"))
                     {
                         DateTime.TryParseExact(child.Attribute("date").Value, "yyyyMMdd", null, DateTimeStyles.None, out date);
-                        button.Name = "User" + i++;
+                        button.Name = "U" + i++;
                         image.Source = new BitmapImage(new Uri("/Icons/user-directory.png", UriKind.Relative));
                         line1.Text = "Joined: " + date.ToString("d");
                         line2.Text = child.Attribute("projects").Value + " Projects";
@@ -147,7 +149,7 @@ namespace Client
 
                         if (type.Equals("project"))
                         {
-                            button.Name = "Project" + i++;
+                            button.Name = "P" + i++;
                             image.Source = new BitmapImage(new Uri("/Icons/project-directory.png", UriKind.Relative));
                             DateTime.TryParseExact(child.Attribute("created").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
                             line2.Text = "Created: " + date.ToString("g");
@@ -157,7 +159,7 @@ namespace Client
                         else if (type.Equals("version"))
                         {
                             DateTime.TryParseExact(child.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
-                            button.Name = "Version" + i++;
+                            button.Name = "V" + child.Attribute("version");
                             image.Source = new BitmapImage(new Uri("/Icons/version-directory.png", UriKind.Relative));
                             line2.Text = "Uploaded: " + date.ToString("g");
                             line3.Text = "Version: " + child.Attribute("number").Value;
@@ -174,7 +176,7 @@ namespace Client
                     {
                         TextBlock line = new TextBlock { FontSize = 10, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
 
-                        button.Name = "Code" + i++;
+                        button.Name = "C" + i++;
                         button.Click += CodeButton_Click;
                         image.Source = new BitmapImage(new Uri("/Icons/file.png", UriKind.Relative));
                         header.Text = child.Attribute("name").Value;
@@ -186,7 +188,7 @@ namespace Client
                     }
                     else if (type.Equals("analysis"))
                     {
-                        button.Name = "Analysis" + i++;
+                        button.Name = "A" + i++;
                         button.Click += AnalysisButton_Click;
                         image.Source = new BitmapImage(new Uri("/Icons/xml-file.png", UriKind.Relative));
                         header.Text = char.ToUpper(child.Attribute("type").Value[0]) + child.Attribute("type").Value.Substring(1)
@@ -201,11 +203,14 @@ namespace Client
 
         private void SetProjects(List<XElement> projects)
         {
-            // ComboBoxItem Content="project.Attribute("name").Value" FontSize="12" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-
-
             foreach (XElement project in projects)
-                Projects.Items.Add(new ComboBoxItem { Content = project.Attribute("name").Value, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Center });
+                Projects.Items.Add(new ComboBoxItem 
+                { 
+                    Content = project.Attribute("name").Value, 
+                    FontSize = 12, 
+                    HorizontalAlignment = HorizontalAlignment.Stretch, 
+                    HorizontalContentAlignment = HorizontalAlignment.Center 
+                });
         }
 
         private void TabSelectionChanged(object sender, SelectionChangedEventArgs args)
@@ -237,13 +242,20 @@ namespace Client
                 UploadProjectButton.Visibility = Visibility.Visible;
                 ResetButton.Visibility = Visibility.Visible;
             }
+
+            ResetLastClickedButton();
         }
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
             DirectoryData data = app.RequestNavigateBack();
 
-            if (data != null) SetExplorer(data.CurrentDirectory, data.Children);
+            if (data != null)
+            {
+                SetExplorer(data.CurrentDirectory, data.Children);
+                ClearLastClickedButton();
+            }
+            else ResetLastClickedButton();
         }
 
         private void LogOutButton_Click(object sender, RoutedEventArgs e)
@@ -290,11 +302,10 @@ namespace Client
                 {
                     StackPanel outerPanel = new StackPanel { Orientation = Orientation.Horizontal };
                     StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left };
-                    Button button = new Button { Name = "Project" + Explorer.Children.Count, Content = outerPanel, Height = 75, Margin = new Thickness(10, 5, 10, 5) };
-                    DateTime date;
+                    Button button = new Button { Name = "P" + Explorer.Children.Count, Content = outerPanel, Height = 75, Margin = new Thickness(10, 5, 10, 5) };
 
                     button.Click += DirectoryButton_Click;
-                    DateTime.TryParseExact(newProject.Attribute("created").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
+                    DateTime.TryParseExact(newProject.Attribute("created").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
 
                     outerPanel.Children.Add(new Image { Source = new BitmapImage(new Uri("/Icons/project-directory.png", UriKind.Relative)), VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right });
                     outerPanel.Children.Add(innerPanel);
@@ -410,7 +421,27 @@ namespace Client
 
         private void DirectoryButton_Click(object sender, RoutedEventArgs e)
         {
+            if (LastClickedButton.button != null
+                && (sender as Button).Name.Equals(LastClickedButton.button.Name)
+                && LastClickedButton.timestamp - LastClickedButton.timestamp < 5000000) // Double-click
+            {
+                char type = (sender as Button).Name[0];
+                DirectoryData data = null;
 
+                if (type == 'U' || type == 'P')
+                    data = app.RequestNavigateInto(((TextBlock)((StackPanel)((StackPanel)(sender as Button).Content).Children[1]).Children[0]).Text);
+                else if (type == 'V')
+                    data = app.RequestNavigateInto((sender as Button).Name.Substring(1));
+
+                if (data != null)
+                {
+                    SetExplorer(data.CurrentDirectory, data.Children);
+                    ClearLastClickedButton();
+                    return;
+                }
+            }
+            
+            SetLastClickedButton(sender as Button);
         }
 
         private void AnalysisButton_Click(object sender, RoutedEventArgs e)
@@ -423,9 +454,62 @@ namespace Client
 
         }
 
+        private void ClearLastClickedButton()
+        {
+            LastClickedButton.button = null;
+            LastClickedButton.timestamp = 0;
+        }
+
+        private void SetLastClickedButton(Button button)
+        {
+            char type = button.Name[0];
+
+            foreach (UIElement element in ((StackPanel)button.Content).Children)
+            {
+                if (element.GetType() == typeof(Image))
+                {
+                    if (type == 'U') ((Image)element).Source = new BitmapImage(new Uri("/Icons/user-directory-click.png", UriKind.Relative));
+                    else if (type == 'P') ((Image)element).Source = new BitmapImage(new Uri("/Icons/project-directory-click.png", UriKind.Relative));
+                    else if (type == 'V') ((Image)element).Source = new BitmapImage(new Uri("/Icons/version-directory-click.png", UriKind.Relative));
+                    else if (type == 'C') ((Image)element).Source = new BitmapImage(new Uri("/Icons/file-click.png", UriKind.Relative));
+                    else if (type == 'A') ((Image)element).Source = new BitmapImage(new Uri("/Icons/xml-file-click.png", UriKind.Relative));
+                }
+                else if (element.GetType() == typeof(StackPanel))
+                    foreach (UIElement child in ((StackPanel)element).Children)
+                    {
+                        if (type == 'U') ((TextBlock)child).Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#FECB4A");
+                        else if (type == 'P') ((TextBlock)child).Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#FFA343");
+                        else if (type == 'V') ((TextBlock)child).Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#FF8561");
+                        else if (type == 'C') ((TextBlock)child).Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#5E9EB9");
+                        else if (type == 'A') ((TextBlock)child).Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#40C5B5");
+                    }
+            }
+
+            ResetLastClickedButton();
+            LastClickedButton.button = button;
+            LastClickedButton.timestamp = DateTime.Now.Ticks;
+        }
+
         private void ResetLastClickedButton()
         {
+            if (LastClickedButton.button == null) return;
 
+            char type = LastClickedButton.button.Name[0];
+
+            foreach (UIElement element in ((StackPanel)LastClickedButton.button.Content).Children)
+            {
+                if (element.GetType() == typeof(Image))
+                {
+                    if (type == 'U') ((Image)element).Source = new BitmapImage(new Uri("/Icons/user-directory.png", UriKind.Relative));
+                    else if (type == 'P') ((Image)element).Source = new BitmapImage(new Uri("/Icons/project-directory.png", UriKind.Relative));
+                    else if (type == 'V') ((Image)element).Source = new BitmapImage(new Uri("/Icons/version-directory.png", UriKind.Relative));
+                    else if (type == 'C') ((Image)element).Source = new BitmapImage(new Uri("/Icons/file.png", UriKind.Relative));
+                    else if (type == 'A') ((Image)element).Source = new BitmapImage(new Uri("/Icons/xml-file.png", UriKind.Relative));
+                }
+                else if (element.GetType() == typeof(StackPanel))
+                    foreach (UIElement child in ((StackPanel)element).Children)
+                        ((TextBlock)child).Foreground = FindResource("TextColor") as SolidColorBrush;
+            }
         }
     }
 }

@@ -87,10 +87,7 @@ namespace Server
                 }
             }
 
-            if (newRoot != null)
-                lock (Host.NavigatorsLock) // Set the Root of all active Navigation instances
-                    foreach (Navigation navigator in Host.Navigators)
-                        navigator.UpdateRoot(newRoot);
+            if (newRoot != null) Task.Run(() => Host.UpdateNavigators(newRoot));
 
             return project;
         }

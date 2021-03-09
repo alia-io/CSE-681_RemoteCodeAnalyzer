@@ -127,9 +127,7 @@ namespace Server
                 newRoot = new XElement(Host.DirectoryTree.Root);
             }
 
-            lock (Host.NavigatorsLock) // Set the Root of all active Navigation instances
-                foreach (Navigation navigator in Host.Navigators)
-                    navigator.UpdateRoot(newRoot);
+            Task.Run(() => Host.UpdateNavigators(newRoot));
 
             secret.Element("userlist").Add(new XElement("user",
                 new XAttribute("name", credentials.Username),

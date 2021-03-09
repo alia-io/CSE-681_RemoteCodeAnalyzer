@@ -23,6 +23,8 @@ namespace Client
         /* Start the client by connecting to authentication service and loading login window */
         private void Application_Startup(object sender, StartupEventArgs e)
         {
+            Thread.Sleep(5000); // Can remove when done testing
+
             lw = new LoginWindow(this);
             ChannelFactory<IAuthentication> authenticationFactory = new ChannelFactory<IAuthentication>(new WSHttpBinding(SecurityMode.None), new EndpointAddress("http://localhost:8000/Authentication/"));
             ChannelFactory<INavigation> navigationFactory = new ChannelFactory<INavigation>(new WSHttpBinding(), new EndpointAddress("http://localhost:8000/Navigation/"));
@@ -109,6 +111,19 @@ namespace Client
             {
                 Console.WriteLine("Unable to connect to authentication service: {0}", e.ToString());
                 return false;
+            }
+        }
+
+        public DirectoryData RequestNavigateInto(string directoryIdentifier)
+        {
+            try
+            {
+                return navigator.NavigateInto(directoryIdentifier);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Unable to connect to navigation service: {0}", e.ToString());
+                return null;
             }
         }
 
