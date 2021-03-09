@@ -5,6 +5,7 @@ using System.Configuration;
 using System.Data;
 using System.Linq;
 using System.Threading;
+using System.Xml.Linq;
 using System.Windows;
 using RCALibrary;
 
@@ -12,7 +13,7 @@ namespace Client
 {
     public partial class App : Application
     {
-        public static string User { get; set; }
+        public string User { get; set; }
         private IAuthentication authenticator;
         private INavigation navigator;
         private IUpload uploader;
@@ -111,9 +112,30 @@ namespace Client
             }
         }
 
-        public bool RequestNewProject()
+        public DirectoryData RequestNavigateBack()
         {
-            return false;
+            try
+            {
+                return navigator.NavigateBack();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Unable to connect to navigation service: {0}", e.ToString());
+                return null;
+            }
+        }
+
+        public XElement RequestNewProject(string projectName)
+        {
+            try
+            {
+                return uploader.NewProject(User, projectName);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Unable to connect to upload service: {0}", e.ToString());
+                return null;
+            }
         }
     }
 }

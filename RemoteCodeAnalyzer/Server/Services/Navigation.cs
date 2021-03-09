@@ -11,7 +11,7 @@ namespace Server
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerSession)]
     class Navigation : INavigation
     {
-        private readonly object RootLock = new object(); // Lock for Root and Current
+        private readonly object ThisLock = new object(); // Lock for Root and Current
         private XElement Root; // More thread-safe version of directory tree while in PerSession mode
         private XElement Current; // More thread-safe version of current directory
         private string User; // Username
@@ -31,15 +31,14 @@ namespace Server
             User = username;
 
             lock (Host.DirectoryTreeLock)
-                lock (RootLock)
+                lock (ThisLock)
                     Root = new XElement(Host.DirectoryTree.Root); // Deep-copy of the root element of the tree
 
             lock (Host.NavigatorsLock) Host.Navigators.Add(this);
 
-            lock (RootLock)
+            lock (ThisLock)
             {
-                findDirectory = from XElement element in Root.Elements()
-                                where element.Name.ToString().Equals("user")
+                findDirectory = from XElement element in Root.Elements("user")
                                 where element.Attribute("name").Value.Equals(username)
                                 select element;
 
@@ -49,7 +48,7 @@ namespace Server
 
                     directory = new DirectoryData(new XElement(Current));
 
-                    foreach (XElement child in findDirectory.First().Elements())
+                    foreach (XElement child in Current.Elements())
                         directory.Children.Add(child);
                 }
                 else Current = null;
@@ -71,9 +70,7 @@ namespace Server
 
             Console.WriteLine("Navigate Back Request Received from IP Address: {0}", (OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name] as RemoteEndpointMessageProperty).Address);
 
-            
-
-            lock (RootLock)
+            lock (ThisLock)
             {
                 if (!Current.Name.ToString().Equals("root"))
                 {
@@ -87,7 +84,7 @@ namespace Server
 
                         directory = new DirectoryData(new XElement(Current));
 
-                        foreach (XElement child in findDirectory.First().Elements())
+                        foreach (XElement child in Current.Elements())
                             directory.Children.Add(child);
                     }
                     else Current = null;
@@ -99,7 +96,7 @@ namespace Server
 
         public void UpdateRoot(XElement newRoot)
         {
-            lock (RootLock) Root = newRoot;
+            lock (ThisLock) Root = new XElement(newRoot);
         }
     }
 }

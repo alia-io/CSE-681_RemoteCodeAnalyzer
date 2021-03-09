@@ -10,8 +10,9 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Shapes;
-using RCALibrary;
 using System.Windows.Media.Imaging;
+using System.Globalization;
+using RCALibrary;
 
 namespace Client
 {
@@ -25,6 +26,7 @@ namespace Client
             this.app = app;
             InitializeComponent();
             SetExplorer(current, children);
+            SetProjects(children);
         }
 
         ~MainWindow() => app.RemoveNavigator();
@@ -58,13 +60,12 @@ namespace Client
                 else if (type.Equals("version"))
                 {
                     StackPanel rightPanel = new StackPanel { Orientation = Orientation.Horizontal };
-                    
+                    left = current.Attribute("number").Value;
 
                     DockPanel.SetDock(rightPanel, Dock.Right);
                     ExplorerHeader.Children.Insert(1, rightPanel);
-
-                    left = current.Attribute("number").Value;
-
+                    DateTime.TryParseExact(current.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
+                    
                     rightPanel.Children.Add(new Rectangle
                     {
                         Fill = FindResource("LineColor") as SolidColorBrush,
@@ -74,7 +75,7 @@ namespace Client
 
                     rightPanel.Children.Add(new TextBlock
                     {
-                        Text = DateTime.TryParseExact(current.Attribute("date").Value, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out date).ToString(),
+                        Text = date.ToString("d"),
                         FontSize = 16,
                         FontWeight = FontWeights.Bold,
                         TextWrapping = TextWrapping.Wrap,
@@ -131,9 +132,10 @@ namespace Client
 
                     if (type.Equals("user"))
                     {
+                        DateTime.TryParseExact(child.Attribute("date").Value, "yyyyMMdd", null, DateTimeStyles.None, out date);
                         button.Name = "User" + i++;
                         image.Source = new BitmapImage(new Uri("/Icons/user-directory.png", UriKind.Relative));
-                        line1.Text = "Joined: " + DateTime.TryParseExact(child.Attribute("date").Value, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out date).ToString();
+                        line1.Text = "Joined: " + date.ToString("d");
                         line2.Text = child.Attribute("projects").Value + " Projects";
                     }
                     else
@@ -147,14 +149,17 @@ namespace Client
                         {
                             button.Name = "Project" + i++;
                             image.Source = new BitmapImage(new Uri("/Icons/project-directory.png", UriKind.Relative));
-                            line2.Text = "Created: " + DateTime.TryParseExact(child.Attribute("created").Value, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out date).ToString();
-                            line3.Text = "Last Upload: " + DateTime.TryParseExact(child.Attribute("edited").Value, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out date).ToString();
+                            DateTime.TryParseExact(child.Attribute("created").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
+                            line2.Text = "Created: " + date.ToString("g");
+                            DateTime.TryParseExact(child.Attribute("edited").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
+                            line3.Text = "Last Upload: " + date.ToString("g");
                         }
                         else if (type.Equals("version"))
                         {
+                            DateTime.TryParseExact(child.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
                             button.Name = "Version" + i++;
                             image.Source = new BitmapImage(new Uri("/Icons/version-directory.png", UriKind.Relative));
-                            line2.Text = "Uploaded: " + DateTime.TryParseExact(child.Attribute("date").Value, "yyyyMMddHHmmss", null, System.Globalization.DateTimeStyles.None, out date).ToString();
+                            line2.Text = "Uploaded: " + date.ToString("g");
                             line3.Text = "Version: " + child.Attribute("number").Value;
                         }
                     }
@@ -184,7 +189,6 @@ namespace Client
                         button.Name = "Analysis" + i++;
                         button.Click += AnalysisButton_Click;
                         image.Source = new BitmapImage(new Uri("/Icons/xml-file.png", UriKind.Relative));
-                        //current.Name.ToString().Substring(0, 1).ToUpper() + current.Name.ToString().Substring(1)
                         header.Text = char.ToUpper(child.Attribute("type").Value[0]) + child.Attribute("type").Value.Substring(1)
                             + Environment.NewLine + "Analysis";
                     }
@@ -193,6 +197,15 @@ namespace Client
 
                 Explorer.Children.Add(button);
             }
+        }
+
+        private void SetProjects(List<XElement> projects)
+        {
+            // ComboBoxItem Content="project.Attribute("name").Value" FontSize="12" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+
+
+            foreach (XElement project in projects)
+                Projects.Items.Add(new ComboBoxItem { Content = project.Attribute("name").Value, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Center });
         }
 
         private void TabSelectionChanged(object sender, SelectionChangedEventArgs args)
@@ -228,7 +241,9 @@ namespace Client
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
+            DirectoryData data = app.RequestNavigateBack();
 
+            if (data != null) SetExplorer(data.CurrentDirectory, data.Children);
         }
 
         private void LogOutButton_Click(object sender, RoutedEventArgs e)
@@ -241,24 +256,70 @@ namespace Client
             Environment.Exit(0);
         }
 
-        private void NewProject_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Return || e.Key == Key.Enter)
-                NewProjectButton_Click(NewProjectButton, e);
-        }
-
         private void NewProjectButton_Click(object sender, RoutedEventArgs e)
         {
             NewProjectPanel.Visibility = Visibility.Visible;
         }
 
+        private void NewProjectName_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Return || e.Key == Key.Enter)
+                ConfirmButton_Click(NewProjectButton, e);
+        }
+
         private void ConfirmButton_Click(object sender, RoutedEventArgs e)
         {
+            XElement newProject = app.RequestNewProject(NewProjectName.Text);
+            bool isUserDirectory = false;
+            bool isThisUser = false;
 
+            if (newProject != null)
+            {
+                if (ExplorerHeader.Children.Count == 2)
+                {
+                    foreach (UIElement element in ExplorerHeader.Children)
+                        if (element.GetType() == typeof(TextBlock) && ((TextBlock)element).Name.Equals("DirectoryName") && ((TextBlock)element).Text.Equals(app.User))
+                            isThisUser = true;
+                        else if (element.GetType() == typeof(StackPanel) && ((StackPanel)element).Children.Count == 2)
+                            foreach (UIElement child in ((StackPanel)element).Children)
+                                if (child.GetType() == typeof(TextBlock) && ((TextBlock)child).Text.Equals("User"))
+                                    isUserDirectory = true;
+                }
 
+                if (isUserDirectory && isThisUser) // Add new project to Explorer view
+                {
+                    StackPanel outerPanel = new StackPanel { Orientation = Orientation.Horizontal };
+                    StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left };
+                    Button button = new Button { Name = "Project" + Explorer.Children.Count, Content = outerPanel, Height = 75, Margin = new Thickness(10, 5, 10, 5) };
+                    DateTime date;
 
-            NewProjectName.Text = "";
-            NewProjectPanel.Visibility = Visibility.Visible;
+                    button.Click += DirectoryButton_Click;
+                    DateTime.TryParseExact(newProject.Attribute("created").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
+
+                    outerPanel.Children.Add(new Image { Source = new BitmapImage(new Uri("/Icons/project-directory.png", UriKind.Relative)), VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right });
+                    outerPanel.Children.Add(innerPanel);
+
+                    innerPanel.Children.Add(new TextBlock { Text = newProject.Attribute("name").Value, MaxWidth = 286, FontSize = 14, TextWrapping = TextWrapping.Wrap, Foreground = FindResource("TextColor") as SolidColorBrush });
+                    innerPanel.Children.Add(new TextBlock { Text = "Author: " + newProject.Attribute("author").Value, FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
+                    innerPanel.Children.Add(new TextBlock { Text = "Created: " + date.ToString("g"), FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
+                    innerPanel.Children.Add(new TextBlock { Text = "Last Upload: " + date.ToString("g"), FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
+
+                    Explorer.Children.Insert(0, button);
+                }
+
+                // Add new project to Projects dropdown and select it
+                Projects.Items.Insert(0, new ComboBoxItem { Content = newProject.Attribute("name").Value, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Center });
+                Projects.SelectedIndex = 0;
+
+                NewProjectName.Text = "";
+                NewProjectPanel.Visibility = Visibility.Collapsed;
+                MessageBox.Show("New project added!");
+            }
+            else
+            {
+                NewProjectName.Text = "";
+                MessageBox.Show("Unable to create new project." + Environment.NewLine + "The project may already exist.");
+            }
         }
 
         private void AddFileButton_Click(object sender, RoutedEventArgs e)
@@ -341,7 +402,7 @@ namespace Client
 
         private void ResetButton_Click(object sender, RoutedEventArgs e)
         {
-            VersionName.SelectedItem = null;
+            Projects.SelectedItem = null;
             FileList.Items.Clear();
             FileList.Items.Add(new ListBoxItem());
             newFiles.Clear();

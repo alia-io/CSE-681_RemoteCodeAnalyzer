@@ -12,7 +12,7 @@ namespace RCALibrary
     public interface IUpload
     {
         [OperationContract]
-        bool NewProject(string username, string projectName);
+        XElement NewProject(string username, string projectName);
     }
 
     [DataContract]

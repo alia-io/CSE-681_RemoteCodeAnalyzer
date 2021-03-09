@@ -36,7 +36,7 @@ namespace Server
                 return false;
             }
 
-            password = from XElement element in secret.Elements("userlist").Elements()
+            password = from XElement element in secret.Elements("userlist").Elements("user")
                        where element.Attribute("name").Value.Equals(credentials.Username)
                        select element.Attribute("password").Value;
 
@@ -69,7 +69,7 @@ namespace Server
                 return false;
             }
 
-            user = from XElement element in secret.Elements("userlist").Elements()
+            user = from XElement element in secret.Elements("userlist").Elements("user")
                    where element.Attribute("name").Value.Equals(credentials.Username)
                    select element.Attribute("name").Value;
 
@@ -107,7 +107,7 @@ namespace Server
             string date = DateTime.Now.ToString("yyyyMMdd");
             XElement newRoot;
 
-            lock (Host.DirectoryTree)
+            lock (Host.DirectoryTreeLock)
             {
                 Host.DirectoryTree.Element("root").Add(
                     new XElement("user",
@@ -123,9 +123,9 @@ namespace Server
                     Console.WriteLine("Failed to save new user to metadata file.\n{0}", e.ToString());
                     return false;
                 }
-            }
 
-            newRoot = new XElement(Host.DirectoryTree.Root);
+                newRoot = new XElement(Host.DirectoryTree.Root);
+            }
 
             lock (Host.NavigatorsLock) // Set the Root of all active Navigation instances
                 foreach (Navigation navigator in Host.Navigators)

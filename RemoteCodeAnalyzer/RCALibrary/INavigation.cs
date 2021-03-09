@@ -28,12 +28,6 @@ namespace RCALibrary
     }
 
     [DataContract]
-    /*[KnownType(typeof(RootDirectory))]
-    [KnownType(typeof(UserDirectory))]
-    [KnownType(typeof(ProjectDirectory))]
-    [KnownType(typeof(VersionDirectory))]
-    [KnownType(typeof(CodeFile))]
-    [KnownType(typeof(AnalysisFile))]*/
     public class DirectoryData
     {
         [DataMember] public XElement CurrentDirectory { get; set; }
@@ -43,6 +37,8 @@ namespace RCALibrary
         {
             CurrentDirectory = current;
             Children = new List<XElement>();
+
+            CurrentDirectory.RemoveNodes();
         }
     }
 }

@@ -90,21 +90,25 @@
                     <Border Background="{StaticResource BackgroundColor}" CornerRadius="0,0,30,30">
                         <!--Project Explorer view-->
                         <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="365*"/>
+                                <ColumnDefinition Width="112*"/>
+                            </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="50"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
-                            <StackPanel Grid.Row="0" Orientation="Vertical">
+                            <StackPanel Grid.Row="0" Orientation="Vertical" Grid.ColumnSpan="2">
                                 <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5" Margin="0,0,0,0"/>
                                 <DockPanel x:Name="ExplorerHeader" LastChildFill="True">
                                     <!--Add explorer header based on current directory-->
-                                    <TextBlock x:Name="DirectoryName" Text="Directory Name" Margin="5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
+                                    <TextBlock x:Name="DirectoryName" Text="" Margin="5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
                                 </DockPanel>
                                 <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5"/>
                             </StackPanel>
 
-                            <ScrollViewer Grid.Row="1" Margin="20,5,20,20" VerticalAlignment="Stretch">
+                            <ScrollViewer Grid.Row="1" Margin="20,5,20,20" VerticalAlignment="Stretch" Grid.ColumnSpan="2">
                                 <WrapPanel x:Name="Explorer" Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10">
                                     <!--Populated programmatically with directories or files-->
                                 </WrapPanel>
@@ -135,11 +139,7 @@
                                         <TextBlock Text="2/27/2021" Margin="10,5,10,5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
                                     </StackPanel>
 
-                                    <ComboBox x:Name="VersionName" FontSize="16" FontWeight="Bold" MaxDropDownHeight="200" VerticalAlignment="Center" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Foreground="{StaticResource TextColor}" Margin="5,0,5,0">
-                                        <ComboBoxItem Content="Project 1" FontSize="12" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                                        <ComboBoxItem Content="Project 2" FontSize="12" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                                        <ComboBoxItem Content="Project 3" FontSize="12" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                                    </ComboBox>
+                                    <ComboBox x:Name="Projects" FontSize="16" FontWeight="Bold" MaxDropDownHeight="200" VerticalAlignment="Center" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Foreground="{StaticResource TextColor}" Margin="5,0,5,0"/>
                                 </DockPanel>
                                 <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5"/>
                             </StackPanel>
@@ -164,7 +164,7 @@
                                             </Image>
                                         </Button.Content>
                                     </Button>
-                                    <TextBox x:Name="NewProjectName" KeyDown="NewProject_KeyDown" Text="" FontSize="18" Margin="10,0,10,0" TextWrapping="NoWrap" VerticalContentAlignment="Center" Background="#FF3F3F3F" Foreground="{StaticResource TextColor}" BorderBrush="#888888"/>
+                                    <TextBox x:Name="NewProjectName" KeyDown="NewProjectName_KeyDown" Text="" FontSize="18" Margin="10,0,10,0" TextWrapping="NoWrap" VerticalContentAlignment="Center" Background="#FF3F3F3F" Foreground="{StaticResource TextColor}" BorderBrush="#888888"/>
                                 </DockPanel>
 
                                 <ScrollViewer Margin="20,5,20,20" VerticalAlignment="Stretch">
@@ -175,7 +175,7 @@
                                 </ScrollViewer>
 
                             </StackPanel>
-                            
+
                         </Grid>
                     </Border>
                 </TabItem>

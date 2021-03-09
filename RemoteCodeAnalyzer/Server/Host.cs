@@ -21,23 +21,6 @@ namespace Server
 
         static void Main()
         {
-            /*var host = Dns.GetHostEntry(Dns.GetHostName());
-            foreach (var ip in host.AddressList)
-            {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    Console.WriteLine("V4 IP address: {0}", ip.ToString());
-                }
-                else if (ip.AddressFamily == AddressFamily.InterNetworkV6)
-                {
-                    Console.WriteLine("V6 IP address: {0}", ip.ToString());
-                }
-                else
-                {
-                    Console.WriteLine("Other IP address: {0}", ip.ToString());
-                }
-            }*/
-
             // Make sure all necessary directories and files exist
             CheckRoot();
             CheckSecret();
@@ -46,8 +29,6 @@ namespace Server
             Console.WriteLine("Initializing the Authentication service.");
             Uri authenticationAddress = new Uri("http://localhost:8000/Authentication/");
             ServiceHost authenticator = new ServiceHost(typeof(Authentication), authenticationAddress);
-
-
 
             // Use to test what happens while server is fulfilling contract
             //WSHttpBinding binding = new WSHttpBinding();
