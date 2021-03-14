@@ -72,7 +72,7 @@ namespace Server
 
             try
             {
-                uploader.AddServiceEndpoint(typeof(IUpload), new WSHttpBinding(SecurityMode.None), uploadAddress);
+                uploader.AddServiceEndpoint(typeof(IUpload), new WSHttpBinding(), uploadAddress);
                 uploader.Open();
                 Console.WriteLine("The Upload service is ready.");
                 Console.WriteLine();

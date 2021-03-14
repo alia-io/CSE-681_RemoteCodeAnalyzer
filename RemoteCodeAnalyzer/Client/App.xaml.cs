@@ -30,7 +30,7 @@ namespace Client
             lw = new LoginWindow(this);
             ChannelFactory<IAuthentication> authenticationFactory = new ChannelFactory<IAuthentication>(new WSHttpBinding(SecurityMode.None), new EndpointAddress("http://localhost:8000/Authentication/"));
             ChannelFactory<INavigation> navigationFactory = new ChannelFactory<INavigation>(new WSHttpBinding(), new EndpointAddress("http://localhost:8000/Navigation/"));
-            ChannelFactory<IUpload> uploadFactory = new ChannelFactory<IUpload>(new WSHttpBinding(SecurityMode.None), new EndpointAddress("http://localhost:8000/Upload/"));
+            ChannelFactory<IUpload> uploadFactory = new ChannelFactory<IUpload>(new WSHttpBinding(), new EndpointAddress("http://localhost:8000/Upload/"));
 
             authenticator = authenticationFactory.CreateChannel();
             navigator = navigationFactory.CreateChannel();
@@ -175,7 +175,7 @@ namespace Client
 
             try
             {
-                Dispatcher.Invoke(() => newUpload = uploader.NewUpload(User, projectName));
+                newUpload = uploader.NewUpload(User, projectName);
             }
             catch (Exception e)
             {
@@ -193,10 +193,17 @@ namespace Client
                         while (s.Length > s.Position)
                         {
                             FileBlock block = new FileBlock(Path.GetFileName(filepath), blockNumber);
-                            s.Read(block.Buffer, 0, block.Buffer.Length);
+
+                            if (s.Length - s.Position < block.Buffer.Length)
+                                block.Length = (int)(s.Length - s.Position);
+                            else
+                                block.Length = block.Buffer.Length;
+
+                            s.Read(block.Buffer, 0, block.Length);
+
                             try
                             {
-                                Dispatcher.Invoke(() => uploader.UploadBlock(block));
+                                uploader.UploadBlock(block);
                             }
                             catch (Exception e)
                             {
@@ -212,7 +219,7 @@ namespace Client
 
                 try
                 {
-                    return Dispatcher.Invoke(() => uploader.CompleteUpload());
+                    return uploader.CompleteUpload();
                 }
                 catch (Exception e)
                 {

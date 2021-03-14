@@ -62,7 +62,7 @@ namespace Server
                 currentFiles.Add(new XElement("code",
                     new XAttribute("name", block.FileName),
                     new XAttribute("type", block.FileName.Substring(block.FileName.LastIndexOf('.') + 1)),
-                    new XAttribute("project", currentVersion.Attribute("project").Value),
+                    new XAttribute("project", currentVersion.Attribute("name").Value),
                     new XAttribute("version", currentVersion.Attribute("number").Value),
                     new XAttribute("author", currentVersion.Attribute("author").Value),
                     new XAttribute("date", currentVersion.Attribute("date").Value),
@@ -72,7 +72,7 @@ namespace Server
 
             using (Stream s = new FileStream(currentFilePath, FileMode.Append))
             {
-                s.Write(block.Buffer, 0, block.Buffer.Length);
+                s.Write(block.Buffer, 0, block.Length);
             }
         }
 
