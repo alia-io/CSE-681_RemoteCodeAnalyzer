@@ -161,7 +161,7 @@ namespace Client
                         else if (type.Equals("version"))
                         {
                             DateTime.TryParseExact(child.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
-                            button.Name = "V" + child.Attribute("version");
+                            button.Name = "V" + child.Attribute("number").Value;
                             image.Source = new BitmapImage(new Uri("/Icons/version-directory.png", UriKind.Relative));
                             line2.Text = "Uploaded: " + date.ToString("g");
                             line3.Text = "Version: " + child.Attribute("number").Value;
@@ -172,7 +172,7 @@ namespace Client
                 {
                     button = new Button { Height = 100, Margin = new Thickness(15, 5, 15, 5) };
                     button.Content = outerPanel;
-                    header.MaxWidth = 93;
+                    header.MaxWidth = 186;
 
                     if (type.Equals("code"))
                     {
@@ -184,9 +184,9 @@ namespace Client
                         header.Text = child.Attribute("name").Value;
                         innerPanel.Children.Add(line);
 
-                        if (child.Attribute("type").Value.Equals("txt")) line.Text = "Text";
-                        else if (child.Attribute("type").Value.Equals("cs")) line.Text = "C#";
-                        else if (child.Attribute("type").Value.Equals("java")) line.Text = "Java";
+                        if (child.Attribute("type").Value.Equals("txt")) line.Text = "Language: Text";
+                        else if (child.Attribute("type").Value.Equals("cs")) line.Text = "Language: C#";
+                        else if (child.Attribute("type").Value.Equals("java")) line.Text = "Language: Java";
                     }
                     else if (type.Equals("analysis"))
                     {
@@ -428,6 +428,7 @@ namespace Client
             string projectName;
             bool isProjectDirectory = false;
             bool isThisProject = false;
+            Timer t = new Timer();
 
             // TODO: Message: Select a project to upload to, or create a new one.
             if (Projects.SelectedItem == null) return;
@@ -449,13 +450,9 @@ namespace Client
             FileListPanel.Visibility = Visibility.Collapsed;
             Uploading.Visibility = Visibility.Visible;
 
-            //Task animate = Task.Run(() =>
-            //{
-                Timer t = new Timer();
-                t.Interval = 100;
-                t.Elapsed += UploadAnimation;
-                t.Enabled = true;
-            //});
+            t.Interval = 100;
+            t.Elapsed += UploadAnimation;
+            t.Enabled = true;
 
             newVersion = await Task.Run(() => app.RequestUpload(projectName, newFiles));
 
@@ -475,8 +472,6 @@ namespace Client
 
             if (newVersion != null)
             {
-                // TODO: Display: Files uploaded! for a few seconds, then disappear --> put this message on the top of BOTH tabs
-
                 if (ExplorerHeader.Children.Count == 2)
                 {
                     if (!app.User.Equals(app.Directory.Attribute("author").Value)) return;
@@ -511,6 +506,7 @@ namespace Client
                 }
 
                 // TODO: change this.
+                // TODO: Display: Files uploaded! for a few seconds, then disappear --> put this message on the top of BOTH tabs
                 MessageBox.Show("New version added!");
             }
         }
@@ -518,7 +514,6 @@ namespace Client
         private void UploadAnimation(object sender, ElapsedEventArgs e)
         {
             string source = null;
-            //string source = ((BitmapImage)(Uploading.Source)).UriSource.ToString();
             Dispatcher.Invoke(() => source = Uploading.Source.ToString());
             string number = source.Substring(source.LastIndexOf('-') + 1, 2);
 

@@ -71,10 +71,10 @@ namespace Server
                                     where element.Attribute("name").Value.Equals(identifier)
                                     select element;
                 }
-                else if (type.Equals("version"))
+                else if (type.Equals("project"))
                 {
-                    findDirectory = from XElement element in Current.Elements()
-                                    where element.Attribute("version").Value.Equals(identifier)
+                    findDirectory = from XElement element in Current.Elements("version")
+                                    where int.Parse(element.Attribute("number").Value) == int.Parse(identifier)
                                     select element;
                 }
 
@@ -122,9 +122,9 @@ namespace Server
                     {
                         findDirectory = from XElement user in Root.Elements("user")
                                   where user.Attribute("name").Value.Equals(Current.Attribute("author").Value)
-                                  from XElement version in user.Elements("project").Elements("version")
-                                  where version.Attribute("name").Value.Equals(Current.Attribute("name").Value)
-                                  select version.Parent;
+                                  from XElement project in user.Elements("project")
+                                  where project.Attribute("name").Value.Equals(Current.Attribute("name").Value)
+                                  select project;
                     }
 
                     if (findDirectory != null && findDirectory.Count() == 1)

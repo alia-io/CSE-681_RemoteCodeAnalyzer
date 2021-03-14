@@ -25,7 +25,7 @@ namespace Client
         /* Start the client by connecting to authentication service and loading login window */
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            Thread.Sleep(5000); // Can remove when done testing
+            //Thread.Sleep(5000); // Can remove when done testing
 
             lw = new LoginWindow(this);
             ChannelFactory<IAuthentication> authenticationFactory = new ChannelFactory<IAuthentication>(new WSHttpBinding(SecurityMode.None), new EndpointAddress("http://localhost:8000/Authentication/"));
@@ -187,9 +187,9 @@ namespace Client
             {
                 foreach (string filepath in files)
                 {
+                    blockNumber = 0;
                     using (Stream s = new FileStream(filepath, FileMode.Open))
                     {
-                        blockNumber = 0;
                         while (s.Length > s.Position)
                         {
                             FileBlock block = new FileBlock(Path.GetFileName(filepath), blockNumber);

@@ -78,6 +78,7 @@ namespace Server
 
         public XElement CompleteUpload()
         {
+            XElement version = currentVersion;
 
             // TODO: enqueue currentFilePath in CodeAnalyzer Queue; signal CodeAnalyzer to start analyzing it
 
@@ -89,7 +90,7 @@ namespace Server
             currentFilePath = null;
             currentFiles.Clear();
 
-            return currentVersion;
+            return version;
         }
     }
 }

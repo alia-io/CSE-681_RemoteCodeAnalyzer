@@ -266,13 +266,16 @@ namespace Server
                 {
                     project = findProject.First();
 
-                    project.Add(new XElement(version));
-
                     // TODO: version.Add(new XElement(functionAnalysis));
                     // TODO: version.Add(new XElement(relationshipAnalysis));
 
                     foreach (XElement element in codeFiles)
                         version.Add(new XElement(element));
+
+                    if (project.Elements().Count() == 0)
+                        project.Add(new XElement(version));
+                    else
+                        project.Elements().First().AddBeforeSelf(new XElement(version));
 
                     try
                     {
