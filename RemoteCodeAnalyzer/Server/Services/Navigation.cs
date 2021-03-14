@@ -18,7 +18,7 @@ namespace Server
 
         public void Remove()
         {
-            lock (Host.NavigatorsLock) Host.Navigators.Remove(this);
+            Host.RemoveNavigator(this);
         }
 
         public DirectoryData Initialize(string username)
@@ -30,11 +30,11 @@ namespace Server
 
             User = username;
 
-            lock (Host.NavigatorsLock) Host.Navigators.Add(this);
+            Host.AddNavigator(this);
 
             lock (ThisLock)
             {
-                lock (Host.DirectoryTreeLock) Root = new XElement(Host.DirectoryTree.Root); // Deep-copy of the root element of the tree
+                Root = Host.CopyRoot(); // Deep-copy of the root element of the tree
 
                 findDirectory = from XElement element in Root.Elements("user")
                                 where element.Attribute("name").Value.Equals(username)

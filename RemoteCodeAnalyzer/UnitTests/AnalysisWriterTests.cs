@@ -2,10 +2,10 @@
 using System.Xml.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace RemoteCodeAnalyzerTests
+namespace UnitTests
 {
     [TestClass]
-    class AnalysisWriterTests
+    public class AnalysisWriterTests
     {
         [TestMethod]
         public void TestFileEquality()

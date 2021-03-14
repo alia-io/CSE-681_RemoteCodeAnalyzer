@@ -104,37 +104,18 @@ namespace Server
 
         private bool AddUser(XDocument secret, AuthenticationRequest credentials)
         {
-            string date = DateTime.Now.ToString("yyyyMMdd");
-            XElement newRoot;
-
-            lock (Host.DirectoryTreeLock)
+            if (Host.AddNewUser(credentials.Username))
             {
-                Host.DirectoryTree.Element("root").Add(
-                    new XElement("user",
-                        new XAttribute("name", credentials.Username),
-                        new XAttribute("date", date),
-                        new XAttribute("projects", 0)));
-                try
-                {
-                    Host.DirectoryTree.Save(".\\root\\metadata.xml");
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Failed to save new user to metadata file.\n{0}", e.ToString());
-                    return false;
-                }
-
-                newRoot = new XElement(Host.DirectoryTree.Root);
-            }
-
-            Task.Run(() => Host.UpdateNavigators(newRoot));
-
-            secret.Element("userlist").Add(new XElement("user",
+                secret.Element("userlist").Add(new XElement("user",
                 new XAttribute("name", credentials.Username),
                 new XAttribute("password", credentials.Password)));
-            secret.Save(".\\root\\secret.xml");
 
-            return true;
+                secret.Save(".\\root\\secret.xml");
+
+                return true;
+            }
+
+            return false;
         }
     }
 }

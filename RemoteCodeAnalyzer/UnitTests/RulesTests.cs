@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Server;
 
-namespace RemoteCodeAnalyzerTests
+namespace UnitTests
 {
     [TestClass]
     public class RulesTests
@@ -11,7 +11,7 @@ namespace RemoteCodeAnalyzerTests
         [TestMethod]
         public void IfRule1()
         {
-            string[] input = { "if", "(", "x", "<", "33", ")", "{" };
+            string[] input = { "(", "x", "<", "33", ")", "{" };
             int scopeCount = 4;
             IfRule rule = new IfRule(scopeCount);
             bool expected = true;
@@ -31,10 +31,10 @@ namespace RemoteCodeAnalyzerTests
         [TestMethod]
         public void IfRule2()
         {
-            string[] input = { "if", "(", "x", "!", "=", "5", "{" };
+            string[] input = { "(", "x", "!", "=", "5", "{" };
             int scopeCount = 7;
             IfRule rule = new IfRule(scopeCount);
-            int expectedStep = 3;
+            int expectedStep = 2;
             bool expected = false;
             bool actual = rule.Complete;
 
@@ -52,7 +52,7 @@ namespace RemoteCodeAnalyzerTests
         [TestMethod]
         public void ElseIfRule()
         {
-            string[] input = { "else", "if", "(", "text", ".", "Equals", "(", "\"", "hello", "\"", ")", ")", "if" };
+            string[] input = { "(", "text", ".", "Equals", "(", "\"", "hello", "\"", ")", ")", "if" };
             int scopeCount = 5;
             ElseIfRule rule = new ElseIfRule(scopeCount);
             bool expected = true;
@@ -76,7 +76,7 @@ namespace RemoteCodeAnalyzerTests
             int scopeCount = 4;
             string fileType = "*.cs";
             string entry;
-            string[] input = { "int", "magic", "=", "7", ";", "int", "x", "=", "6", ";", "int", "code", ";", " ", "bool", 
+            string[] input = { "int", "magic", "=", "7", ";", "int", "x", "=", "6", ";", "int", "code", ";", " ", "bool",
                 "found", "=", "false", ";", "if", "(", "x", "<=", "10", ")", "{", "if", "(", "x", "<", "0", ")", "code",
                 "=", "-", "100", ";", "else", "if", "(", "x", "<", "magic", ")", "code", "=", "-", "10", ";", "else", "if",
                 "(", "x", ">", "magic", ")", "code", "=", "10", ";", "else", "{", "code", "=", "0", ";", "found", "=", "true",
@@ -87,14 +87,13 @@ namespace RemoteCodeAnalyzerTests
             for (int i = 0; i < input.Length; i++)
             {
                 entry = input[i];
+                CFScopeRule newRule;
                 bool scopeOpener = false;
-                CFScopeRule newRule = CFScopeRuleFactory.GetRule(activeRules, entry, scopeCount, fileType);
+                //CFScopeRule newRule = CFScopeRuleFactory.GetRule(activeRules, entry, scopeCount, fileType);
                 List<CFScopeRule> failedRules = new List<CFScopeRule>();
 
                 if (entry.Equals("(") || entry.Equals("{")) scopeCount++;
                 if (entry.Equals(")") || entry.Equals("}")) scopeCount--;
-
-                if (newRule != null) activeRules.Add(newRule);
 
                 foreach (CFScopeRule rule in activeRules)
                 {
@@ -105,8 +104,16 @@ namespace RemoteCodeAnalyzerTests
                     }
                 }
 
+                newRule = CFScopeRuleFactory.GetRule(activeRules, entry, scopeCount, fileType);
+                if (newRule != null) activeRules.Add(newRule);
+
                 if (scopeOpener) activeRules.Clear();
                 else activeRules.RemoveAll(rule => rule.Complete);
+            }
+
+            foreach (string scope in actualScopes)
+            {
+                Console.WriteLine(scope);
             }
 
             CollectionAssert.AreEqual(expectedScopes, actualScopes);

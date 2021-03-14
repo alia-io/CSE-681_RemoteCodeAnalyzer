@@ -279,11 +279,11 @@ namespace Server
         {
             if (rule == "if")
             {
-                if (!activeRules.OfType<ElseRule>().Where(item => item.Step == 0).Any())
+                if (!activeRules.OfType<ElseRule>().Any())
                     return new IfRule(scopeCount);
                 else
                 {
-                    activeRules.RemoveAll(item => item.GetType() == typeof(ElseRule) && ((ElseRule)item).Step == 0);
+                    activeRules.RemoveAll(item => item.GetType() == typeof(ElseRule));
                     return new ElseIfRule(scopeCount);
                 }
             }

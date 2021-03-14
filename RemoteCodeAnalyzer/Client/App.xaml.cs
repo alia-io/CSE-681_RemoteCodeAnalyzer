@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.ServiceModel;
 using System.Collections.Generic;
 using System.Configuration;
@@ -13,7 +14,8 @@ namespace Client
 {
     public partial class App : Application
     {
-        public string User { get; set; }
+        public string User { get; private set; }
+        public XElement Directory { get; private set; }
         private IAuthentication authenticator;
         private INavigation navigator;
         private IUpload uploader;
@@ -56,6 +58,7 @@ namespace Client
 
             if (directory != null)
             {
+                Directory = directory.CurrentDirectory;
                 mw = new MainWindow(this, directory.CurrentDirectory, directory.Children);
                 lw.Close();
                 mw.Show();
@@ -77,6 +80,7 @@ namespace Client
             try
             {
                 navigator.Remove();
+                Directory = null;
             }
             catch (Exception e)
             {
@@ -116,28 +120,38 @@ namespace Client
 
         public DirectoryData RequestNavigateInto(string directoryIdentifier)
         {
+            DirectoryData data = null;
+
             try
             {
-                return navigator.NavigateInto(directoryIdentifier);
+                data = navigator.NavigateInto(directoryIdentifier);
             }
             catch (Exception e)
             {
                 Console.WriteLine("Unable to connect to navigation service: {0}", e.ToString());
-                return null;
             }
+
+            if (data != null) Directory = data.CurrentDirectory;
+
+            return data;
         }
 
         public DirectoryData RequestNavigateBack()
         {
+            DirectoryData data = null;
+
             try
             {
-                return navigator.NavigateBack();
+                data = navigator.NavigateBack();
             }
             catch (Exception e)
             {
                 Console.WriteLine("Unable to connect to navigation service: {0}", e.ToString());
-                return null;
             }
+
+            if (data != null) Directory = data.CurrentDirectory;
+
+            return data;
         }
 
         public XElement RequestNewProject(string projectName)
@@ -151,6 +165,64 @@ namespace Client
                 Console.WriteLine("Unable to connect to upload service: {0}", e.ToString());
                 return null;
             }
+        }
+
+        public XElement RequestUpload(string projectName, List<string> files)
+        {
+            //Thread.Sleep(30000);
+            int blockNumber;
+            bool newUpload = false;
+
+            try
+            {
+                Dispatcher.Invoke(() => newUpload = uploader.NewUpload(User, projectName));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Unable to connect to upload service: {0}", e.ToString());
+                return null;
+            }
+
+            if (newUpload)
+            {
+                foreach (string filepath in files)
+                {
+                    using (Stream s = new FileStream(filepath, FileMode.Open))
+                    {
+                        blockNumber = 0;
+                        while (s.Length > s.Position)
+                        {
+                            FileBlock block = new FileBlock(Path.GetFileName(filepath), blockNumber);
+                            s.Read(block.Buffer, 0, block.Buffer.Length);
+                            try
+                            {
+                                Dispatcher.Invoke(() => uploader.UploadBlock(block));
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine("Unable to connect to upload service: {0}", e.ToString());
+                                return null;
+                            }
+                            blockNumber++;
+                        }
+                    }
+                }
+
+                // TODO: Change "Uploading" animation to "Analyzing" animation
+
+                try
+                {
+                    return Dispatcher.Invoke(() => uploader.CompleteUpload());
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Unable to connect to upload service: {0}", e.ToString());
+                    return null;
+                }
+            }
+            
+            // TODO: Error message = could not upload file(s)
+            return null;
         }
     }
 }

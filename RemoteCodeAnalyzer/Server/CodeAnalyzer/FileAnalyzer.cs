@@ -979,11 +979,11 @@ namespace Server
                     scopeOpener = true;
                 }
 
-            if (scopeOpener) this.ClearCurrentItems();
-            else activeRules.RemoveAll(rule => rule.Complete);
-
             newRule = CFScopeRuleFactory.GetRule(activeRules, entry, scopeStack.Count, fileType);
             if (newRule != null) activeRules.Add(newRule);
+
+            if (scopeOpener) this.ClearCurrentItems();
+            else activeRules.RemoveAll(rule => rule.Complete);
 
             return scopeOpener;
         }

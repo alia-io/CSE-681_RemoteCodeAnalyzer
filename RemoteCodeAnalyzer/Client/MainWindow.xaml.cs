@@ -1,7 +1,9 @@
 ﻿using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Timers;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Linq;
 using System.Xml.Linq;
 using System.Windows;
@@ -279,11 +281,23 @@ namespace Client
                 ConfirmButton_Click(NewProjectButton, e);
         }
 
+        // TODO: change MessageBoxes to Red(?) message text above the TextBox
+        // TODO: on success, collapse the TextBox but still display the success message on a timer. At the end of the timer, collapse the message.
         private void ConfirmButton_Click(object sender, RoutedEventArgs e)
         {
-            XElement newProject = app.RequestNewProject(NewProjectName.Text);
+            XElement newProject;
             bool isUserDirectory = false;
             bool isThisUser = false;
+
+            // TODO: add some additional requirements for project name
+            if (NewProjectName.Text.Length < 1)
+            {
+                NewProjectName.Text = "";
+                MessageBox.Show("Unable to create a new project without a name.");
+                return;
+            }
+
+            newProject = app.RequestNewProject(NewProjectName.Text);
 
             if (newProject != null)
             {
@@ -406,9 +420,117 @@ namespace Client
                 ((ListBoxItem)FileList.Items[i]).Name = "I" + i.ToString();
         }
 
-        private void UploadButton_Click(object sender, RoutedEventArgs e)
+        private async void UploadButton_Click(object sender, RoutedEventArgs e)
         {
+            MouseEventHandler mouseWait = (_sender, _e) => Mouse.OverrideCursor = Cursors.Wait;
+            MouseEventHandler mouseArrow = (_sender, _e) => Mouse.OverrideCursor = Cursors.Arrow;
+            XElement newVersion;
+            string projectName;
+            bool isProjectDirectory = false;
+            bool isThisProject = false;
 
+            // TODO: Message: Select a project to upload to, or create a new one.
+            if (Projects.SelectedItem == null) return;
+            if (newFiles.Count < 1) return; // TODO: Message: add files to upload
+
+            projectName = ((ComboBoxItem)Projects.SelectedItem).Content.ToString();
+
+            NewProjectName.Text = "";
+            UploadTab.MouseEnter += mouseWait;
+            UploadTab.MouseLeave += mouseArrow;
+            NewProjectButton.IsEnabled = false;
+            AddFileButton.IsEnabled = false;
+            UploadProjectButton.IsEnabled = false;
+            ResetButton.IsEnabled = false;
+            Projects.IsEnabled = false;
+            FileList.Items.Clear();
+            FileList.Items.Add(new ListBoxItem());
+            NewProjectPanel.Visibility = Visibility.Collapsed;
+            FileListPanel.Visibility = Visibility.Collapsed;
+            Uploading.Visibility = Visibility.Visible;
+
+            //Task animate = Task.Run(() =>
+            //{
+                Timer t = new Timer();
+                t.Interval = 100;
+                t.Elapsed += UploadAnimation;
+                t.Enabled = true;
+            //});
+
+            newVersion = await Task.Run(() => app.RequestUpload(projectName, newFiles));
+
+            Uploading.Visibility = Visibility.Collapsed;
+            FileListPanel.Visibility = Visibility.Visible;
+            t.Close();
+            Mouse.OverrideCursor = Cursors.Arrow;
+            UploadTab.MouseEnter -= mouseWait;
+            UploadTab.MouseLeave -= mouseArrow;
+            NewProjectButton.IsEnabled = true;
+            AddFileButton.IsEnabled = true;
+            UploadProjectButton.IsEnabled = true;
+            ResetButton.IsEnabled = true;
+            Projects.IsEnabled = true;
+            Projects.SelectedItem = null;
+            newFiles.Clear();
+
+            if (newVersion != null)
+            {
+                // TODO: Display: Files uploaded! for a few seconds, then disappear --> put this message on the top of BOTH tabs
+
+                if (ExplorerHeader.Children.Count == 2)
+                {
+                    if (!app.User.Equals(app.Directory.Attribute("author").Value)) return;
+
+                    foreach (UIElement element in ExplorerHeader.Children)
+                        if (element.GetType() == typeof(TextBlock) && ((TextBlock)element).Name.Equals("DirectoryName") && ((TextBlock)element).Text.Equals(app.Directory.Attribute("name").Value))
+                            isThisProject = true;
+                        else if (element.GetType() == typeof(StackPanel) && ((StackPanel)element).Children.Count == 2)
+                            foreach (UIElement child in ((StackPanel)element).Children)
+                                if (child.GetType() == typeof(TextBlock) && ((TextBlock)child).Text.Equals("Project"))
+                                    isProjectDirectory = true;
+                }
+
+                if (isProjectDirectory && isThisProject) // Add new version to Explorer view
+                {
+                    StackPanel outerPanel = new StackPanel { Orientation = Orientation.Horizontal };
+                    StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left };
+                    Button button = new Button { Name = "V" + newVersion.Attribute("version"), Content = outerPanel, Height = 75, Margin = new Thickness(10, 5, 10, 5) };
+
+                    button.Click += DirectoryButton_Click;
+                    DateTime.TryParseExact(newVersion.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
+
+                    outerPanel.Children.Add(new Image { Source = new BitmapImage(new Uri("/Icons/version-directory.png", UriKind.Relative)), VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right });
+                    outerPanel.Children.Add(innerPanel);
+
+                    innerPanel.Children.Add(new TextBlock { Text = newVersion.Attribute("name").Value, MaxWidth = 286, FontSize = 14, TextWrapping = TextWrapping.Wrap, Foreground = FindResource("TextColor") as SolidColorBrush });
+                    innerPanel.Children.Add(new TextBlock { Text = newVersion.Attribute("author").Value, FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
+                    innerPanel.Children.Add(new TextBlock { Text = "Uploaded: " + date.ToString("g"), FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
+                    innerPanel.Children.Add(new TextBlock { Text = "Version: " + newVersion.Attribute("number").Value, FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
+
+                    Explorer.Children.Insert(0, button);
+                }
+
+                // TODO: change this.
+                MessageBox.Show("New version added!");
+            }
+        }
+
+        private void UploadAnimation(object sender, ElapsedEventArgs e)
+        {
+            string source = null;
+            //string source = ((BitmapImage)(Uploading.Source)).UriSource.ToString();
+            Dispatcher.Invoke(() => source = Uploading.Source.ToString());
+            string number = source.Substring(source.LastIndexOf('-') + 1, 2);
+
+            if (number[1] == '.') number = number.Substring(0, 1);
+
+            int num = int.Parse(number) + 1;
+
+            if (num > 16) num = 1;
+
+            Dispatcher.Invoke(() =>
+                Uploading.Source = new BitmapImage(new Uri("/Icons/Frames/uploading-" + num + ".png", UriKind.Relative))
+            );
         }
 
         private void ResetButton_Click(object sender, RoutedEventArgs e)

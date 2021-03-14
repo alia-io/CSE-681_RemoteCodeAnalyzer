@@ -118,9 +118,10 @@
                 </TabItem>
 
                 <TabItem x:Name="UploadTab" Header="Upload Project" Grid.Column="1" IsSelected="False">
+
                     <Border Background="{StaticResource BackgroundColor}" CornerRadius="0,0,30,30">
                         <!--Upload Project view-->
-                        <Grid>
+                        <Grid x:Name="UploadGrid">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="50"/>
                                 <RowDefinition Height="*"/>
@@ -144,7 +145,8 @@
                                 <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5"/>
                             </StackPanel>
 
-                            <StackPanel Grid.Row="1">
+                            <Image x:Name="Uploading" Source="Icons/Frames/uploading-1.png" Grid.Row="1" Margin="30" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                            <StackPanel x:Name="FileListPanel" Grid.Row="1" Visibility="Visible">
 
                                 <DockPanel x:Name="NewProjectPanel" LastChildFill="True" Margin="10,0,10,0" Visibility="Collapsed">
                                     <TextBlock DockPanel.Dock="Left" Text="Project Name:" FontSize="14" VerticalAlignment="Center"/>
@@ -164,16 +166,15 @@
                                             </Image>
                                         </Button.Content>
                                     </Button>
-                                    <TextBox x:Name="NewProjectName" KeyDown="NewProjectName_KeyDown" Text="" FontSize="18" Margin="10,0,10,0" TextWrapping="NoWrap" VerticalContentAlignment="Center" Background="#FF3F3F3F" Foreground="{StaticResource TextColor}" BorderBrush="#888888"/>
+                                    <TextBox x:Name="NewProjectName" KeyDown="NewProjectName_KeyDown" Text="" Cursor="IBeam" FontSize="18" Margin="10,0,10,0" TextWrapping="NoWrap" VerticalContentAlignment="Center" Background="#FF3F3F3F" Foreground="{StaticResource TextColor}" BorderBrush="#888888"/>
                                 </DockPanel>
 
-                                <ScrollViewer Margin="20,5,20,20" VerticalAlignment="Stretch">
+                                <ScrollViewer Margin="20,5,20,20" VerticalAlignment="Stretch" Visibility="Visible">
                                     <ListBox x:Name="FileList" Grid.Row="1" Background="Transparent" Foreground="{StaticResource TextColor}" BorderThickness="0">
                                         <!--Populated programmatically with file names-->
                                         <ListBoxItem/>
                                     </ListBox>
                                 </ScrollViewer>
-
                             </StackPanel>
 
                         </Grid>

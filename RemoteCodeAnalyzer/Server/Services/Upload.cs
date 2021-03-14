@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Generic;
-using System.Xml.Linq;
 using System.Linq;
+using System.Xml.Linq;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Threading.Tasks;
 using System.ServiceModel;
@@ -11,85 +12,84 @@ using RCALibrary;
 
 namespace Server
 {
-    [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerSession)]
+    [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerSession, IncludeExceptionDetailInFaults = true)]
     public class Upload : IUpload
     {
-        //private XElement Home;
+        private XElement currentVersion;    // Current version undergoing upload and analysis
+        private string currentFilePath;     // Path of the current file being written to
+        private readonly List<XElement> currentFiles = new List<XElement>();   // List of files in current upload
+
+        //private readonly ConcurrentQueue<int> fileQueue = new ConcurrentQueue<int>();
+
         public XElement NewProject(string username, string projectName)
         {
             string time = DateTime.Now.ToString("yyyyMMddHHmm");
-            IEnumerable<XElement> findUser;
-            IEnumerable<XElement> matchingProjects;
-            XElement user;
-            XElement newRoot = null;
-            XElement project = null;
 
-            lock (Host.DirectoryTreeLock)
+            XElement project = new XElement("project",
+                new XAttribute("name", projectName),
+                new XAttribute("author", username),
+                new XAttribute("created", time),
+                new XAttribute("edited", time));
+
+            if (Host.AddNewProject(project)) return project;
+            else return null;
+        }
+
+        public bool NewUpload(string username, string projectName)
+        {
+            currentVersion = Host.GetNewVersion(username, projectName, DateTime.Now.ToString("yyyyMMddHHmm"));
+
+            if (currentVersion == null) return false;
+
+            // TODO: create new codeanalyzer
+
+            return true;
+        }
+
+        public void UploadBlock(FileBlock block)
+        {
+            if (block.Number == 0)
             {
-                findUser = from XElement element in Host.DirectoryTree.Elements("root").Elements("user")
-                       where element.Attribute("name").Value.Equals(username)
-                       select element;
-
-                if (findUser.Count() == 1)
+                if (currentFilePath != null)
                 {
-                    user = findUser.First();
-
-                    matchingProjects = from XElement element in user.Elements("project")
-                                       where element.Attribute("name").Value.Equals(projectName)
-                                       select element;
-
-                    if (matchingProjects.Count() == 0)
-                    {
-                        project = new XElement("project",
-                            new XAttribute("name", projectName),
-                            new XAttribute("author", username),
-                            new XAttribute("created", time),
-                            new XAttribute("edited", time));
-
-                        user.Attribute("projects").Value = (int.Parse(user.Attribute("projects").Value) + 1).ToString();
-
-                        user.Add(new XElement(project));
-
-                        try
-                        {
-                            Directory.CreateDirectory(".\\root\\" + username + "\\" + projectName);
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine("Failed to create new project directory.\n{0}", e.ToString());
-                            return null;
-                        }
-
-                        try
-                        {
-                            Host.DirectoryTree.Save(".\\root\\metadata.xml");
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine("Failed to save new user to metadata file.\n{0}", e.ToString());
-                            while (Directory.Exists(".\\root\\" + username + "\\" + projectName))
-                            {
-                                try
-                                {
-                                    Directory.Delete(".\\root\\" + username + "\\" + projectName);
-                                }
-                                catch (Exception f)
-                                {
-                                    Console.WriteLine("Failed to remove project directory.\n{0}", f.ToString());
-                                }
-                            }
-                            return null;
-                        }
-
-                        project = new XElement(project);
-                        newRoot = new XElement(Host.DirectoryTree.Root);
-                    }
+                    // TODO: enqueue currentFilePath in CodeAnalyzer Queue; signal CodeAnalyzer to start analyzing it
                 }
+
+                currentFilePath = ".\\root\\" + currentVersion.Attribute("author").Value 
+                    + "\\" + currentVersion.Attribute("name").Value + 
+                    "\\" + currentVersion.Attribute("number").Value + "\\" + block.FileName;
+
+                currentFiles.Add(new XElement("code",
+                    new XAttribute("name", block.FileName),
+                    new XAttribute("type", block.FileName.Substring(block.FileName.LastIndexOf('.') + 1)),
+                    new XAttribute("project", currentVersion.Attribute("project").Value),
+                    new XAttribute("version", currentVersion.Attribute("number").Value),
+                    new XAttribute("author", currentVersion.Attribute("author").Value),
+                    new XAttribute("date", currentVersion.Attribute("date").Value),
+                    new XAttribute("path", currentFilePath)
+                ));
             }
 
-            if (newRoot != null) Task.Run(() => Host.UpdateNavigators(newRoot));
+            using (Stream s = new FileStream(currentFilePath, FileMode.Append))
+            {
+                s.Write(block.Buffer, 0, block.Buffer.Length);
+            }
+        }
 
-            return project;
+        public XElement CompleteUpload()
+        {
+
+            // TODO: enqueue currentFilePath in CodeAnalyzer Queue; signal CodeAnalyzer to start analyzing it
+
+            // TODO: wait for CodeAnalyzer to finish creating FunctionAnalysis & RelationshipAnalysis files
+
+            Host.AddNewVersion(currentVersion, new XElement("FA"), new XElement("RA"), currentFiles);
+
+            currentVersion = null;
+            currentFilePath = null;
+            currentFiles.Clear();
+
+            return currentVersion;
         }
     }
 }
