@@ -3,17 +3,17 @@ using System.Linq;
 
 namespace Server
 {
-    public abstract class CFScopeRule
+    public abstract class ControlFlowScopeRule
     {
         public int Step { get; internal set; }
         public bool Complete { get; internal set; }
-        public CFScopeRule() { Step = 0; Complete = false; }
+        public ControlFlowScopeRule() { Step = 0; Complete = false; }
         public abstract bool IsPassed(string entry, int scopeCount);
         public abstract string GetScopeType();
     }
 
     /* Tests rules for "if" statement syntax */
-    public class IfRule : CFScopeRule
+    public class IfRule : ControlFlowScopeRule
     {
         private readonly int savedScopeCount;
 
@@ -42,7 +42,7 @@ namespace Server
     }
 
     /* Tests rules for "else if" statement syntax */
-    public class ElseIfRule : CFScopeRule
+    public class ElseIfRule : ControlFlowScopeRule
     {
         private readonly int savedScopeCount;
 
@@ -71,7 +71,7 @@ namespace Server
     }
 
     /* Tests rules for "else" statement syntax */
-    public class ElseRule : CFScopeRule
+    public class ElseRule : ControlFlowScopeRule
     {
         private readonly int savedScopeCount;
 
@@ -92,7 +92,7 @@ namespace Server
     }
 
     /* Tests rules for "for" loop syntax for C# */
-    public class ForRule_CS : CFScopeRule
+    public class ForRule_CS : ControlFlowScopeRule
     {
         private readonly int savedScopeCount;
 
@@ -133,7 +133,7 @@ namespace Server
     }
 
     /* Tests rules for "for" loop syntax for Java */
-    public class ForRule_JAVA : CFScopeRule
+    public class ForRule_JAVA : ControlFlowScopeRule
     {
         private readonly int savedScopeCount;
 
@@ -162,7 +162,7 @@ namespace Server
     }
 
     /* Tests rules for "foreach" loop syntax */
-    public class ForEachRule : CFScopeRule
+    public class ForEachRule : ControlFlowScopeRule
     {
         private readonly int savedScopeCount;
 
@@ -191,7 +191,7 @@ namespace Server
     }
 
     /* Tests rules for "while" loop syntax */
-    public class WhileRule : CFScopeRule
+    public class WhileRule : ControlFlowScopeRule
     {
         private readonly int savedScopeCount;
 
@@ -225,7 +225,7 @@ namespace Server
     }
 
     /* Tests rules for "do while" loop syntax */
-    public class DoWhileRule : CFScopeRule
+    public class DoWhileRule : ControlFlowScopeRule
     {
         private readonly int savedScopeCount;
 
@@ -240,7 +240,7 @@ namespace Server
     }
 
     /* Tests rules for "switch" statement syntax */
-    public class SwitchRule : CFScopeRule
+    public class SwitchRule : ControlFlowScopeRule
     {
         private readonly int savedScopeCount;
 
@@ -275,7 +275,7 @@ namespace Server
 
     public static class CFScopeRuleFactory
     {
-        public static CFScopeRule GetRule(List<CFScopeRule> activeRules, string rule, int scopeCount, string fileType)
+        public static ControlFlowScopeRule GetRule(List<ControlFlowScopeRule> activeRules, string rule, int scopeCount, string fileType)
         {
             if (rule == "if")
             {

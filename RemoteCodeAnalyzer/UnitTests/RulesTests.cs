@@ -72,7 +72,7 @@ namespace UnitTests
         [TestMethod]
         public void CFScopeRuleFactory1()
         {
-            List<CFScopeRule> activeRules = new List<CFScopeRule>();
+            List<ControlFlowScopeRule> activeRules = new List<ControlFlowScopeRule>();
             int scopeCount = 4;
             string fileType = "*.cs";
             string entry;
@@ -87,15 +87,15 @@ namespace UnitTests
             for (int i = 0; i < input.Length; i++)
             {
                 entry = input[i];
-                CFScopeRule newRule;
+                ControlFlowScopeRule newRule;
                 bool scopeOpener = false;
                 //CFScopeRule newRule = CFScopeRuleFactory.GetRule(activeRules, entry, scopeCount, fileType);
-                List<CFScopeRule> failedRules = new List<CFScopeRule>();
+                List<ControlFlowScopeRule> failedRules = new List<ControlFlowScopeRule>();
 
                 if (entry.Equals("(") || entry.Equals("{")) scopeCount++;
                 if (entry.Equals(")") || entry.Equals("}")) scopeCount--;
 
-                foreach (CFScopeRule rule in activeRules)
+                foreach (ControlFlowScopeRule rule in activeRules)
                 {
                     if (rule.IsPassed(entry, scopeCount))
                     {

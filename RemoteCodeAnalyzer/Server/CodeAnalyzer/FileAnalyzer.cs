@@ -22,7 +22,7 @@ namespace Server
         private readonly StringBuilder stringBuilder = new StringBuilder("");
 
         /* Scope syntax rules to check for */
-        private readonly List<CFScopeRule> activeRules = new List<CFScopeRule>();
+        private readonly List<ControlFlowScopeRule> activeRules = new List<ControlFlowScopeRule>();
 
         public FileAnalyzer(ProgramFile programFile, ProgramClassTypeCollection programClassTypes, string fileType)
         {
@@ -967,11 +967,11 @@ namespace Server
         /* Check for control flow scope openers within functions: if, else if, else, for, for each, while, do while, switch */
         private bool CheckControlFlowScopes(string entry)
         {
-            CFScopeRule newRule;
+            ControlFlowScopeRule newRule;
             bool scopeOpener = false;
-            List<CFScopeRule> failedRules = new List<CFScopeRule>();
+            List<ControlFlowScopeRule> failedRules = new List<ControlFlowScopeRule>();
 
-            foreach (CFScopeRule rule in activeRules)
+            foreach (ControlFlowScopeRule rule in activeRules)
                 if (rule.IsPassed(entry, scopeStack.Count))
                 {
                     ((ProgramFunction)typeStack.Peek()).Complexity++;

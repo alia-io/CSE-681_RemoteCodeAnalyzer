@@ -249,7 +249,8 @@
             </Style>
 
             <!--Source: https://stackoverflow.com/questions/6005534/how-can-i-put-a-separator-between-every-listboxitem-in-my-listbox-->
-            <Style TargetType="ListBoxItem">
+            <!--TODO: Create lines between items-->
+            <!--<Style TargetType="{x:Type ListBoxItem}">
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ListBoxItem">
@@ -265,7 +266,7 @@
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
-            </Style>
+            </Style>-->
 
         </ResourceDictionary>
     </Application.Resources>

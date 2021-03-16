@@ -19,22 +19,24 @@ namespace Client
         private IAuthentication authenticator;
         private INavigation navigator;
         private IUpload uploader;
+        private IReadFile filereader;
         private LoginWindow lw;
         private MainWindow mw;
 
         /* Start the client by connecting to authentication service and loading login window */
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            //Thread.Sleep(5000); // Can remove when done testing
-
             lw = new LoginWindow(this);
-            ChannelFactory<IAuthentication> authenticationFactory = new ChannelFactory<IAuthentication>(new WSHttpBinding(SecurityMode.None), new EndpointAddress("http://localhost:8000/Authentication/"));
+
+            ChannelFactory<IAuthentication> authenticationFactory = new ChannelFactory<IAuthentication>(new WSHttpBinding(), new EndpointAddress("http://localhost:8000/Authentication/"));
             ChannelFactory<INavigation> navigationFactory = new ChannelFactory<INavigation>(new WSHttpBinding(), new EndpointAddress("http://localhost:8000/Navigation/"));
             ChannelFactory<IUpload> uploadFactory = new ChannelFactory<IUpload>(new WSHttpBinding(), new EndpointAddress("http://localhost:8000/Upload/"));
+            ChannelFactory<IReadFile> readFileFactory = new ChannelFactory<IReadFile>(new WSHttpBinding(), new EndpointAddress("http://localhost:8000/ReadFile/"));
 
             authenticator = authenticationFactory.CreateChannel();
             navigator = navigationFactory.CreateChannel();
             uploader = uploadFactory.CreateChannel();
+            filereader = readFileFactory.CreateChannel();
 
             User = null;
             lw.Show();
@@ -233,14 +235,26 @@ namespace Client
             }
         }
 
-        public void RequestAnalysisFile()
+        public void RequestAnalysisFile(string filename)
         {
+            // FileBlock ReadBlock(string user, string project, string version, string filename)
+            string user = Directory.Attribute("author").Value;
+            string project = Directory.Attribute("name").Value;
+            string version = Directory.Attribute("number").Value;
+
+
 
         }
 
-        public void RequestCodeFile()
+        public void RequestCodeFile(string filename)
         {
+            // FileBlock ReadBlock(string user, string project, string version, string filename)
+            string user = Directory.Attribute("author").Value;
+            string project = Directory.Attribute("name").Value;
+            string version = Directory.Attribute("number").Value;
 
+
+            Thread.Sleep(30000);
         }
     }
 }

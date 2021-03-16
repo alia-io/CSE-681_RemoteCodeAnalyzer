@@ -38,14 +38,14 @@ namespace Server
             {
                 // Use to test what happens while server is fulfilling contract
                 //navigator.AddServiceEndpoint(typeof(IAuthentication), binding, authenticationAddress);
-                authenticator.AddServiceEndpoint(typeof(IAuthentication), new WSHttpBinding(SecurityMode.None), authenticationAddress);
+                authenticator.AddServiceEndpoint(typeof(IAuthentication), new WSHttpBinding(), authenticationAddress);
                 authenticator.Open();
                 Console.WriteLine("The Authentication service is ready.");
                 Console.WriteLine();
             }
-            catch (CommunicationException ce)
+            catch (Exception e)
             {
-                Console.WriteLine("An exception occurred: {0}", ce.Message);
+                Console.WriteLine("Failed to start the Authentication service: {0}", e.ToString());
                 authenticator.Abort();
             }
 
@@ -62,7 +62,7 @@ namespace Server
             }
             catch (Exception e)
             {
-                Console.WriteLine("Failed to start the Navigation Service: {0}", e.ToString());
+                Console.WriteLine("Failed to start the Navigation service: {0}", e.ToString());
                 navigator.Abort();
             }
 
@@ -77,16 +77,34 @@ namespace Server
                 Console.WriteLine("The Upload service is ready.");
                 Console.WriteLine();
             }
-            catch (CommunicationException ce)
+            catch (Exception e)
             {
-                Console.WriteLine("An exception occurred: {0}", ce.Message);
+                Console.WriteLine("Failed to start the Upload service: {0}", e.ToString());
                 uploader.Abort();
+            }
+
+            Console.WriteLine("Initializing the ReadFile service.");
+            Uri readFileAddress = new Uri("http://localhost:8000/ReadFile/");
+            ServiceHost filereader = new ServiceHost(typeof(ReadFile), readFileAddress);
+
+            try
+            {
+                filereader.AddServiceEndpoint(typeof(IReadFile), new WSHttpBinding(), readFileAddress);
+                filereader.Open();
+                Console.WriteLine("The ReadFile service is ready.");
+                Console.WriteLine();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Failed to start the ReadFile service: {0}", e.ToString());
+                filereader.Abort();
             }
 
             Console.ReadKey();
             authenticator.Close();
             navigator.Close();
             uploader.Close();
+            filereader.Close();
         }
 
         public static void AddNavigator(Navigation navigator)

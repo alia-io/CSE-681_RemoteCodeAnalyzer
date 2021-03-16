@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CodeAnalyzer\CentralData.cs" />
+    <Compile Include="Services\ReadFile.cs" />
     <Compile Include="SizeLimitedQueue.cs" />
     <Compile Include="CodeAnalyzer\AnalysisWriter.cs" />
     <Compile Include="CodeAnalyzer\Executive.cs" />

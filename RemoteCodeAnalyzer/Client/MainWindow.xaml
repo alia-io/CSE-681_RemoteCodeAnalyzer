@@ -14,48 +14,48 @@
         </Grid.ColumnDefinitions>
 
         <!--Left view-->
-        <Border Grid.Column="0" Background="{StaticResource BackgroundColor}" CornerRadius="30" Margin="30,30,15,30" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border x:Name="LeftPanel" Grid.Column="0" Background="{StaticResource BackgroundColor}" CornerRadius="30" Margin="30,30,15,30" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="105"/>
+                    <RowDefinition x:Name="FileTextHeadersRow" Height="105"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
+                
+                <Image x:Name="LeftAnimation" Grid.Row="1" Source="Assets/Animations/Loading/loading-0.png" Width="250" Height="250" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
 
-                <StackPanel Grid.Row="0" Orientation="Vertical" Margin="0,20,0,5">
+                <StackPanel x:Name="FileTextHeaders" Grid.Row="0" Orientation="Vertical" Margin="0,20,0,5" Visibility="Collapsed">
                     <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5"/>
                     <DockPanel LastChildFill="True">
                         <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                            <TextBlock Text="3" Margin="10,5,10,5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
+                            <TextBlock x:Name="Version" Text="" Margin="10,5,10,5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
                             <Rectangle Fill="{StaticResource LineColor}" VerticalAlignment="Stretch" Width="3"/>
                         </StackPanel>
 
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                             <Rectangle Fill="{StaticResource LineColor}" VerticalAlignment="Stretch" Width="3"/>
-                            <TextBlock Text="2/27/2021" Margin="10,5,10,5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
+                            <TextBlock x:Name="Date" Text="" Margin="10,5,10,5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
                         </StackPanel>
 
-                        <TextBlock x:Name="ProjectName" Text="Project Name" Margin="5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
+                        <TextBlock x:Name="ProjectName" Text="" Margin="5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
                     </DockPanel>
                     <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="3"/>
 
                     <DockPanel LastChildFill="True">
-                        <Border DockPanel.Dock="Left" Background="#40768C" CornerRadius="10" Margin="5,3,5,3">
-                            <TextBlock Text="C#" Margin="5,2,5,2" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
+                        <Border x:Name="LFileTypeBox" DockPanel.Dock="Left" Background="Transparent" CornerRadius="10" Margin="5,3,5,3">
+                            <TextBlock x:Name="LFileType" Text="" Margin="5,2,5,2" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
                         </Border>
 
-                        <Border DockPanel.Dock="Right" Background="#40768C" CornerRadius="10" Margin="5,3,5,3">
-                            <TextBlock Text="C#" Margin="5,2,5,2" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
+                        <Border x:Name="RFileTypeBox" DockPanel.Dock="Right" Background="Transparent" CornerRadius="10" Margin="5,3,5,3">
+                            <TextBlock x:Name="RFileType" Text="" Margin="5,2,5,2" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
                         </Border>
 
-                        <TextBlock x:Name="FileName" Text="File Name" Margin="5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
+                        <TextBlock x:Name="FileName" Text="" Margin="5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextColor}"/>
                     </DockPanel>
                     <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5"/>
                 </StackPanel>
 
-                <Image x:Name="LeftAnimation" Source="Assets/Animations/Loading/loading-0.png" Grid.Row="1" Margin="0,70,0,100" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
-
-                <ScrollViewer x:Name="FileTextView" Grid.Row="1" Margin="20,5,20,20" Visibility="Visible">
+                <ScrollViewer x:Name="FileTextView" Grid.Row="1" Margin="20,5,20,20" Visibility="Collapsed">
                     <TextBlock x:Name="FileText" Foreground="#EAE2B7" FontSize="14" TextWrapping="Wrap">
                         <Span>Test for normal text: test test test test test test</Span>
                         <Span>More normal text: test test test test test test test</Span>
@@ -147,7 +147,7 @@
                                 <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5"/>
                             </StackPanel>
 
-                            <Image x:Name="RightAnimation" Source="Assets/Animations/Uploading/uploading-0.png" Grid.Row="1" Margin="0,50,0,60" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                            <Image x:Name="RightAnimation" Source="Assets/Animations/Uploading/uploading-0.png" Grid.Row="1" Width="250" Height="250" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
                             
                             <StackPanel x:Name="FileListPanel" Grid.Row="1" Visibility="Visible">
 
@@ -177,7 +177,7 @@
                                 <ScrollViewer Margin="20,5,20,20" VerticalAlignment="Stretch" Visibility="Visible">
                                     <ListBox x:Name="FileList" Grid.Row="1" Background="Transparent" Foreground="{StaticResource TextColor}" BorderThickness="0">
                                         <!--Populated programmatically with file names-->
-                                        <ListBoxItem/>
+                                        <ListBoxItem x:Name="LastItem"/>
                                     </ListBox>
                                 </ScrollViewer>
                             </StackPanel>

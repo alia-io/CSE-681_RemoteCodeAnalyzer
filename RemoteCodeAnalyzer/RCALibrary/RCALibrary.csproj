@@ -57,7 +57,7 @@
   <ItemGroup>
     <Compile Include="DataContracts.cs" />
     <Compile Include="IAuthentication.cs" />
-    <Compile Include="IFileReader.cs" />
+    <Compile Include="IReadFile.cs" />
     <Compile Include="INavigation.cs" />
     <Compile Include="IUpload.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

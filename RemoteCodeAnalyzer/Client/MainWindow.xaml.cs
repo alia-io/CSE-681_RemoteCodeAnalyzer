@@ -463,8 +463,8 @@ namespace Client
             }
 
             RightAnimation.Visibility = Visibility.Collapsed;
-            FileListPanel.Visibility = Visibility.Visible;
             animate.Stop();
+            FileListPanel.Visibility = Visibility.Visible;
             RightAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Uploading/uploading-0.png", UriKind.Relative));
             UploadTab.MouseEnter -= MouseWait;
             UploadTab.MouseLeave -= MouseArrow;
@@ -541,66 +541,143 @@ namespace Client
             SetLastClickedButton(sender as Button);
         }
 
-        private void AnalysisButton_Click(object sender, RoutedEventArgs e)
+        private async void AnalysisButton_Click(object sender, RoutedEventArgs e)
         {
+            // TODO: disable clicking code or analysis file buttons or back button --> ONLY DISABLE TEMPORARILY TO GET INFO
+
             DispatcherTimer animate = new DispatcherTimer(DispatcherPriority.Normal);
+            TextBlock header = (TextBlock)((StackPanel)((StackPanel)(sender as Button).Content).Children[1]).Children[0];
+            string analysisType = header.Text.Substring(0, header.Text.IndexOf(Environment.NewLine));
+            string filename = char.ToLower(analysisType[0]) + analysisType.Substring(1) + "_analysis.xml";
 
             SetLastClickedButton(sender as Button);
 
-            // TODO: clear left panel file header text
+            Version.Text = "";
+            Date.Text = "";
+            ProjectName.Text = "";
+            LFileTypeBox.Background = Brushes.Transparent;
+            RFileTypeBox.Background = Brushes.Transparent;
+            LFileType.Text = "";
+            RFileType.Text = "";
             FileText.Text = "";
-            UploadTab.MouseEnter += MouseWait;
-            UploadTab.MouseLeave += MouseArrow;
+
+            Mouse.OverrideCursor = Cursors.Wait;
+            Explorer.IsEnabled = false;
+            BackButton.IsEnabled = false;
+            LeftPanel.MouseEnter += MouseWait;
+            LeftPanel.MouseLeave += MouseArrow;
+            ExplorerTab.MouseEnter += MouseWait;
+            ExplorerTab.MouseLeave += MouseArrow;
+            FileTextHeaders.Visibility = Visibility.Collapsed;
             FileTextView.Visibility = Visibility.Collapsed;
-            RightAnimation.Visibility = Visibility.Visible;
-
-
-
+            FileTextHeadersRow.Height = new GridLength(0);
+            LeftAnimation.Visibility = Visibility.Visible;
 
             animate.Interval = TimeSpan.FromMilliseconds(50);
             animate.Tick += LoadAnimation;
             animate.Start();
 
-            // TODO: request analysis file data
+            await Task.Run(() => app.RequestAnalysisFile(filename));
 
-
-            RightAnimation.Visibility = Visibility.Collapsed;
-            FileTextView.Visibility = Visibility.Visible;
+            LeftAnimation.Visibility = Visibility.Collapsed;
             animate.Stop();
+
+            // Only if successful?
+            DateTime.TryParseExact(app.Directory.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
+            Version.Text = app.Directory.Attribute("number").Value;
+            Date.Text = date.ToString("d");
+            ProjectName.Text = app.Directory.Attribute("name").Value;
+            LFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#2A9D8F");
+            RFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#2A9D8F");
+            LFileType.Text = "XML";
+            RFileType.Text = "XML";
+            FileName.Text = analysisType + " Analysis";
+
+            // TODO: set FileText.Text
+
+            // Only do these three if setting all above fields is successful
+            FileTextHeadersRow.Height = new GridLength(105);
+            FileTextHeaders.Visibility = Visibility.Visible;
+            FileTextView.Visibility = Visibility.Visible;
+
+            Explorer.IsEnabled = true;
+            BackButton.IsEnabled = true;
             LeftAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Loading/loading-0.png", UriKind.Relative));
-            UploadTab.MouseEnter -= MouseWait;
-            UploadTab.MouseLeave -= MouseArrow;
+            LeftPanel.MouseEnter -= MouseWait;
+            LeftPanel.MouseLeave -= MouseArrow;
+            ExplorerTab.MouseEnter -= MouseWait;
+            ExplorerTab.MouseLeave -= MouseArrow;
+            Mouse.OverrideCursor = Cursors.Arrow;
         }
 
-        private void CodeButton_Click(object sender, RoutedEventArgs e)
+        private async void CodeButton_Click(object sender, RoutedEventArgs e)
         {
+            // TODO: disable clicking code or analysis file buttons or back button --> ONLY DISABLE TEMPORARILY TO GET INFO
+
             DispatcherTimer animate = new DispatcherTimer(DispatcherPriority.Normal);
+            StackPanel innerPanel = (StackPanel)((StackPanel)(sender as Button).Content).Children[1];
+            string filename = ((TextBlock)innerPanel.Children[0]).Text;
+            string language = ((TextBlock)innerPanel.Children[1]).Text;
+            string type = language.Substring(language.LastIndexOf(' ') + 1);
 
             SetLastClickedButton(sender as Button);
 
-            // TODO: clear left panel file header text
+            Version.Text = "";
+            Date.Text = "";
+            ProjectName.Text = "";
+            LFileTypeBox.Background = Brushes.Transparent;
+            RFileTypeBox.Background = Brushes.Transparent;
+            LFileType.Text = "";
+            RFileType.Text = "";
             FileText.Text = "";
-            UploadTab.MouseEnter += MouseWait;
-            UploadTab.MouseLeave += MouseArrow;
+
+            Mouse.OverrideCursor = Cursors.Wait;
+            Explorer.IsEnabled = false;
+            BackButton.IsEnabled = false;
+            LeftPanel.MouseEnter += MouseWait;
+            LeftPanel.MouseLeave += MouseArrow;
+            ExplorerTab.MouseEnter += MouseWait;
+            ExplorerTab.MouseLeave += MouseArrow;
+            FileTextHeaders.Visibility = Visibility.Collapsed;
             FileTextView.Visibility = Visibility.Collapsed;
-            RightAnimation.Visibility = Visibility.Visible;
-
-
-
+            FileTextHeadersRow.Height = new GridLength(0);
+            LeftAnimation.Visibility = Visibility.Visible;
 
             animate.Interval = TimeSpan.FromMilliseconds(50);
             animate.Tick += LoadAnimation;
             animate.Start();
 
-            // TODO: request code file data
+            await Task.Run(() => app.RequestCodeFile(filename));
 
-
-            RightAnimation.Visibility = Visibility.Collapsed;
-            FileTextView.Visibility = Visibility.Visible;
+            LeftAnimation.Visibility = Visibility.Collapsed;
             animate.Stop();
+
+            // Only if successful?
+            DateTime.TryParseExact(app.Directory.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
+            Version.Text = app.Directory.Attribute("number").Value;
+            Date.Text = date.ToString("d");
+            ProjectName.Text = app.Directory.Attribute("name").Value;
+            LFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#40768C");
+            RFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#40768C");
+            LFileType.Text = type;
+            RFileType.Text = type;
+            FileName.Text = filename.Substring(0, filename.LastIndexOf('.'));
+
+            // TODO: set FileText.Text
+
+            // Only do these three if setting all above fields is successful
+            FileTextHeadersRow.Height = new GridLength(105);
+            FileTextHeaders.Visibility = Visibility.Visible;
+            FileTextView.Visibility = Visibility.Visible;
+
+            Explorer.IsEnabled = true;
+            BackButton.IsEnabled = true;
             LeftAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Loading/loading-0.png", UriKind.Relative));
-            UploadTab.MouseEnter -= MouseWait;
-            UploadTab.MouseLeave -= MouseArrow;
+            LeftPanel.MouseEnter -= MouseWait;
+            LeftPanel.MouseLeave -= MouseArrow;
+            ExplorerTab.MouseEnter -= MouseWait;
+            ExplorerTab.MouseLeave -= MouseArrow;
+            Mouse.OverrideCursor = Cursors.Arrow;
         }
 
         private void UploadAnimation(object sender, EventArgs e)
@@ -656,7 +733,7 @@ namespace Client
             LastClickedButton.button = null;
             LastClickedButton.timestamp = 0;
         }
-
+        
         private void SetLastClickedButton(Button button)
         {
             char type = button.Name[0];
