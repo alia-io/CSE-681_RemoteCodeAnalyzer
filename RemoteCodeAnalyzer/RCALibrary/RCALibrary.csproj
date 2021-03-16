@@ -55,7 +55,9 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataContracts.cs" />
     <Compile Include="IAuthentication.cs" />
+    <Compile Include="IFileReader.cs" />
     <Compile Include="INavigation.cs" />
     <Compile Include="IUpload.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

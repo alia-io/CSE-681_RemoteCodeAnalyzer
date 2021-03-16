@@ -53,7 +53,9 @@
                     <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5"/>
                 </StackPanel>
 
-                <ScrollViewer Grid.Row="1" Margin="20,5,20,20">
+                <Image x:Name="LeftAnimation" Source="Assets/Animations/Loading/loading-0.png" Grid.Row="1" Margin="0,70,0,100" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+
+                <ScrollViewer x:Name="FileTextView" Grid.Row="1" Margin="20,5,20,20" Visibility="Visible">
                     <TextBlock x:Name="FileText" Foreground="#EAE2B7" FontSize="14" TextWrapping="Wrap">
                         <Span>Test for normal text: test test test test test test</Span>
                         <Span>More normal text: test test test test test test test</Span>
@@ -145,8 +147,11 @@
                                 <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5"/>
                             </StackPanel>
 
-                            <Image x:Name="Uploading" Source="Icons/Frames/uploading-1.png" Grid.Row="1" Margin="30" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                            <Image x:Name="RightAnimation" Source="Assets/Animations/Uploading/uploading-0.png" Grid.Row="1" Margin="0,50,0,60" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                            
                             <StackPanel x:Name="FileListPanel" Grid.Row="1" Visibility="Visible">
+
+                                <TextBlock x:Name="UploadProjectMessage" Text="" HorizontalAlignment="Center" FontSize="14" Margin="0,0,0,10" Visibility="Collapsed"/>
 
                                 <DockPanel x:Name="NewProjectPanel" LastChildFill="True" Margin="10,0,10,0" Visibility="Collapsed">
                                     <TextBlock DockPanel.Dock="Left" Text="Project Name:" FontSize="14" VerticalAlignment="Center"/>
@@ -155,10 +160,10 @@
                                             <Image Width="30" Height="30">
                                                 <Image.Style>
                                                     <Style TargetType="{x:Type Image}">
-                                                        <Setter Property="Source" Value="Icons/confirm-project.png"/>
+                                                        <Setter Property="Source" Value="Assets/Icons/confirm-project.png"/>
                                                         <Style.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Source" Value="Icons/confirm-project-hover.png"/>
+                                                                <Setter Property="Source" Value="Assets/Icons/confirm-project-hover.png"/>
                                                             </Trigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -191,10 +196,10 @@
                         <Image Width="60" Height="60">
                             <Image.Style>
                                 <Style TargetType="{x:Type Image}">
-                                    <Setter Property="Source" Value="Icons/back.png"/>
+                                    <Setter Property="Source" Value="Assets/Icons/back.png"/>
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Source" Value="Icons/back-hover.png"/>
+                                            <Setter Property="Source" Value="Assets/Icons/back-hover.png"/>
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>
@@ -208,10 +213,10 @@
                         <Image Width="60" Height="60">
                             <Image.Style>
                                 <Style TargetType="{x:Type Image}">
-                                    <Setter Property="Source" Value="Icons/logout.png"/>
+                                    <Setter Property="Source" Value="Assets/Icons/logout.png"/>
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Source" Value="Icons/logout-hover.png"/>
+                                            <Setter Property="Source" Value="Assets/Icons/logout-hover.png"/>
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>
@@ -225,10 +230,10 @@
                         <Image Width="60" Height="60">
                             <Image.Style>
                                 <Style TargetType="{x:Type Image}">
-                                    <Setter Property="Source" Value="Icons/quit.png"/>
+                                    <Setter Property="Source" Value="Assets/Icons/quit.png"/>
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Source" Value="Icons/quit-hover.png"/>
+                                            <Setter Property="Source" Value="Assets/Icons/quit-hover.png"/>
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>
@@ -242,10 +247,10 @@
                         <Image Width="70" Height="60">
                             <Image.Style>
                                 <Style TargetType="{x:Type Image}">
-                                    <Setter Property="Source" Value="Icons/new-project.png"/>
+                                    <Setter Property="Source" Value="Assets/Icons/new-project.png"/>
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Source" Value="Icons/new-project-hover.png"/>
+                                            <Setter Property="Source" Value="Assets/Icons/new-project-hover.png"/>
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>
@@ -259,10 +264,10 @@
                         <Image Width="60" Height="60">
                             <Image.Style>
                                 <Style TargetType="{x:Type Image}">
-                                    <Setter Property="Source" Value="Icons/add-file.png"/>
+                                    <Setter Property="Source" Value="Assets/Icons/add-file.png"/>
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Source" Value="Icons/add-file-hover.png"/>
+                                            <Setter Property="Source" Value="Assets/Icons/add-file-hover.png"/>
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>
@@ -276,10 +281,10 @@
                         <Image Width="60" Height="60">
                             <Image.Style>
                                 <Style TargetType="{x:Type Image}">
-                                    <Setter Property="Source" Value="Icons/upload-project.png"/>
+                                    <Setter Property="Source" Value="Assets/Icons/upload-project.png"/>
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Source" Value="Icons/upload-project-hover.png"/>
+                                            <Setter Property="Source" Value="Assets/Icons/upload-project-hover.png"/>
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>
@@ -293,10 +298,10 @@
                         <Image Width="60" Height="60">
                             <Image.Style>
                                 <Style TargetType="{x:Type Image}">
-                                    <Setter Property="Source" Value="Icons/reset.png"/>
+                                    <Setter Property="Source" Value="Assets/Icons/reset.png"/>
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Source" Value="Icons/reset-hover.png"/>
+                                            <Setter Property="Source" Value="Assets/Icons/reset-hover.png"/>
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>

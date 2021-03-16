@@ -26,19 +26,4 @@ namespace RCALibrary
         [OperationContract]
         void UpdateRoot(XElement newRoot);
     }
-
-    [DataContract]
-    public class DirectoryData
-    {
-        [DataMember] public XElement CurrentDirectory { get; set; }
-        [DataMember] public List<XElement> Children { get; set; }
-
-        public DirectoryData(XElement current)
-        {
-            CurrentDirectory = current;
-            Children = new List<XElement>();
-
-            CurrentDirectory.RemoveNodes();
-        }
-    }
 }

@@ -167,11 +167,10 @@ namespace Client
             }
         }
 
-        public XElement RequestUpload(string projectName, List<string> files)
+        public bool RequestUpload(string projectName, List<string> files)
         {
-            //Thread.Sleep(30000);
             int blockNumber;
-            bool newUpload = false;
+            bool newUpload;
 
             try
             {
@@ -180,7 +179,7 @@ namespace Client
             catch (Exception e)
             {
                 Console.WriteLine("Unable to connect to upload service: {0}", e.ToString());
-                return null;
+                return false;
             }
 
             if (newUpload)
@@ -208,28 +207,40 @@ namespace Client
                             catch (Exception e)
                             {
                                 Console.WriteLine("Unable to connect to upload service: {0}", e.ToString());
-                                return null;
+                                return false;
                             }
                             blockNumber++;
                         }
                     }
                 }
-
-                // TODO: Change "Uploading" animation to "Analyzing" animation
-
-                try
-                {
-                    return uploader.CompleteUpload();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Unable to connect to upload service: {0}", e.ToString());
-                    return null;
-                }
+                return true;
             }
             
             // TODO: Error message = could not upload file(s)
-            return null;
+            return false;
+        }
+
+        public XElement RequestCompleteUpload()
+        {
+            try
+            {
+                return uploader.CompleteUpload();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Unable to connect to upload service: {0}", e.ToString());
+                return null;
+            }
+        }
+
+        public void RequestAnalysisFile()
+        {
+
+        }
+
+        public void RequestCodeFile()
+        {
+
         }
     }
 }

@@ -17,7 +17,7 @@ namespace Server
         private static readonly object DirectoryTreeLock = new object();
         private static readonly object NavigatorsLock = new object();
         private static XDocument DirectoryTree = null;
-        private static List<Navigation> Navigators = new List<Navigation>();
+        private static readonly List<Navigation> Navigators = new List<Navigation>();
 
         static void Main()
         {

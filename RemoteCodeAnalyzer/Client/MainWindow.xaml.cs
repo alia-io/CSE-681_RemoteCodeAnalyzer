@@ -15,6 +15,8 @@ using System.Windows.Shapes;
 using System.Windows.Media.Imaging;
 using System.Globalization;
 using RCALibrary;
+using System.Windows.Threading;
+using System.Windows.Documents;
 
 namespace Client
 {
@@ -138,7 +140,7 @@ namespace Client
                     {
                         DateTime.TryParseExact(child.Attribute("date").Value, "yyyyMMdd", null, DateTimeStyles.None, out date);
                         button.Name = "U" + i++;
-                        image.Source = new BitmapImage(new Uri("/Icons/user-directory.png", UriKind.Relative));
+                        image.Source = new BitmapImage(new Uri("/Assets/Icons/user-directory.png", UriKind.Relative));
                         line1.Text = "Joined: " + date.ToString("d");
                         line2.Text = child.Attribute("projects").Value + " Projects";
                     }
@@ -152,7 +154,7 @@ namespace Client
                         if (type.Equals("project"))
                         {
                             button.Name = "P" + i++;
-                            image.Source = new BitmapImage(new Uri("/Icons/project-directory.png", UriKind.Relative));
+                            image.Source = new BitmapImage(new Uri("/Assets/Icons/project-directory.png", UriKind.Relative));
                             DateTime.TryParseExact(child.Attribute("created").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
                             line2.Text = "Created: " + date.ToString("g");
                             DateTime.TryParseExact(child.Attribute("edited").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
@@ -162,7 +164,7 @@ namespace Client
                         {
                             DateTime.TryParseExact(child.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
                             button.Name = "V" + child.Attribute("number").Value;
-                            image.Source = new BitmapImage(new Uri("/Icons/version-directory.png", UriKind.Relative));
+                            image.Source = new BitmapImage(new Uri("/Assets/Icons/version-directory.png", UriKind.Relative));
                             line2.Text = "Uploaded: " + date.ToString("g");
                             line3.Text = "Version: " + child.Attribute("number").Value;
                         }
@@ -180,7 +182,7 @@ namespace Client
 
                         button.Name = "C" + i++;
                         button.Click += CodeButton_Click;
-                        image.Source = new BitmapImage(new Uri("/Icons/file.png", UriKind.Relative));
+                        image.Source = new BitmapImage(new Uri("/Assets/Icons/file.png", UriKind.Relative));
                         header.Text = child.Attribute("name").Value;
                         innerPanel.Children.Add(line);
 
@@ -192,7 +194,7 @@ namespace Client
                     {
                         button.Name = "A" + i++;
                         button.Click += AnalysisButton_Click;
-                        image.Source = new BitmapImage(new Uri("/Icons/xml-file.png", UriKind.Relative));
+                        image.Source = new BitmapImage(new Uri("/Assets/Icons/xml-file.png", UriKind.Relative));
                         header.Text = char.ToUpper(child.Attribute("type").Value[0]) + child.Attribute("type").Value.Substring(1)
                             + Environment.NewLine + "Analysis";
                     }
@@ -321,7 +323,7 @@ namespace Client
                     button.Click += DirectoryButton_Click;
                     DateTime.TryParseExact(newProject.Attribute("created").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
 
-                    outerPanel.Children.Add(new Image { Source = new BitmapImage(new Uri("/Icons/project-directory.png", UriKind.Relative)), VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right });
+                    outerPanel.Children.Add(new Image { Source = new BitmapImage(new Uri("/Assets/Icons/project-directory.png", UriKind.Relative)), VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right });
                     outerPanel.Children.Add(innerPanel);
 
                     innerPanel.Children.Add(new TextBlock { Text = newProject.Attribute("name").Value, MaxWidth = 286, FontSize = 14, TextWrapping = TextWrapping.Wrap, Foreground = FindResource("TextColor") as SolidColorBrush });
@@ -422,13 +424,9 @@ namespace Client
 
         private async void UploadButton_Click(object sender, RoutedEventArgs e)
         {
-            MouseEventHandler mouseWait = (_sender, _e) => Mouse.OverrideCursor = Cursors.Wait;
-            MouseEventHandler mouseArrow = (_sender, _e) => Mouse.OverrideCursor = Cursors.Arrow;
-            XElement newVersion;
+            XElement newVersion = null;
             string projectName;
-            bool isProjectDirectory = false;
-            bool isThisProject = false;
-            Timer t = new Timer();
+            DispatcherTimer animate = new DispatcherTimer(DispatcherPriority.Normal);
 
             // TODO: Message: Select a project to upload to, or create a new one.
             if (Projects.SelectedItem == null) return;
@@ -437,8 +435,8 @@ namespace Client
             projectName = ((ComboBoxItem)Projects.SelectedItem).Content.ToString();
 
             NewProjectName.Text = "";
-            UploadTab.MouseEnter += mouseWait;
-            UploadTab.MouseLeave += mouseArrow;
+            UploadTab.MouseEnter += MouseWait;
+            UploadTab.MouseLeave += MouseArrow;
             NewProjectButton.IsEnabled = false;
             AddFileButton.IsEnabled = false;
             UploadProjectButton.IsEnabled = false;
@@ -448,20 +446,28 @@ namespace Client
             FileList.Items.Add(new ListBoxItem());
             NewProjectPanel.Visibility = Visibility.Collapsed;
             FileListPanel.Visibility = Visibility.Collapsed;
-            Uploading.Visibility = Visibility.Visible;
+            RightAnimation.Visibility = Visibility.Visible;
 
-            t.Interval = 100;
-            t.Elapsed += UploadAnimation;
-            t.Enabled = true;
+            animate.Interval = TimeSpan.FromMilliseconds(50);
+            animate.Tick += UploadAnimation;
+            animate.Start();
 
-            newVersion = await Task.Run(() => app.RequestUpload(projectName, newFiles));
+            if (await Task.Run(() => app.RequestUpload(projectName, newFiles)))
+            {
+                animate.Stop();
+                animate.Tick -= UploadAnimation;
+                animate.Tick += AnalyzeAnimation;
+                animate.Start();
 
-            Uploading.Visibility = Visibility.Collapsed;
+                newVersion = await Task.Run(() => app.RequestCompleteUpload());
+            }
+
+            RightAnimation.Visibility = Visibility.Collapsed;
             FileListPanel.Visibility = Visibility.Visible;
-            t.Close();
-            Mouse.OverrideCursor = Cursors.Arrow;
-            UploadTab.MouseEnter -= mouseWait;
-            UploadTab.MouseLeave -= mouseArrow;
+            animate.Stop();
+            RightAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Uploading/uploading-0.png", UriKind.Relative));
+            UploadTab.MouseEnter -= MouseWait;
+            UploadTab.MouseLeave -= MouseArrow;
             NewProjectButton.IsEnabled = true;
             AddFileButton.IsEnabled = true;
             UploadProjectButton.IsEnabled = true;
@@ -470,22 +476,13 @@ namespace Client
             Projects.SelectedItem = null;
             newFiles.Clear();
 
-            if (newVersion != null)
+            if (newVersion == null)
             {
-                if (ExplorerHeader.Children.Count == 2)
-                {
-                    if (!app.User.Equals(app.Directory.Attribute("author").Value)) return;
-
-                    foreach (UIElement element in ExplorerHeader.Children)
-                        if (element.GetType() == typeof(TextBlock) && ((TextBlock)element).Name.Equals("DirectoryName") && ((TextBlock)element).Text.Equals(app.Directory.Attribute("name").Value))
-                            isThisProject = true;
-                        else if (element.GetType() == typeof(StackPanel) && ((StackPanel)element).Children.Count == 2)
-                            foreach (UIElement child in ((StackPanel)element).Children)
-                                if (child.GetType() == typeof(TextBlock) && ((TextBlock)child).Text.Equals("Project"))
-                                    isProjectDirectory = true;
-                }
-
-                if (isProjectDirectory && isThisProject) // Add new version to Explorer view
+                // TODO: display error message ("Could not upload files?")
+            }
+            else
+            {
+                if (app.Directory.Name.ToString().Equals("project") && app.Directory.Attribute("name").Value.Equals(newVersion.Attribute("name").Value)) // Add new version to Explorer view
                 {
                     StackPanel outerPanel = new StackPanel { Orientation = Orientation.Horizontal };
                     StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left };
@@ -494,7 +491,7 @@ namespace Client
                     button.Click += DirectoryButton_Click;
                     DateTime.TryParseExact(newVersion.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
 
-                    outerPanel.Children.Add(new Image { Source = new BitmapImage(new Uri("/Icons/version-directory.png", UriKind.Relative)), VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right });
+                    outerPanel.Children.Add(new Image { Source = new BitmapImage(new Uri("/Assets/Icons/version-directory.png", UriKind.Relative)), VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right });
                     outerPanel.Children.Add(innerPanel);
 
                     innerPanel.Children.Add(new TextBlock { Text = newVersion.Attribute("name").Value, MaxWidth = 286, FontSize = 14, TextWrapping = TextWrapping.Wrap, Foreground = FindResource("TextColor") as SolidColorBrush });
@@ -509,23 +506,6 @@ namespace Client
                 // TODO: Display: Files uploaded! for a few seconds, then disappear --> put this message on the top of BOTH tabs
                 MessageBox.Show("New version added!");
             }
-        }
-
-        private void UploadAnimation(object sender, ElapsedEventArgs e)
-        {
-            string source = null;
-            Dispatcher.Invoke(() => source = Uploading.Source.ToString());
-            string number = source.Substring(source.LastIndexOf('-') + 1, 2);
-
-            if (number[1] == '.') number = number.Substring(0, 1);
-
-            int num = int.Parse(number) + 1;
-
-            if (num > 16) num = 1;
-
-            Dispatcher.Invoke(() =>
-                Uploading.Source = new BitmapImage(new Uri("/Icons/Frames/uploading-" + num + ".png", UriKind.Relative))
-            );
         }
 
         private void ResetButton_Click(object sender, RoutedEventArgs e)
@@ -563,12 +543,112 @@ namespace Client
 
         private void AnalysisButton_Click(object sender, RoutedEventArgs e)
         {
+            DispatcherTimer animate = new DispatcherTimer(DispatcherPriority.Normal);
 
+            SetLastClickedButton(sender as Button);
+
+            // TODO: clear left panel file header text
+            FileText.Text = "";
+            UploadTab.MouseEnter += MouseWait;
+            UploadTab.MouseLeave += MouseArrow;
+            FileTextView.Visibility = Visibility.Collapsed;
+            RightAnimation.Visibility = Visibility.Visible;
+
+
+
+
+            animate.Interval = TimeSpan.FromMilliseconds(50);
+            animate.Tick += LoadAnimation;
+            animate.Start();
+
+            // TODO: request analysis file data
+
+
+            RightAnimation.Visibility = Visibility.Collapsed;
+            FileTextView.Visibility = Visibility.Visible;
+            animate.Stop();
+            LeftAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Loading/loading-0.png", UriKind.Relative));
+            UploadTab.MouseEnter -= MouseWait;
+            UploadTab.MouseLeave -= MouseArrow;
         }
 
         private void CodeButton_Click(object sender, RoutedEventArgs e)
         {
+            DispatcherTimer animate = new DispatcherTimer(DispatcherPriority.Normal);
 
+            SetLastClickedButton(sender as Button);
+
+            // TODO: clear left panel file header text
+            FileText.Text = "";
+            UploadTab.MouseEnter += MouseWait;
+            UploadTab.MouseLeave += MouseArrow;
+            FileTextView.Visibility = Visibility.Collapsed;
+            RightAnimation.Visibility = Visibility.Visible;
+
+
+
+
+            animate.Interval = TimeSpan.FromMilliseconds(50);
+            animate.Tick += LoadAnimation;
+            animate.Start();
+
+            // TODO: request code file data
+
+
+            RightAnimation.Visibility = Visibility.Collapsed;
+            FileTextView.Visibility = Visibility.Visible;
+            animate.Stop();
+            LeftAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Loading/loading-0.png", UriKind.Relative));
+            UploadTab.MouseEnter -= MouseWait;
+            UploadTab.MouseLeave -= MouseArrow;
+        }
+
+        private void UploadAnimation(object sender, EventArgs e)
+        {
+            string source = RightAnimation.Source.ToString();
+            int index;
+
+            if (source != null)
+            {
+                index = source.LastIndexOf('-') + 1;
+                if (int.TryParse(source.Substring(index, source.Length - index - 4), out int number))
+                {
+                    if (++number > 15) number = 0;
+                    RightAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Uploading/uploading-" + number + ".png", UriKind.Relative));
+                }
+            }
+        }
+
+        private void AnalyzeAnimation(object sender, EventArgs e)
+        {
+            string source = RightAnimation.Source.ToString();
+            int index;
+
+            if (source != null)
+            {
+                index = source.LastIndexOf('-') + 1;
+                if (int.TryParse(source.Substring(index, source.Length - index - 4), out int number))
+                {
+                    if (++number > 15) number = 0;
+                    RightAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Analyzing/analyzing-" + number + ".png", UriKind.Relative));
+                }
+            }
+        }
+
+        private void LoadAnimation(object sender, EventArgs e)
+        {
+            string source = LeftAnimation.Source.ToString();
+            int index;
+
+            if (source != null)
+            {
+                index = source.LastIndexOf('-') + 1;
+                if (int.TryParse(source.Substring(index, source.Length - index - 4), out int number))
+                {
+                    if (++number > 15) number = 0;
+                    RightAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Loading/loading-" + number + ".png", UriKind.Relative));
+                }
+            }
         }
 
         private void ClearLastClickedButton()
@@ -585,11 +665,11 @@ namespace Client
             {
                 if (element.GetType() == typeof(Image))
                 {
-                    if (type == 'U') ((Image)element).Source = new BitmapImage(new Uri("/Icons/user-directory-click.png", UriKind.Relative));
-                    else if (type == 'P') ((Image)element).Source = new BitmapImage(new Uri("/Icons/project-directory-click.png", UriKind.Relative));
-                    else if (type == 'V') ((Image)element).Source = new BitmapImage(new Uri("/Icons/version-directory-click.png", UriKind.Relative));
-                    else if (type == 'C') ((Image)element).Source = new BitmapImage(new Uri("/Icons/file-click.png", UriKind.Relative));
-                    else if (type == 'A') ((Image)element).Source = new BitmapImage(new Uri("/Icons/xml-file-click.png", UriKind.Relative));
+                    if (type == 'U') ((Image)element).Source = new BitmapImage(new Uri("/Assets/Icons/user-directory-click.png", UriKind.Relative));
+                    else if (type == 'P') ((Image)element).Source = new BitmapImage(new Uri("/Assets/Icons/project-directory-click.png", UriKind.Relative));
+                    else if (type == 'V') ((Image)element).Source = new BitmapImage(new Uri("/Assets/Icons/version-directory-click.png", UriKind.Relative));
+                    else if (type == 'C') ((Image)element).Source = new BitmapImage(new Uri("/Assets/Icons/file-click.png", UriKind.Relative));
+                    else if (type == 'A') ((Image)element).Source = new BitmapImage(new Uri("/Assets/Icons/xml-file-click.png", UriKind.Relative));
                 }
                 else if (element.GetType() == typeof(StackPanel))
                     foreach (UIElement child in ((StackPanel)element).Children)
@@ -617,16 +697,19 @@ namespace Client
             {
                 if (element.GetType() == typeof(Image))
                 {
-                    if (type == 'U') ((Image)element).Source = new BitmapImage(new Uri("/Icons/user-directory.png", UriKind.Relative));
-                    else if (type == 'P') ((Image)element).Source = new BitmapImage(new Uri("/Icons/project-directory.png", UriKind.Relative));
-                    else if (type == 'V') ((Image)element).Source = new BitmapImage(new Uri("/Icons/version-directory.png", UriKind.Relative));
-                    else if (type == 'C') ((Image)element).Source = new BitmapImage(new Uri("/Icons/file.png", UriKind.Relative));
-                    else if (type == 'A') ((Image)element).Source = new BitmapImage(new Uri("/Icons/xml-file.png", UriKind.Relative));
+                    if (type == 'U') ((Image)element).Source = new BitmapImage(new Uri("/Assets/Icons/user-directory.png", UriKind.Relative));
+                    else if (type == 'P') ((Image)element).Source = new BitmapImage(new Uri("/Assets/Icons/project-directory.png", UriKind.Relative));
+                    else if (type == 'V') ((Image)element).Source = new BitmapImage(new Uri("/Assets/Icons/version-directory.png", UriKind.Relative));
+                    else if (type == 'C') ((Image)element).Source = new BitmapImage(new Uri("/Assets/Icons/file.png", UriKind.Relative));
+                    else if (type == 'A') ((Image)element).Source = new BitmapImage(new Uri("/Assets/Icons/xml-file.png", UriKind.Relative));
                 }
                 else if (element.GetType() == typeof(StackPanel))
                     foreach (UIElement child in ((StackPanel)element).Children)
                         ((TextBlock)child).Foreground = FindResource("TextColor") as SolidColorBrush;
             }
         }
+
+        private void MouseWait(object _sender, MouseEventArgs _e) => Mouse.OverrideCursor = Cursors.Wait;
+        private void MouseArrow(object _sender, MouseEventArgs _e) => Mouse.OverrideCursor = Cursors.Arrow;
     }
 }

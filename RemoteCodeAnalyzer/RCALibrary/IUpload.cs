@@ -23,25 +23,4 @@ namespace RCALibrary
         [OperationContract]
         XElement CompleteUpload();
     }
-
-    [DataContract]
-    public class FileBlock
-    {
-        [DataMember] public string FileName { get; set; }
-        [DataMember] public int Number { get; set; }
-        [DataMember] public int Length { get; set; }
-        [DataMember] public byte[] Buffer { get; private set; }
-
-        public FileBlock()
-        {
-            Buffer = new byte[16000];
-        }
-
-        public FileBlock(string filename, int number)
-        {
-            FileName = filename;
-            Number = number;
-            Buffer = new byte[16000];
-        }
-    }
 }

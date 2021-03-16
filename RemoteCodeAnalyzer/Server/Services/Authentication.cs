@@ -17,7 +17,6 @@ namespace Server
     {
         public bool Login(AuthenticationRequest credentials)
         {
-            int test = 3;
             XDocument secret;
             IEnumerable<string> password;
 
