@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using CodeAnalyzer;
 
-namespace UnitTests
+namespace UnitTests.CodeAnalyzerTests
 {
     [TestClass]
     public class SizeLimitedQueueTests

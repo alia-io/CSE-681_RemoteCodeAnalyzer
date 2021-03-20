@@ -36,6 +36,8 @@ namespace Server
 
         public bool NewUpload(string username, string projectName)
         {
+            if (currentVersion != null) return false; // Upload is already in progress
+
             currentVersion = Host.GetNewVersion(username, projectName, DateTime.Now.ToString("yyyyMMddHHmm"));
 
             if (currentVersion == null) return false;
@@ -87,27 +89,36 @@ namespace Server
 
             _ = analyzer.EnqueueInputFiles(currentFiles);
 
-            analyzer.PerformCodeAnalysis();
+            if (!analyzer.PerformCodeAnalysis())
+            {
+                currentVersion = null;
+                currentFilePath = null;
+                currentFiles.Clear();
+                return null;
+            }
 
-            Host.AddNewVersion(currentVersion, currentFiles,
-                new XElement("analysis",
-                    new XAttribute("type", "function"),
-                    new XAttribute("project", project),
-                    new XAttribute("version", version),
-                    new XAttribute("author", author),
-                    new XAttribute("date", date)),
-                new XElement("analysis",
-                    new XAttribute("type", "relationship"),
-                    new XAttribute("project", project),
-                    new XAttribute("version", version),
-                    new XAttribute("author", author),
-                    new XAttribute("date", date)));
+            version.Add(new XElement("analysis",
+                new XAttribute("type", "function"),
+                new XAttribute("project", project),
+                new XAttribute("version", version),
+                new XAttribute("author", author),
+                new XAttribute("date", date)));
+
+            version.Add(new XElement("analysis",
+                new XAttribute("type", "relationship"),
+                new XAttribute("project", project),
+                new XAttribute("version", version),
+                new XAttribute("author", author),
+                new XAttribute("date", date)));
+
+            foreach (XElement codeFile in currentFiles) version.Add(codeFile);
 
             currentVersion = null;
             currentFilePath = null;
             currentFiles.Clear();
 
-            return version;
+            if (Host.AddNewVersion(new XElement(version))) return version;
+            else return null;
         }
     }
 }

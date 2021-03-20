@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 
 namespace CodeAnalyzer
 {
@@ -37,7 +38,7 @@ namespace CodeAnalyzer
         }
 
         /* Creates the main executive objects to perform all major tasks and activities, limiting access to private data members */
-        public void PerformCodeAnalysis()
+        public bool PerformCodeAnalysis()
         {
             ThreadPool.SetMaxThreads(24, 24);
 
@@ -49,7 +50,7 @@ namespace CodeAnalyzer
             catch (Exception e)
             {
                 Console.WriteLine("Failed to create temp directory.\n{0}", e.ToString());
-                return;
+                return false;
             }
 
             // Task to dequeue inputFiles, parse them, and enqueue them into parsedFiles queue
@@ -82,6 +83,8 @@ namespace CodeAnalyzer
                     Console.WriteLine("Failed to delete temp directory.\n{0}", e.ToString());
                 }
             }
+
+            return true;
         }
 
         /* Enqueues files onto the inputFiles queue */
@@ -120,7 +123,7 @@ namespace CodeAnalyzer
                 tasks.Add(Task.Run(() =>
                 {
                     string filename = parsedFiles.Dequeue();
-                    ProgramFile file = new ProgramFile(filename, directoryPath);
+                    ProgramFile file = new ProgramFile(filename, directoryPath + "\\temp");
                     new FileAnalyzer(file, programClassTypes).ProcessFileCode();
                     processedFiles.Add(file);
                 }));

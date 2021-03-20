@@ -266,7 +266,7 @@ namespace Server
             return version;
         }
 
-        public static bool AddNewVersion(XElement version, List<XElement> codeFiles, XElement functionAnalysis, XElement relationshipAnalysis)
+        public static bool AddNewVersion(XElement version)
         {
             IEnumerable<XElement> findProject;
             XElement project;
@@ -284,16 +284,8 @@ namespace Server
                 {
                     project = findProject.First();
 
-                    // TODO: version.Add(new XElement(functionAnalysis));
-                    // TODO: version.Add(new XElement(relationshipAnalysis));
-
-                    foreach (XElement element in codeFiles)
-                        version.Add(new XElement(element));
-
-                    if (project.Elements().Count() == 0)
-                        project.Add(new XElement(version));
-                    else
-                        project.Elements().First().AddBeforeSelf(new XElement(version));
+                    if (project.Elements().Count() == 0) project.Add(version);
+                    else project.Elements().First().AddBeforeSelf(new XElement(version));
 
                     try
                     {
@@ -303,6 +295,7 @@ namespace Server
                     catch (Exception e)
                     {
                         Console.WriteLine("Failed to save new files to metadata file.\n{0}", e.ToString());
+                        return false;
                     }
                 }
             }

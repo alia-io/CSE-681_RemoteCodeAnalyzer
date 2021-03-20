@@ -13,6 +13,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace CodeAnalyzer
 {
@@ -31,7 +32,9 @@ namespace CodeAnalyzer
             if (parent != null)
             {
                 Parent = parent;
-                DirectoryPath = parent.DirectoryPath + "\\" + parent.Name;
+                parent.ChildList.Add(this);
+                DirectoryPath = parent.DirectoryPath + "\\" + 
+                    new Regex(string.Format("[{0}]", Regex.Escape(new string(Path.GetInvalidPathChars())))).Replace(parent.Name, "");
             }
         }
     }
@@ -51,7 +54,7 @@ namespace CodeAnalyzer
     /* Defines core information for types that "behave" or "look" like classes: classes and interfaces */
     public abstract class ProgramClassType : ProgramDataType
     {
-        public ProgramClassTypeCollection ProgramClassCollection { get; internal set; }
+        public ProgramClassTypeCollection ProgramClassTypes { get; internal set; }
         public List<ProgramClassType> SubClasses { get; }       // Inheritance (child data): ProgramType(s) that this type is inherited by
         public List<ProgramClassType> SuperClasses { get; }     // Inheritance (parent data): ProgramType(s) that this type inherits from
         public override string Name // Maintain the ProgramClassTypeCollection if a name changes
@@ -59,14 +62,16 @@ namespace CodeAnalyzer
             get { return base.Name; }
             protected set
             {
-                if (ProgramClassCollection != null) ProgramClassCollection.NotifyNameChange(this, value);
+                if (ProgramClassTypes != null) ProgramClassTypes.NotifyNameChange(this, value);
                 base.Name = value;
             }
         }
 
-        public ProgramClassType(ProgramType parent, string name, List<string> modifiers, List<string> generics) 
+        public ProgramClassType(ProgramClassTypeCollection programClassTypes, ProgramType parent, string name, List<string> modifiers, List<string> generics) 
             : base(parent, name, modifiers, generics)
         {
+            ProgramClassTypes = programClassTypes;
+            programClassTypes.Add(this);
             SubClasses = new List<ProgramClassType>();
             SuperClasses = new List<ProgramClassType>();
         }
@@ -105,8 +110,8 @@ namespace CodeAnalyzer
         public List<ProgramClassType> OwnedByClasses { get; }   // Composition/Aggregation (parent data): ProgramClass(es) that this class is owned by ("part of")
         public List<ProgramClassType> UsedClasses { get; }      // Using (child data): ProgramClass(es) that this class uses
         public List<ProgramClassType> UsedByClasses { get; }    // Using (parent data): ProgramClass(es) that this class is used by
-        public ProgramClass(ProgramType parent, string name, List<string> modifiers, List<string> generics)
-            : base(parent, name, modifiers, generics)
+        public ProgramClass(ProgramClassTypeCollection programClassTypes, ProgramType parent, string name, List<string> modifiers, List<string> generics)
+            : base(programClassTypes, parent, name, modifiers, generics)
         {
             OwnedClasses = new List<ProgramClassType>();
             OwnedByClasses = new List<ProgramClassType>();
@@ -118,8 +123,8 @@ namespace CodeAnalyzer
     /* Defines unique data contained in an object representing an interface */
     public class ProgramInterface : ProgramClassType
     {
-        public ProgramInterface(ProgramType parent, string name, List<string> modifiers, List<string> generics)
-            : base(parent, name, modifiers, generics) { }
+        public ProgramInterface(ProgramClassTypeCollection programClassTypes, ProgramType parent, string name, List<string> modifiers, List<string> generics)
+            : base(programClassTypes, parent, name, modifiers, generics) { }
     }
 
     /* Defines unique data contained in an object representing a function */

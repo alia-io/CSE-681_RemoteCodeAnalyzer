@@ -31,7 +31,7 @@ namespace CodeAnalyzer
 
             using (reader = File.OpenText(filePath))
             {
-                using (writer = new StreamWriter(tempFilePath))
+                using (writer = File.CreateText(tempFilePath))
                 {
                     while (!reader.EndOfStream)
                     {

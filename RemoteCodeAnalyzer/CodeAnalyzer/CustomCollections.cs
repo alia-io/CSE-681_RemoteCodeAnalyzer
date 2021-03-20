@@ -20,18 +20,18 @@ namespace CodeAnalyzer
         protected override void InsertItem(int index, ProgramClassType item)
         {
             base.InsertItem(index, item);
-            item.ProgramClassCollection = this;
+            item.ProgramClassTypes = this;
         }
 
         protected override void SetItem(int index, ProgramClassType item)
         {
             base.SetItem(index, item);
-            item.ProgramClassCollection = this;
+            item.ProgramClassTypes = this;
         }
 
         protected override void RemoveItem(int index)
         {
-            base[index].ProgramClassCollection = null;
+            base[index].ProgramClassTypes = null;
             base.RemoveItem(index);
         }
 
@@ -41,7 +41,7 @@ namespace CodeAnalyzer
             try
             {
                 CopyTo(copy, 0);
-                foreach (ProgramClassType programClassType in copy) programClassType.ProgramClassCollection = null;
+                foreach (ProgramClassType programClassType in copy) programClassType.ProgramClassTypes = null;
             }
             catch (Exception e)
             {

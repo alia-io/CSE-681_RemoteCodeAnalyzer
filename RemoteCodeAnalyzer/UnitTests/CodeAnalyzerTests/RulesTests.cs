@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using CodeAnalyzer;
 
-namespace UnitTests
+namespace UnitTests.CodeAnalyzerTests
 {
     [TestClass]
     public class RulesTests

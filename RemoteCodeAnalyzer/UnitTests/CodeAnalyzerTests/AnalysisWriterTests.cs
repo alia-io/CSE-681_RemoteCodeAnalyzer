@@ -3,7 +3,7 @@ using System.Xml.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 // TODO: remove this.....?
-namespace UnitTests
+namespace UnitTests.CodeAnalyzerTests
 {
     [TestClass]
     public class AnalysisWriterTests

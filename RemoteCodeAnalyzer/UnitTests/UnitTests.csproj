@@ -171,6 +171,7 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Text.RegularExpressions, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Text.RegularExpressions.4.3.0\lib\net463\System.Text.RegularExpressions.dll</HintPath>
       <Private>True</Private>
@@ -186,6 +187,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CodeAnalyzerTests\AnalysisWriterTests.cs" />
+    <Compile Include="CodeAnalyzerTests\FileAnalyzerTests.cs" />
     <Compile Include="CodeAnalyzerTests\TextParserTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CodeAnalyzerTests\RulesTests.cs" />

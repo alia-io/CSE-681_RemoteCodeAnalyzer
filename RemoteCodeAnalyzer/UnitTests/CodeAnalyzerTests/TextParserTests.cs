@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using CodeAnalyzer;
 
-namespace UnitTests
+namespace UnitTests.CodeAnalyzerTests
 {
     [TestClass]
     public class TextParserTests
@@ -17,7 +17,7 @@ namespace UnitTests
         {
             string filePath = "..\\..\\TestFiles\\TextParser1_Input.txt";
             string tempFilePath = "..\\..\\TestFiles\\temp\\TextParser1_Input.txt.txt";
-            string expected = File.ReadAllText("..\\..\\TestFiles\\temp\\TextParser1_Expected.txt");
+            string expected = File.ReadAllText("..\\..\\TestFiles\\TextParser1_Expected.txt");
             string actual;
 
             TextParser parser = new TextParser(filePath, tempFilePath);
@@ -33,7 +33,7 @@ namespace UnitTests
         {
             string filePath = "..\\..\\TestFiles\\TextParser2_Input.txt";
             string tempFilePath = "..\\..\\TestFiles\\temp\\TextParser2_Input.txt.txt";
-            string expected = File.ReadAllText("..\\..\\TestFiles\\temp\\TextParser2_Expected.txt");
+            string expected = File.ReadAllText("..\\..\\TestFiles\\TextParser2_Expected.txt");
             string actual;
 
             TextParser parser = new TextParser(filePath, tempFilePath);
