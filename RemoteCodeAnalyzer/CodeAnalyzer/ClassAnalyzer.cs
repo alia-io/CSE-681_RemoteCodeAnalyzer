@@ -10,8 +10,8 @@ namespace CodeAnalyzer
     public class ClassAnalyzer
     {
         private int savedIndex = 0;
-        private ProgramClassType programClassType;
-        private ProgramClassTypeCollection programClassTypeCollection;
+        private readonly ProgramClassType programClassType;
+        private readonly ProgramClassTypeCollection programClassTypeCollection;
 
         public ClassAnalyzer(ProgramClassType programClassType, ProgramClassTypeCollection programClassTypeCollection)
         {

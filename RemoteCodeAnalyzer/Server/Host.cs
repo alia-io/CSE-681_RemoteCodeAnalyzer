@@ -266,7 +266,7 @@ namespace Server
             return version;
         }
 
-        public static bool AddNewVersion(XElement version, XElement functionAnalysis, XElement relationshipAnalysis, List<XElement> codeFiles)
+        public static bool AddNewVersion(XElement version, List<XElement> codeFiles, XElement functionAnalysis, XElement relationshipAnalysis)
         {
             IEnumerable<XElement> findProject;
             XElement project;
