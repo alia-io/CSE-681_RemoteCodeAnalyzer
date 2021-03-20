@@ -185,15 +185,20 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AnalysisWriterTests.cs" />
+    <Compile Include="CodeAnalyzerTests\AnalysisWriterTests.cs" />
+    <Compile Include="CodeAnalyzerTests\TextParserTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RulesTests.cs" />
-    <Compile Include="SizeLimitedQueueTests.cs" />
+    <Compile Include="CodeAnalyzerTests\RulesTests.cs" />
+    <Compile Include="CodeAnalyzerTests\SizeLimitedQueueTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Client\Client.csproj">
       <Project>{e5448284-d5e2-4505-b75d-8477ec61209d}</Project>
       <Name>Client</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CodeAnalyzer\CodeAnalyzer.csproj">
+      <Project>{0b0a4e07-50d7-48a9-a34a-44a4f8372050}</Project>
+      <Name>CodeAnalyzer</Name>
     </ProjectReference>
     <ProjectReference Include="..\RCALibrary\RCALibrary.csproj">
       <Project>{2cdc6288-41d8-48f0-83f4-49f45446ab96}</Project>

@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.ServiceModel;
 using System.Runtime.Serialization;
+using CodeAnalyzer;
 using RCALibrary;
 
 namespace Server
@@ -18,8 +19,6 @@ namespace Server
         private XElement currentVersion;    // Current version undergoing upload and analysis
         private string currentFilePath;     // Path of the current file being written to
         private readonly List<XElement> currentFiles = new List<XElement>();   // List of files in current upload
-
-        //private readonly ConcurrentQueue<int> fileQueue = new ConcurrentQueue<int>();
 
         public XElement NewProject(string username, string projectName)
         {
@@ -60,7 +59,7 @@ namespace Server
                     "\\" + currentVersion.Attribute("number").Value + "\\" + block.FileName;
 
                 currentFiles.Add(new XElement("code",
-                    new XAttribute("name", block.FileName),
+                    new XAttribute("name", block.FileName.Substring(0, block.FileName.LastIndexOf('.'))),
                     new XAttribute("type", block.FileName.Substring(block.FileName.LastIndexOf('.') + 1)),
                     new XAttribute("project", currentVersion.Attribute("name").Value),
                     new XAttribute("version", currentVersion.Attribute("number").Value),
@@ -70,7 +69,7 @@ namespace Server
                 ));
             }
 
-            using (Stream s = new FileStream(currentFilePath, FileMode.Append))
+            using (FileStream s = new FileStream(currentFilePath, FileMode.Append))
             {
                 s.Write(block.Buffer, 0, block.Length);
             }
@@ -79,10 +78,22 @@ namespace Server
         public XElement CompleteUpload()
         {
             XElement version = currentVersion;
+            string directoryPath = ".\\root\\" + version.Attribute("author").Value
+                + "\\" + version.Attribute("name").Value
+                + "\\" + version.Attribute("number").Value;
+            Executive analyzer = new Executive(currentFiles.Count, directoryPath);
 
-            // TODO: enqueue currentFilePath in CodeAnalyzer Queue; signal CodeAnalyzer to start analyzing it
+            Task.Run(() =>
+            {
+                foreach (XElement file in currentFiles)
+                {
+                    analyzer.EnqueueInputFile(file.Attribute("name") + "." + file.Attribute("type"));
+                }
+            });
 
-            // TODO: wait for CodeAnalyzer to finish creating FunctionAnalysis & RelationshipAnalysis files
+            analyzer.PerformCodeAnalysis();
+
+            // TODO: make sure code analysis worked
 
             Host.AddNewVersion(currentVersion, new XElement("FA"), new XElement("RA"), currentFiles);
 

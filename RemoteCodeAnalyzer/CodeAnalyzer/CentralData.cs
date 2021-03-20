@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Server
+namespace CodeAnalyzer
 {
     /* Stores all data needed for code analysis and output writing */
     public class CodeAnalysisData
@@ -23,19 +23,6 @@ namespace Server
     /* Stores the directory path, filetype, unprocessed file queue, and optional arguments */
     public class UploadData
     {
-        // Queues
-        public Queue<ProgramFile> RawTextQueue { get; private set; }
-
-
-        // 
-        public string DirectoryPath { get; private set; }
-        public string FileType { get; private set; }
-
-        public UploadData()
-        {
-            this.RawTextQueue = new Queue<ProgramFile>();
-        }
-
         /* Sets the file type to analyze and the optional settings */
         /*public void SetInputSessionData(string[] input)
         {
@@ -57,22 +44,22 @@ namespace Server
         /* Reads all files, creates and enqueues the ProgramFile objects with their raw text data */
         public void EnqueueFiles()
         {
-            string[] filePaths;
+            //string[] filePaths;
 
-            if (this.FileType.Equals("*.cs") || this.FileType.Equals("*.java") || this.FileType.Equals("*.txt"))
-            {
+            //if (this.FileType.Equals("*.cs") || this.FileType.Equals("*.java") || this.FileType.Equals("*.txt"))
+            //{
                 //if (this.IncludeSubdirectories)
                     //filePaths = Directory.GetFiles(this.DirectoryPath, this.FileType, SearchOption.AllDirectories);
                 //else
-                    filePaths = Directory.GetFiles(this.DirectoryPath, this.FileType, SearchOption.TopDirectoryOnly);
+                    //filePaths = Directory.GetFiles(this.DirectoryPath, this.FileType, SearchOption.TopDirectoryOnly);
 
-                foreach (string filePath in filePaths) // Read and enqueue all files
-                {
-                    string[] filePathArray = filePath.Split('\\');
-                    string fileName = filePathArray[filePathArray.Length - 1];
-                    this.RawTextQueue.Enqueue(new ProgramFile(filePath, fileName, File.ReadAllText(filePath)));
-                }
-            }
+                //foreach (string filePath in filePaths) // Read and enqueue all files
+                //{
+                    //string[] filePathArray = filePath.Split('\\');
+                    //string fileName = filePathArray[filePathArray.Length - 1];
+                    //this.RawTextQueue.Enqueue(new ProgramFile(fileName, filePath, File.ReadAllText(filePath)));
+                //}
+            //}
         }
     }
 }

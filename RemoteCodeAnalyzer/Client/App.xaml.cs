@@ -9,6 +9,7 @@ using System.Threading;
 using System.Xml.Linq;
 using System.Windows;
 using RCALibrary;
+using System.Text;
 
 namespace Client
 {
@@ -189,7 +190,7 @@ namespace Client
                 foreach (string filepath in files)
                 {
                     blockNumber = 0;
-                    using (Stream s = new FileStream(filepath, FileMode.Open))
+                    using (FileStream s = new FileStream(filepath, FileMode.Open, FileAccess.Read))
                     {
                         while (s.Length > s.Position)
                         {
@@ -235,26 +236,79 @@ namespace Client
             }
         }
 
-        public void RequestAnalysisFile(string filename)
+        public bool RequestAnalysisFile(string filename, out string fileText)
         {
-            // FileBlock ReadBlock(string user, string project, string version, string filename)
+            // TODO: include colored lines
+            MemoryStream s = new MemoryStream();
+            StreamReader r;     // Used to convert MemoryStream bytes into a string
+            FileBlock block;    // The next file block
             string user = Directory.Attribute("author").Value;
             string project = Directory.Attribute("name").Value;
             string version = Directory.Attribute("number").Value;
 
+            fileText = "";  // Output file text
 
+            using (s)
+            {
+                do
+                {
+                    try
+                    {
+                        block = filereader.ReadBlock(user, project, version, filename);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Unable to connect to readfile service: {0}", e.ToString());
+                        return false;
+                    }
 
+                    if (block == null) return false;
+                    s.Write(block.Buffer, 0, block.Length);
+                }
+                while (!block.LastBlock);
+            }
+
+            r = new StreamReader(s);
+            fileText = r.ReadToEnd();
+            return true;
         }
 
-        public void RequestCodeFile(string filename)
+        public bool RequestCodeFile(string filename, out string fileText)
         {
-            // FileBlock ReadBlock(string user, string project, string version, string filename)
+            FileBlock block;    // The next file block
             string user = Directory.Attribute("author").Value;
             string project = Directory.Attribute("name").Value;
             string version = Directory.Attribute("number").Value;
 
+            fileText = "";  // Output file text
 
-            Thread.Sleep(30000);
+            using (MemoryStream s = new MemoryStream())
+            {
+                do
+                {
+                    try
+                    {
+                        block = filereader.ReadBlock(user, project, version, filename);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Unable to connect to readfile service: {0}", e.ToString());
+                        return false;
+                    }
+
+                    if (block == null) return false;
+                    s.Write(block.Buffer, 0, block.Length);
+                }
+                while (!block.LastBlock);
+
+                s.Position = 0;
+                using (StreamReader r = new StreamReader(s))
+                {
+                    fileText = r.ReadToEnd();
+                }
+            }
+
+            return true;
         }
     }
 }

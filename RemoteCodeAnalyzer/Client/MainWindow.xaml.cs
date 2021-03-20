@@ -543,12 +543,14 @@ namespace Client
 
         private async void AnalysisButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: disable clicking code or analysis file buttons or back button --> ONLY DISABLE TEMPORARILY TO GET INFO
+            // TODO: disable clicking code or analysis file buttons or back button --> ONLY DISABLE TEMPORARILY TO GET INFO?
 
             DispatcherTimer animate = new DispatcherTimer(DispatcherPriority.Normal);
             TextBlock header = (TextBlock)((StackPanel)((StackPanel)(sender as Button).Content).Children[1]).Children[0];
             string analysisType = header.Text.Substring(0, header.Text.IndexOf(Environment.NewLine));
             string filename = char.ToLower(analysisType[0]) + analysisType.Substring(1) + "_analysis.xml";
+            string fileText = "";
+            bool getFileText;
 
             SetLastClickedButton(sender as Button);
 
@@ -577,28 +579,34 @@ namespace Client
             animate.Tick += LoadAnimation;
             animate.Start();
 
-            await Task.Run(() => app.RequestAnalysisFile(filename));
-
+            getFileText = await Task.Run(() => app.RequestAnalysisFile(filename, out fileText));
+            
             LeftAnimation.Visibility = Visibility.Collapsed;
             animate.Stop();
 
-            // Only if successful?
-            DateTime.TryParseExact(app.Directory.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
-            Version.Text = app.Directory.Attribute("number").Value;
-            Date.Text = date.ToString("d");
-            ProjectName.Text = app.Directory.Attribute("name").Value;
-            LFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#2A9D8F");
-            RFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#2A9D8F");
-            LFileType.Text = "XML";
-            RFileType.Text = "XML";
-            FileName.Text = analysisType + " Analysis";
+            if (getFileText)
+            {
+                DateTime.TryParseExact(app.Directory.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
+                Version.Text = app.Directory.Attribute("number").Value;
+                Date.Text = date.ToString("d");
+                ProjectName.Text = app.Directory.Attribute("name").Value;
+                LFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#2A9D8F");
+                RFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#2A9D8F");
+                LFileType.Text = "XML";
+                RFileType.Text = "XML";
+                FileName.Text = analysisType + " Analysis";
+                FileText.Text = fileText;
 
-            // TODO: set FileText.Text
-
-            // Only do these three if setting all above fields is successful
-            FileTextHeadersRow.Height = new GridLength(105);
-            FileTextHeaders.Visibility = Visibility.Visible;
-            FileTextView.Visibility = Visibility.Visible;
+                FileTextHeadersRow.Height = new GridLength(105);
+                FileTextHeaders.Visibility = Visibility.Visible;
+                FileTextView.Visibility = Visibility.Visible;
+                // TODO: success message (temp)
+            }
+            else
+            {
+                // TODO: error message (temp)
+                // FileTextView.Visibility = Visibility.Visible; //???
+            }
 
             Explorer.IsEnabled = true;
             BackButton.IsEnabled = true;
@@ -612,13 +620,20 @@ namespace Client
 
         private async void CodeButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: disable clicking code or analysis file buttons or back button --> ONLY DISABLE TEMPORARILY TO GET INFO
+            // TODO: disable clicking code or analysis file buttons or back button --> ONLY DISABLE TEMPORARILY TO GET INFO?
 
             DispatcherTimer animate = new DispatcherTimer(DispatcherPriority.Normal);
             StackPanel innerPanel = (StackPanel)((StackPanel)(sender as Button).Content).Children[1];
             string filename = ((TextBlock)innerPanel.Children[0]).Text;
             string language = ((TextBlock)innerPanel.Children[1]).Text;
             string type = language.Substring(language.LastIndexOf(' ') + 1);
+            string fileType = "";
+            string fileText = "";
+            bool getFileText;
+
+            if (type.Equals("Text")) fileType = "txt";
+            else if (type.Equals("C#")) fileType = "cs";
+            else if (type.Equals("Java")) fileType = "java";
 
             SetLastClickedButton(sender as Button);
 
@@ -647,28 +662,34 @@ namespace Client
             animate.Tick += LoadAnimation;
             animate.Start();
 
-            await Task.Run(() => app.RequestCodeFile(filename));
+            getFileText = await Task.Run(() => app.RequestCodeFile(filename + "." + fileType, out fileText));
 
             LeftAnimation.Visibility = Visibility.Collapsed;
             animate.Stop();
 
-            // Only if successful?
-            DateTime.TryParseExact(app.Directory.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
-            Version.Text = app.Directory.Attribute("number").Value;
-            Date.Text = date.ToString("d");
-            ProjectName.Text = app.Directory.Attribute("name").Value;
-            LFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#40768C");
-            RFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#40768C");
-            LFileType.Text = type;
-            RFileType.Text = type;
-            FileName.Text = filename.Substring(0, filename.LastIndexOf('.'));
+            if (getFileText)
+            {
+                DateTime.TryParseExact(app.Directory.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
+                Version.Text = app.Directory.Attribute("number").Value;
+                Date.Text = date.ToString("d");
+                ProjectName.Text = app.Directory.Attribute("name").Value;
+                LFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#40768C");
+                RFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#40768C");
+                LFileType.Text = type;
+                RFileType.Text = type;
+                FileName.Text = filename;
+                FileText.Text = fileText;
 
-            // TODO: set FileText.Text
-
-            // Only do these three if setting all above fields is successful
-            FileTextHeadersRow.Height = new GridLength(105);
-            FileTextHeaders.Visibility = Visibility.Visible;
-            FileTextView.Visibility = Visibility.Visible;
+                FileTextHeadersRow.Height = new GridLength(105);
+                FileTextHeaders.Visibility = Visibility.Visible;
+                FileTextView.Visibility = Visibility.Visible;
+                // TODO: success message (temp)
+            }
+            else
+            {
+                // TODO: error message (temp)
+                // FileTextView.Visibility = Visibility.Visible; //???
+            }
 
             Explorer.IsEnabled = true;
             BackButton.IsEnabled = true;

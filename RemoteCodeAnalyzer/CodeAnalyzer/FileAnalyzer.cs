@@ -1,16 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Server
+namespace CodeAnalyzer
 {
-    public enum ControlFlowType { _if, _elseif, _else, _for, _foreach, _while, _dowhile, _switch };
+    //public enum ControlFlowType { _if, _elseif, _else, _for, _foreach, _while, _dowhile, _switch };
 
     /* Processor of the file data (except relationship data), filling all internal Child ProgramType lists */
     class FileAnalyzer
     {
+        /* Saved input data */
         private readonly ProgramClassTypeCollection programClassTypes;
         private readonly ProgramFile programFile;
         private readonly string fileType;
@@ -19,16 +21,18 @@ namespace Server
         private readonly Stack<string> scopeStack = new Stack<string>();
         private readonly Stack<ProgramType> typeStack = new Stack<ProgramType>();
 
-        private readonly StringBuilder stringBuilder = new StringBuilder("");
+        /* Reader and saved input text */
+        StreamReader reader;
+        private readonly List<string> currentText = new List<string>();
 
         /* Scope syntax rules to check for */
         private readonly List<ControlFlowScopeRule> activeRules = new List<ControlFlowScopeRule>();
 
-        public FileAnalyzer(ProgramFile programFile, ProgramClassTypeCollection programClassTypes, string fileType)
+        public FileAnalyzer(ProgramFile programFile, ProgramClassTypeCollection programClassTypes)
         {
             this.programClassTypes = programClassTypes;
             this.programFile = programFile;
-            this.fileType = fileType;
+            fileType = programFile.FileType;
         }
 
         /* Analyzes all of the code outside of a class or interface */
@@ -36,176 +40,214 @@ namespace Server
         {
             string entry;
 
-            for (int index = 0; index < programFile.FileTextData.Count; index++)
+            using (reader = File.OpenText(programFile.DirectoryPath + "\\temp\\" + programFile.Name))
             {
-                entry = programFile.FileTextData[index];
-
-                // Determine whether to ignore the entry (if it's part of a comment)
-                if (this.IgnoreEntry(entry)) continue;
-
-                if (entry.Equals("}")) // Check for the end of an existing bracketed scope
+                while (!reader.EndOfStream)
                 {
-                    this.EndBracketedScope("");
-                    continue;
+                    entry = reader.ReadLine();
+
+                    // Determine whether to ignore the entry (if it's part of a comment or string)
+                    if (IgnoreEntry(entry)) continue;
+
+                    if (entry.Equals("}")) // Check for the end of an existing bracketed scope
+                    {
+                        EndBracketedScope(null, "");
+                        continue;
+                    }
+
+                    if (entry.Equals("namespace")) // Check for a new namespace
+                    {
+                        CreateNewNamespace();
+                        continue;
+                    }
+
+                    if (entry.Equals("class") || entry.Equals("interface")) // Check for a new class or interface
+                    {
+                        CreateNewProgramClassType(entry);
+                        continue;
+                    }
+
+                    if (entry.Equals("{")) // Push scope opener onto scopeStack
+                        scopeStack.Push(entry);
+
+                    UpdateCurrentText(null, entry);
                 }
-
-                if (entry.Equals("namespace")) // Check for a new namespace
-                {
-                    index = this.NewNamespace(index);
-                    continue;
-                }
-
-                if (entry.Equals("class") || entry.Equals("interface")) // Check for a new class or interface
-                {
-                    index = this.NewProgramClassType(entry, index);
-                    continue;
-                }
-
-                if (entry.Equals("{")) // Push scope opener onto scopeStack
-                    scopeStack.Push(entry);
-
-                this.UpdateStringBuilder(entry);
             }
         }
 
         /* Processes data within a ProgramClassType (class or interface) scope but outside of a function */
-        private int ProcessProgramClassTypeData(string scopeType, int i)
+        private void ProcessProgramClassTypeData(string type)
         {
             string entry;
-            int index;
 
-            for (index = i; index < programFile.FileTextData.Count; index++)
+            while (!Directory.Exists(typeStack.Peek().DirectoryPath))
             {
-                entry = programFile.FileTextData[index];
-
-                // Determine whether to ignore the entry (if it's part of a comment)
-                if (this.IgnoreEntry(entry)) continue;
-
-                this.UpdateTextData(entry); // Add entry to current ProgramDataType's text list for relationship analysis
-
-                if (entry.Equals("}")) // Check for the end of an existing bracketed scope
+                try
                 {
-                    if (this.EndBracketedScope(scopeType))
-                        return index;
-                    continue;
+                    Directory.CreateDirectory(typeStack.Peek().DirectoryPath);
                 }
-
-                if (entry.Equals("class") || entry.Equals("interface")) // Check for a new class or interface
+                catch (Exception e)
                 {
-                    index = this.NewProgramClassType(entry, index);
-                    continue;
+                    Console.WriteLine("Unable to create temp subdirectory: {0}", e.ToString());
                 }
-
-                if (entry.Equals("{"))
-                {
-                    if (this.CheckIfFunction()) // Check if a new function is being started
-                    {
-                        scopeStack.Push(entry);
-                        index = this.ProcessFunctionData(++index);
-                        continue;
-                    }
-                    else // Push scope opener onto scopeStack
-                        scopeStack.Push(entry);
-                }
-
-                if (entry.Equals("=>"))
-                {
-                    if (this.CheckIfFunction()) // Check if a new lambda function is being started
-                    {
-                        index = this.ProcessFunctionData(++index);
-                        continue;
-                    }
-                }
-                this.UpdateStringBuilder(entry);
             }
-            return index;
+
+            using (StreamWriter writer = File.AppendText(typeStack.Peek().DirectoryPath + "\\" + typeStack.Peek().Name + ".txt"))
+            {
+                ClearCurrentItems(writer); // Add saved text to ProgramDataType's temp file & clear the list
+
+                while (!reader.EndOfStream)
+                {
+                    entry = reader.ReadLine();
+
+                    // Determine whether to ignore the entry (if it's part of a comment or string)
+                    if (IgnoreEntry(entry)) continue;
+
+                    currentText.Add(entry); // Add entry to current text list to be written to ProgramDataType's temp file
+
+                    if (entry.Equals("}")) // Check for the end of an existing bracketed scope
+                    {
+                        if (EndBracketedScope(writer, type)) return;
+                        continue;
+                    }
+
+                    if (entry.Equals("class") || entry.Equals("interface")) // Check for a new class or interface
+                    {
+                        CreateNewProgramClassType(entry);
+                        continue;
+                    }
+
+                    if (entry.Equals("{"))
+                    {
+                        if (CheckIfFunction()) // Check if new function is being started
+                        {
+                            scopeStack.Push(entry);
+                            ProcessFunctionData();
+                            continue;
+                        }
+                        else // Push scope opener onto scopeStack
+                            scopeStack.Push(entry);
+                    }
+
+                    if (entry.Equals("=>"))
+                    {
+                        if (CheckIfFunction()) // Check if a new lambda function is being started
+                        {
+                            ProcessFunctionData();
+                            continue;
+                        }
+                    }
+
+                    UpdateCurrentText(writer, entry);
+                }
+            }
         }
 
         /* Processes data within a Function scope */
-        private int ProcessFunctionData(int i)
+        private void ProcessFunctionData()
         {
             string entry;
-            int index;
             bool scopeOpener;
+            bool beginningOfStream = true;
 
-            for (index = i; index < programFile.FileTextData.Count; index++)
+            while (!Directory.Exists(typeStack.Peek().DirectoryPath))
             {
-                entry = programFile.FileTextData[index];
-                scopeOpener = false;
-
-                // Determine whether to ignore the entry (if it's part of a comment)
-                if (this.IgnoreEntry(entry)) continue;
-
-                this.UpdateTextData(entry); // Add entry to current Function's text list for relationship analysis
-
-                if (entry.Equals(" ")) this.IncrementFunctionSize(); // Check for a new line and update function data
-
-                if (this.CheckScopeClosersWithinFunction(entry, ref index)) // Check for some closing scopes: ")", "}", ";"
-                    return index; // Closing scope was the end of this function
-
-                // Check control flow scope openers
-                if (!entry.Equals(" ") && typeStack.Count > 0 && typeStack.Peek().GetType() == typeof(ProgramFunction) && this.CheckControlFlowScopes(entry))
-                    scopeOpener = true;
-
-                this.CheckScopeOpenersWithinFunction(entry, scopeOpener, ref index); // Check for some opening scopes: "(", "{", "=>"
-
-                this.UpdateStringBuilder(entry);
+                try
+                {
+                    Directory.CreateDirectory(typeStack.Peek().DirectoryPath);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Unable to create temp subdirectory: {0}", e.ToString());
+                }
             }
 
-            return index;
+            using (StreamWriter writer = File.AppendText(typeStack.Peek().DirectoryPath + "\\" + typeStack.Peek().Name + ".txt"))
+            {
+                while (!reader.EndOfStream)
+                {
+                    entry = reader.ReadLine();
+                    scopeOpener = false;
+
+                    if (beginningOfStream && entry.Equals(" ")) continue; // Don't add first newline(s) to function data
+                    beginningOfStream = false;
+
+                    // Determine whether to ignore the entry (if it's part of a comment or string)
+                    if (IgnoreEntry(entry)) continue;
+
+                    currentText.Add(entry); // Add entry to current text list to be written to Function's temp file
+
+                    if (entry.Equals(" ")) IncrementFunctionSize(); // Check for a new line and update function data
+
+                    // Check for some closing scopes: ")", "}", ";"
+                    if (CheckScopeClosersWithinFunction(writer, entry)) return; // Closing scope was the end of this function
+
+                    // Check control flow scope openers
+                    if (!entry.Equals(" ") && typeStack.Count > 0 && typeStack.Peek().GetType() == typeof(ProgramFunction) && CheckControlFlowScopes(writer, entry))
+                        scopeOpener = true;
+
+                    CheckScopeOpenersWithinFunction(entry, scopeOpener); // Check for some opening scopes: "(", "{", "=>"
+
+                    UpdateCurrentText(writer, entry);
+                }
+            }
         }
 
         /* Creates a new namespace object and adds it as a child to the current type */
-        private int NewNamespace(int index)
+        private void CreateNewNamespace()
         {
+            ProgramNamespace newNamespace;
             string entry;
 
             scopeStack.Push("namespace"); // Push the namespace scope opener onto scopeStack
-            this.ClearCurrentItems();
+            ClearCurrentItems(null);
 
-            while (++index < programFile.FileTextData.Count) // Get the name of the namespace
+            while (!reader.EndOfStream) // Get the name of the namespace
             {
-                entry = programFile.FileTextData[index];
+                entry = reader.ReadLine();
                 if (entry.Equals("{"))
                 {
-                    scopeStack.Push("{"); // push the new scope opener onto scopeStack
+                    scopeStack.Push("{"); // Push the new scope opener onto scopeStack
                     break;
                 }
-                if (!entry.Equals(" ")) stringBuilder.Append(entry);
+                if (!entry.Equals(" ")) currentText.Append(entry);
             }
 
-            ProgramNamespace programNamespace = new ProgramNamespace(stringBuilder.ToString());
-            this.ClearCurrentItems();
+            // Create new namespace and add it to its parent's ChildList
+            if (typeStack.Count > 0)
+            {
+                newNamespace = new ProgramNamespace(typeStack.Peek(), currentText.ToString());
+                typeStack.Peek().ChildList.Add(newNamespace);
+            }
+            else
+            {
+                newNamespace = new ProgramNamespace(programFile, currentText.ToString());
+                programFile.ChildList.Add(newNamespace);
+            }
 
-            // Add new namespace to its parent's ChildList
-            if (typeStack.Count > 0) typeStack.Peek().ChildList.Add(programNamespace);
-            else programFile.ChildList.Add(programNamespace);
-
-            typeStack.Push(programNamespace);
-            return index;
+            ClearCurrentItems(null);
+            typeStack.Push(newNamespace);
         }
 
         /* Creates a new class or interface object, adds it as a child to the current type, and sends it to its analyzer */
-        private int NewProgramClassType(string type, int index)
+        private void CreateNewProgramClassType(string type)
         {
             ProgramClassType programClassType;
 
             // Gather the ProgramClassType data
-            (int newIndex, string name, List<string> textData, List<string> modifiers, List<string> generics) = this.GetClassTypeData(type, index);
+            GetClassTypeData(type, out ProgramType parent, out string name, out List<string> modifiers, out List<string> generics);
 
             // Create the new class or interface object
-            if (type.Equals("class")) programClassType = this.NewClass(name, modifiers, generics);
-            else programClassType = this.NewInterface(name, modifiers, generics);
+            if (type.Equals("class")) programClassType = NewClass(parent, name, modifiers, generics);
+            else programClassType = NewInterface(parent, name, modifiers, generics);
 
             if (programClassTypes.Contains(name))
             {
                 Console.WriteLine("\n\nError: Cannot determine data with two classes with the same name.\n\n");
-                Environment.Exit(1);
+                return;
             }
 
-            // Add text/inheritance data, and add class/interface to general ProgramClassType list
-            programClassType.TextData = textData;
-            programClassTypes.Add(programClassType);
+            programClassTypes.Add(programClassType); // Add class/interface to general ProgramClassType list
 
             // Add new class/interface to its parent's ChildList
             if (typeStack.Count > 0) typeStack.Peek().ChildList.Add(programClassType);
@@ -213,32 +255,35 @@ namespace Server
 
             typeStack.Push(programClassType);
 
-            return this.ProcessProgramClassTypeData(type, newIndex); // Send to method to analyze inside of a class/interface
+            ProcessProgramClassTypeData(type); // Send to method to analyze inside of a class/interface
         }
 
         /* Creates a new class object and adds it as a child to the current type */
-        private ProgramClass NewClass(string name, List<string> modifiers, List<string> generics)
+        private ProgramClass NewClass(ProgramType parent, string name, List<string> modifiers, List<string> generics)
         {
-            ProgramClass programClass = new ProgramClass(name, modifiers, generics);
-            this.ClearCurrentItems();
+            ProgramClass programClass = new ProgramClass(parent, name, modifiers, generics);
+            ClearCurrentItems(null);
             return programClass;
         }
 
         /* Creates a new interface object and adds it as a child to the current type */
-        private ProgramInterface NewInterface(string name, List<string> modifiers, List<string> generics)
+        private ProgramInterface NewInterface(ProgramType parent, string name, List<string> modifiers, List<string> generics)
         {
-            ProgramInterface programInterface = new ProgramInterface(name, modifiers, generics);
-            this.ClearCurrentItems();
+            ProgramInterface programInterface = new ProgramInterface(parent, name, modifiers, generics);
+            ClearCurrentItems(null);
             return programInterface;
         }
 
         /* Creates a new function object and adds it as a child to the current type */
-        private void NewFunction(string[] functionIdentifier, string name, List<string> modifiers, List<string> returnTypes, List<string> generics, List<string> parameters, List<string> baseParameters)
+        private void NewFunction(string name, List<string> modifiers, List<string> returnTypes, List<string> generics, List<string> parameters, List<string> baseParameters)
         {
-            this.RemoveFunctionSignatureFromTextData(functionIdentifier.Length);
-            this.ClearCurrentItems();
+            ProgramType parent = programFile;
 
-            ProgramFunction programFunction = new ProgramFunction(name, modifiers, returnTypes, generics, parameters, baseParameters);
+            ClearCurrentItems(null);
+
+            if (typeStack.Count > 0) parent = typeStack.Peek(); // Get the parent
+
+            ProgramFunction programFunction = new ProgramFunction(parent, name, modifiers, returnTypes, generics, parameters, baseParameters);
 
             // Add new function to its parent's ChildList
             if (typeStack.Count > 0) typeStack.Peek().ChildList.Add(programFunction);
@@ -251,34 +296,36 @@ namespace Server
         }
 
         /* Finds all data required to create a new class or interface */
-        private (int index, string name, List<string> textData, List<string> modifiers, List<string> generics) GetClassTypeData(string type, int index)
+        private void GetClassTypeData(string type, out ProgramType parent, out string name, out List<string> modifiers, out List<string> generics)
         {
             string entry;
-            string name = "";
-            List<string> textData = new List<string>();
-            string[] modifiersArray = stringBuilder.ToString().Split(' ');
-            List<string> modifiers = new List<string>();
-            List<string> generics = new List<string>();
+            parent = programFile;
+            name = "";
+            string[] modifiersArray = currentText.ToString().Split(' ');
+            modifiers = new List<string>();
+            generics = new List<string>();
             int brackets = 0;
+
+            if (typeStack.Count > 0) parent = typeStack.Peek(); // Get the parent
 
             foreach (string modifier in modifiersArray) // Get the modifiers
                 if (modifier.Length > 0) modifiers.Add(modifier);
 
             scopeStack.Push(type); // Push the type of scope opener (class or interface)
-            this.ClearCurrentItems();
+            ClearCurrentItems(null);
 
-            while (++index < programFile.FileTextData.Count) // Get the name of the class/interface
+            while (!reader.EndOfStream)
             {
-                entry = programFile.FileTextData[index];
+                entry = reader.ReadLine();
 
-                // Determine whether to ignore the entry (if it's part of a comment)
-                if (this.IgnoreEntry(entry)) continue;
+                // Determine whether to ignore the entry (if it's part of a comment or string)
+                if (IgnoreEntry(entry)) continue;
 
-                textData.Add(entry); // Add entry to class's/interface's TextData list
+                currentText.Add(entry); // Add entry to list to be added to class's/interface's temp file
 
                 if (entry.Equals("{"))
                 {
-                    scopeStack.Push("{"); // Push the scope opener bracket
+                    scopeStack.Push(entry); // Push the scope opener bracket
                     break;
                 }
 
@@ -289,15 +336,11 @@ namespace Server
                 if (name.Length == 0) // The next entry after "class" or "interface" will be the name
                     if (!entry.Equals(" ")) name = entry;
             }
-
-            return (++index, name, textData, modifiers, generics);
         }
 
         /* Detects the syntax for a normal function signature */
         private bool CheckIfFunction()
         {
-            string[] functionIdentifier = stringBuilder.ToString().Split(' ');
-
             // The function requirement to check next. If this ends at 4 or 7, there is a new function. If this ends at -1, there is not a new function.
             int functionRequirement = 0;
 
@@ -312,9 +355,8 @@ namespace Server
             int squareBrackets = 0;
             int angleBrackets = 0;
 
-            for (int i = 0; i < functionIdentifier.Length; i++)
+            foreach (string text in currentText)
             {
-                string text = functionIdentifier[i];
                 if (text.Length < 1) continue;
 
                 if (text.Equals("(")) parentheses++;
@@ -322,7 +364,7 @@ namespace Server
                 else if (text.Equals("<")) angleBrackets++;
 
                 // Test the current requirement
-                functionRequirement = this.TestFunctionRequirement(functionRequirement, text, ref name, ref modifiers, ref returnTypes, ref generics, ref parameters, squareBrackets, angleBrackets, parentheses);
+                functionRequirement = TestFunctionRequirement(functionRequirement, text, ref name, ref modifiers, ref returnTypes, ref generics, ref parameters, squareBrackets, angleBrackets, parentheses);
 
                 if (text.Equals(")")) parentheses--;
                 else if (text.Equals("]")) squareBrackets--;
@@ -331,19 +373,20 @@ namespace Server
 
             if (functionRequirement == 4 || functionRequirement == 7) // Function signature detected - create a new function
             {
-                this.NewFunction(functionIdentifier, name, modifiers, returnTypes, generics, parameters, new List<string>());
+                NewFunction(name, modifiers, returnTypes, generics, parameters, new List<string>());
                 return true;
             }
+
             // If it failed normal function requirements, check rules for constructors and deconstructors
-            else if ((fileType.Equals("*.cs") || fileType.Equals("*.txt")) && this.CheckIfConstructor_cs(functionIdentifier)) return true;
-            else if (fileType.Equals("*.java") && this.CheckIfConstructor_java(functionIdentifier)) return true;
-            else if (this.CheckIfDeconstructor(functionIdentifier)) return true;
+            else if ((fileType.Equals("*.cs") || fileType.Equals("*.txt")) && CheckIfConstructor_cs()) return true;
+            else if (fileType.Equals("*.java") && CheckIfConstructor_java()) return true;
+            else if (CheckIfDeconstructor()) return true;
 
             return false;
         }
 
         /* Detects the syntax for a C# Constructor function */
-        private bool CheckIfConstructor_cs(string[] functionIdentifier)
+        private bool CheckIfConstructor_cs()
         {
             // The constructor requirement to check next. If this ends at 3 or 7, there is a new function. If this ends at -1, there is not a new function.
             int functionRequirement = 0;
@@ -358,9 +401,8 @@ namespace Server
             int brackets = 0;
             int periods = 0; // Used for formatting
 
-            for (int i = 0; i < functionIdentifier.Length; i++)
+            foreach (string text in currentText)
             {
-                string text = functionIdentifier[i];
                 if (text.Length < 1) continue;
 
                 if (text.Equals("(")) parentheses++;
@@ -369,7 +411,7 @@ namespace Server
                 else if (text.Equals(".")) periods++;
 
                 // Test the current requirement
-                functionRequirement = this.TestConstructorRequirement_cs(functionRequirement, text, ref modifiers, ref name, ref parameters, ref baseParameters, brackets, parentheses, periods);
+                functionRequirement = TestConstructorRequirement_cs(functionRequirement, text, ref modifiers, ref name, ref parameters, ref baseParameters, brackets, parentheses, periods);
 
                 if (periods > 0 && !text.Equals(".")) periods--;
                 else if (text.Equals("]") || text.Equals(">")) brackets--;
@@ -377,7 +419,7 @@ namespace Server
 
             if (functionRequirement == 3 || functionRequirement == 7) // Constructor signature detected - create a new function
             {
-                this.NewFunction(functionIdentifier, name, modifiers, new List<string>(), new List<string>(), parameters, baseParameters);
+                NewFunction(name, modifiers, new List<string>(), new List<string>(), parameters, baseParameters);
                 return true;
             }
 
@@ -385,7 +427,7 @@ namespace Server
         }
 
         /* Detects the syntax for a Java Constructor function */
-        private bool CheckIfConstructor_java(string[] functionIdentifier)
+        private bool CheckIfConstructor_java()
         {
             // The constructor requirement to check next. If this ends at ???, there is a new function. If this ends at -1, there is not a new function.
             int functionRequirement = 0;
@@ -400,9 +442,8 @@ namespace Server
             int angleBrackets = 0;
             int periods = 0;
 
-            for (int i = 0; i < functionIdentifier.Length; i++)
+            foreach (string text in currentText)
             {
-                string text = functionIdentifier[i];
                 if (text.Length < 1) continue;
 
                 if (text.Equals("(")) parentheses++;
@@ -411,7 +452,7 @@ namespace Server
                 else if (text.Equals(".")) periods++;
 
                 // Test the current requirement
-                functionRequirement = this.TestConstructorRequirement_java(functionRequirement, text, ref name, ref modifiers, ref parameters, squareBrackets, angleBrackets, parentheses, periods);
+                functionRequirement = TestConstructorRequirement_java(functionRequirement, text, ref name, ref modifiers, ref parameters, squareBrackets, angleBrackets, parentheses, periods);
 
                 if (periods > 0 && !text.Equals(".")) periods--;
                 else if (text.Equals(")")) parentheses--;
@@ -421,7 +462,7 @@ namespace Server
 
             if (functionRequirement == 4 || functionRequirement == 7) // Function signature detected - create a new function
             {
-                this.NewFunction(functionIdentifier, name, modifiers, new List<string>(), new List<string>(), parameters, new List<string>());
+                NewFunction(name, modifiers, new List<string>(), new List<string>(), parameters, new List<string>());
                 return true;
             }
 
@@ -429,25 +470,24 @@ namespace Server
         }
 
         /* Detects the syntax for a Deconstructor function */
-        private bool CheckIfDeconstructor(string[] functionIdentifier)
+        private bool CheckIfDeconstructor()
         {
             // The deconstructor requirement to check next. If this ends at 4, there is a new function. If this ends at -1, there is not a new function.
             int functionRequirement = 0;
 
             string name = "";
 
-            for (int i = 0; i < functionIdentifier.Length; i++)
+            foreach (string text in currentText)
             {
-                string text = functionIdentifier[i];
                 if (text.Length < 1) continue;
 
                 // Test the current requirement
-                functionRequirement = this.TestDeconstructorRequirement(functionRequirement, text, ref name);
+                functionRequirement = TestDeconstructorRequirement(functionRequirement, text, ref name);
             }
 
             if (functionRequirement == 4) // Deconstructor signature detected - create a new function
             {
-                this.NewFunction(functionIdentifier, name, new List<string>(), new List<string>(), new List<string>(), new List<string>(), new List<string>());
+                NewFunction(name, new List<string>(), new List<string>(), new List<string>(), new List<string>(), new List<string>());
                 return true;
             }
 
@@ -460,28 +500,28 @@ namespace Server
             switch (functionRequirement)
             {
                 case 0: // To pass: Find text entry that could be a return type.
-                    functionRequirement = this.FunctionStep0(text, ref returnTypes, parentheses);
+                    functionRequirement = FunctionStep0(text, ref returnTypes, parentheses);
                     break;
                 case 1: // To pass: Find text entry that could be a name.
-                    functionRequirement = this.FunctionStep1(text, ref name, ref modifiers, ref returnTypes, parentheses, angleBrackets + squareBrackets);
+                    functionRequirement = FunctionStep1(text, ref name, ref modifiers, ref returnTypes, parentheses, angleBrackets + squareBrackets);
                     break;
                 case 2: // To pass: Find opening parenthesis.
-                    functionRequirement = this.FunctionStep2(text, ref name, ref modifiers, ref returnTypes, ref generics, squareBrackets, angleBrackets);
+                    functionRequirement = FunctionStep2(text, ref name, ref modifiers, ref returnTypes, ref generics, squareBrackets, angleBrackets);
                     break;
                 case 3: // To pass: Find closing parenthesis.
-                    functionRequirement = this.FunctionStep3(text, ref parameters, parentheses);
+                    functionRequirement = FunctionStep3(text, ref parameters, parentheses);
                     break;
                 case 4: // To pass: Find no more text after closing parenthesis, or continue to test for function with multiple return types.
-                    functionRequirement = this.FunctionStep4(text, ref name, ref modifiers, ref returnTypes, ref parameters);
+                    functionRequirement = FunctionStep4(text, ref name, ref modifiers, ref returnTypes, ref parameters);
                     break;
                 case 5: // To pass: Find opening parenthesis.
-                    functionRequirement = this.FunctionStep5(text, ref generics, angleBrackets);
+                    functionRequirement = FunctionStep5(text, ref generics, angleBrackets);
                     break;
                 case 6: // To pass: Find closing parenthesis.
-                    functionRequirement = this.FunctionStep6(text, ref parameters, parentheses);
+                    functionRequirement = FunctionStep6(text, ref parameters, parentheses);
                     break;
                 case 7: // To pass: Find no more text after closing parenthesis.
-                    functionRequirement = this.FunctionStep7(text);
+                    functionRequirement = FunctionStep7(text);
                     break;
             }
             return functionRequirement;
@@ -493,28 +533,28 @@ namespace Server
             switch (functionRequirement)
             {
                 case 0: // To pass: The name of function equals name of the class.
-                    functionRequirement = this.ConstructorStep0_cs(text, ref name);
+                    functionRequirement = ConstructorStep0_cs(text, ref name);
                     break;
                 case 1: // To pass: Find opening parenthesis.
-                    functionRequirement = this.ConstructorStep1_cs(text, ref modifiers, ref name, brackets, periods);
+                    functionRequirement = ConstructorStep1_cs(text, ref modifiers, ref name, brackets, periods);
                     break;
                 case 2: // To pass: Find closing parenthesis.
-                    functionRequirement = this.ConstructorStep2_cs(text, ref parameters, parentheses);
+                    functionRequirement = ConstructorStep2_cs(text, ref parameters, parentheses);
                     break;
                 case 3: // To continue: Find colon.
-                    functionRequirement = this.ConstructorStep3_cs(text, ref baseParameters);
+                    functionRequirement = ConstructorStep3_cs(text, ref baseParameters);
                     break;
                 case 4: // To pass: Find "base".
-                    functionRequirement = this.ConstructorStep4_cs(text, ref baseParameters);
+                    functionRequirement = ConstructorStep4_cs(text, ref baseParameters);
                     break;
                 case 5: // To pass: Find opening parenthesis.
-                    functionRequirement = this.ConstructorStep5_cs(text, ref baseParameters);
+                    functionRequirement = ConstructorStep5_cs(text, ref baseParameters);
                     break;
                 case 6: // To pass: Find closing parenthesis.
-                    functionRequirement = this.ConstructorStep6_cs(text, ref baseParameters);
+                    functionRequirement = ConstructorStep6_cs(text, ref baseParameters);
                     break;
                 case 7: // To pass: Find no more text after closing parenthesis.
-                    functionRequirement = this.ConstructorStep7_cs(text);
+                    functionRequirement = ConstructorStep7_cs(text);
                     break;
             }
             return functionRequirement;
@@ -526,16 +566,16 @@ namespace Server
             switch (functionRequirement)
             {
                 case 0: // To pass: The name of function equals name of the class.
-                    functionRequirement = this.ConstructorStep0_java(text, ref name);
+                    functionRequirement = ConstructorStep0_java(text, ref name);
                     break;
                 case 1: // To pass: Find opening parenthesis.
-                    functionRequirement = this.ConstructorStep1_java(text, ref name, ref modifiers, squareBrackets + angleBrackets, periods);
+                    functionRequirement = ConstructorStep1_java(text, ref name, ref modifiers, squareBrackets + angleBrackets, periods);
                     break;
                 case 2: // To pass: Find opening parenthesis.
-                    functionRequirement = this.ConstructorStep2_java(text, ref parameters, parentheses);
+                    functionRequirement = ConstructorStep2_java(text, ref parameters, parentheses);
                     break;
                 case 3: // To pass: Find no more text after closing parenthesis.
-                    functionRequirement = this.ConstructorStep3_java(text);
+                    functionRequirement = ConstructorStep3_java(text);
                     break;
             }
             return functionRequirement;
@@ -547,19 +587,19 @@ namespace Server
             switch (functionRequirement)
             {
                 case 0: // To pass: Find tilde.
-                    functionRequirement = this.DeconstructorStep0(text, ref name);
+                    functionRequirement = DeconstructorStep0(text, ref name);
                     break;
                 case 1: // To pass: The name of function equals name of the class.
-                    functionRequirement = this.DeconstructorStep1(text, ref name);
+                    functionRequirement = DeconstructorStep1(text, ref name);
                     break;
                 case 2: // To pass: Find opening parenthesis.
-                    functionRequirement = this.DeconstructorStep2(text);
+                    functionRequirement = DeconstructorStep2(text);
                     break;
                 case 3: // To pass: Find closing parenthesis.
-                    functionRequirement = this.DeconstructorStep3(text);
+                    functionRequirement = DeconstructorStep3(text);
                     break;
                 case 4: // To pass: Find no more text after closing parenthesis.
-                    functionRequirement = this.DeconstructorStep4(text);
+                    functionRequirement = DeconstructorStep4(text);
                     break;
             }
             return functionRequirement;
@@ -577,7 +617,7 @@ namespace Server
                 return 0;
             }
 
-            if ((!Char.IsSymbol(text[0]) && !Char.IsPunctuation(text[0])) || text[0].Equals('_'))
+            if ((!char.IsSymbol(text[0]) && !char.IsPunctuation(text[0])) || text[0].Equals('_'))
             {
                 returnTypes.Add(text);
                 return 1;
@@ -609,7 +649,7 @@ namespace Server
                 return 1;
             }
 
-            if ((!Char.IsSymbol(text[0]) && !Char.IsPunctuation(text[0])) || text[0].Equals('_'))
+            if ((!char.IsSymbol(text[0]) && !char.IsPunctuation(text[0])) || text[0].Equals('_'))
             {
                 name = text;
                 return 2;
@@ -640,7 +680,7 @@ namespace Server
                 returnTypes.Add(text);
             }
 
-            else if ((!Char.IsSymbol(text[0]) && !Char.IsPunctuation(text[0])) || text[0].Equals('_'))
+            else if ((!char.IsSymbol(text[0]) && !char.IsPunctuation(text[0])) || text[0].Equals('_'))
             {
                 if (name.Length == 0) // Need to find name again
                     name = text;
@@ -678,7 +718,7 @@ namespace Server
             if (text.Equals(" ")) return 4;
 
             // Check for a function signature with multiple return types
-            if (parameters.Count > 1 && returnTypes.Count > 0 && ((!Char.IsSymbol(text[0]) && !Char.IsPunctuation(text[0])) || text[0].Equals('_')))
+            if (parameters.Count > 1 && returnTypes.Count > 0 && ((!char.IsSymbol(text[0]) && !char.IsPunctuation(text[0])) || text[0].Equals('_')))
             {
                 foreach (string entry in returnTypes) modifiers.Add(entry);
                 modifiers.Add(name);
@@ -731,7 +771,7 @@ namespace Server
         {
             if (text.Equals(" ")) return 0;
 
-            if ((!Char.IsSymbol((char)text[0]) && !Char.IsPunctuation((char)text[0])) || ((char)text[0]).Equals('_'))
+            if ((!char.IsSymbol((char)text[0]) && !char.IsPunctuation((char)text[0])) || ((char)text[0]).Equals('_'))
             {
                 name = text;
                 if (typeStack.Count > 0 && typeStack.Peek().GetType() == typeof(ProgramFunction) && typeStack.Peek().Name.Equals(name))
@@ -753,7 +793,7 @@ namespace Server
                 return -1;
             }
 
-            if (brackets == 0 && periods == 0 && (!Char.IsSymbol((char)text[0]) && !Char.IsPunctuation((char)text[0])) || ((char)text[0]).Equals('_'))
+            if (brackets == 0 && periods == 0 && (!char.IsSymbol((char)text[0]) && !char.IsPunctuation((char)text[0])) || ((char)text[0]).Equals('_'))
             {
                 modifiers.Add(name);
                 name = text;
@@ -850,7 +890,7 @@ namespace Server
         {
             if (text.Equals(" ")) return 0;
 
-            if ((!Char.IsSymbol((char)text[0]) && !Char.IsPunctuation((char)text[0])) || ((char)text[0]).Equals('_'))
+            if ((!char.IsSymbol((char)text[0]) && !char.IsPunctuation((char)text[0])) || ((char)text[0]).Equals('_'))
             {
                 name = text;
                 if (typeStack.Count > 0 && typeStack.Peek().GetType() == typeof(ProgramFunction) && typeStack.Peek().Name.Equals(name))
@@ -872,7 +912,7 @@ namespace Server
                 return -1;
             }
 
-            if (brackets == 0 && periods == 0 && (!Char.IsSymbol((char)text[0]) && !Char.IsPunctuation((char)text[0])) || ((char)text[0]).Equals('_'))
+            if (brackets == 0 && periods == 0 && (!char.IsSymbol((char)text[0]) && !char.IsPunctuation((char)text[0])) || ((char)text[0]).Equals('_'))
             {
                 modifiers.Add(name);
                 name = text;
@@ -965,7 +1005,7 @@ namespace Server
         }
 
         /* Check for control flow scope openers within functions: if, else if, else, for, for each, while, do while, switch */
-        private bool CheckControlFlowScopes(string entry)
+        private bool CheckControlFlowScopes(StreamWriter writer, string entry)
         {
             ControlFlowScopeRule newRule;
             bool scopeOpener = false;
@@ -982,14 +1022,14 @@ namespace Server
             newRule = CFScopeRuleFactory.GetRule(activeRules, entry, scopeStack.Count, fileType);
             if (newRule != null) activeRules.Add(newRule);
 
-            if (scopeOpener) this.ClearCurrentItems();
+            if (scopeOpener) ClearCurrentItems(writer);
             else activeRules.RemoveAll(rule => rule.Complete);
 
             return scopeOpener;
         }
 
         /* Maintains stacks when a bracketed scope ends; returns true if the type of scope is equal to scopeType */
-        private bool EndBracketedScope(string scopeType)
+        private bool EndBracketedScope(StreamWriter writer, string scopeType)
         {
             bool isScopeType = false;
 
@@ -1024,12 +1064,12 @@ namespace Server
             }
 
             activeRules.Clear();
-            this.ClearCurrentItems();
+            ClearCurrentItems(writer);
             return isScopeType;
         }
 
         /* Maintains the stack when a bracketless scope ends; returns true if the scope is a function */
-        private bool EndBracketlessScope()
+        private bool EndBracketlessScope(StreamWriter writer)
         {
             bool isFunction = false;
             if (!activeRules.OfType<ForRule_CS>().Any())
@@ -1050,68 +1090,62 @@ namespace Server
                     }
                     scopeStack.Pop();
                 }
-                this.ClearCurrentItems();
+                ClearCurrentItems(writer);
             }
             return isFunction;
         }
 
         /* Maintains the stack when there is a scope closer; returns true if a function is ending */
-        private bool CheckScopeClosersWithinFunction(string entry, ref int index)
+        private bool CheckScopeClosersWithinFunction(StreamWriter writer, string entry)
         {
             // Check for closing parenthesis
             if (entry.Equals(")") && scopeStack.Count > 0 && scopeStack.Peek().Equals("(")) scopeStack.Pop();
 
             if (entry.Equals("}")) // Check for the end of an existing bracketed scope
             {
-                if (this.EndBracketedScope("function"))
+                if (EndBracketedScope(writer, "function"))
                     return true;
             }
 
             // Check for the end of an existing bracketless scope
-            if (entry.Equals(";"))
-                if (this.EndBracketlessScope()) // True if bracketless scope was a function
-                {
-                    index++;
-                    return true;
-                }
+            if (entry.Equals(";") && EndBracketlessScope(writer)) return true; // True if bracketless scope was a function
 
             return false;
         }
 
         /* Maintains the stack when there is a scope opener */
-        private void CheckScopeOpenersWithinFunction(string entry, bool scopeOpener, ref int index)
+        private void CheckScopeOpenersWithinFunction(string entry, bool scopeOpener)
         {
             if (entry.Equals("(")) scopeStack.Push(entry); // Check for open parenthesis
 
             if (entry.Equals("{"))
             {
-                if (!scopeOpener && this.CheckIfFunction()) // Check if a new function is being started
+                if (!scopeOpener && CheckIfFunction()) // Check if a new function is being started
                 {
                     scopeStack.Push(entry);
-                    index = this.ProcessFunctionData(++index);
+                    ProcessFunctionData();
                 }
                 else // Push scope opener onto scopeStack
                     scopeStack.Push(entry);
             }
 
-            if (entry.Equals("=>"))
-                if (this.CheckIfFunction()) // Check if a new lambda function is being started
-                    index = this.ProcessFunctionData(++index);
+            if (entry.Equals("=>") && CheckIfFunction()) // Check if a new lambda function is being started
+                ProcessFunctionData();
         }
 
         /* Add entry to current ProgramDataType's text list for classes, interfaces, and functions */
-        private void UpdateTextData(string entry)
+        /*private void UpdateTextData(string entry)
         {
             if (typeStack.Count > 0 && (typeStack.Peek().GetType() == typeof(ProgramClass)
                     || typeStack.Peek().GetType() == typeof(ProgramInterface)
                     || typeStack.Peek().GetType() == typeof(ProgramFunction)))
                 ((ProgramDataType)typeStack.Peek()).TextData.Add(entry);
-        }
+        }*/
 
         /* Increments the current function's size, if possible and appropriate */
         private void IncrementFunctionSize()
         {
-            if (typeStack.Peek().GetType() == typeof(ProgramFunction) && ((ProgramFunction)typeStack.Peek()).TextData.Count > 0)
+            if (typeStack.Peek().GetType() == typeof(ProgramFunction))
                 ((ProgramFunction)typeStack.Peek()).Size++;
         }
 
@@ -1160,7 +1194,7 @@ namespace Server
         }
 
         /* Remove the function signature from the current class's or interface's text (for relationship analysis) */
-        private void RemoveFunctionSignatureFromTextData(int size)
+        /*private void RemoveFunctionSignatureFromTextData(int size)
         {
             if (typeStack.Count > 0 && (typeStack.Peek().GetType() == typeof(ProgramClass)
                 || typeStack.Peek().GetType() == typeof(ProgramInterface) || typeStack.Peek().GetType() == typeof(ProgramFunction)))
@@ -1177,26 +1211,29 @@ namespace Server
                 // Remove the function signature
                 ((ProgramDataType)typeStack.Peek()).TextData = ((ProgramDataType)typeStack.Peek()).TextData.GetRange(0, ((ProgramDataType)typeStack.Peek()).TextData.Count - size);
             }
-        }
+        }*/
 
         /* Updates the StringBuilder in the case of a new statement or scope */
-        private void UpdateStringBuilder(string entry)
+        private void UpdateCurrentText(StreamWriter writer, string entry)
         {
             if (!entry.Equals(" "))
             {
+                currentText.Add(entry);
                 if (entry.Equals(";") || entry.Equals("}") || entry.Equals("{"))
                 {
-                    stringBuilder.Clear();
-                    return;
+                    if (writer != null)
+                        foreach (string text in currentText) writer.WriteLine(text);
+                    currentText.Clear();
                 }
-                if (stringBuilder.Length > 0) stringBuilder.Append(" ");
-                stringBuilder.Append(entry);
             }
         }
 
-        private void ClearCurrentItems()
+        /* Clears the current text and active rules */
+        private void ClearCurrentItems(StreamWriter writer)
         {
-            stringBuilder.Clear();
+            if (writer != null)
+                foreach (string text in currentText) writer.WriteLine(text);
+            currentText.Clear();
             activeRules.Clear();
         }
     }

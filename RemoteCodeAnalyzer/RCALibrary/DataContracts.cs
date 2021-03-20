@@ -43,6 +43,7 @@ namespace RCALibrary
         
         public FileBlock()
         {
+            LastBlock = false;
             Buffer = new byte[16000];
         }
 
@@ -50,6 +51,7 @@ namespace RCALibrary
         {
             FileName = filename;
             Number = number;
+            LastBlock = false;
             Buffer = new byte[16000];
         }
     }

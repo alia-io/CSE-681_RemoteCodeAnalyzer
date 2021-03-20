@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Server;
+using CodeAnalyzer;
 
 namespace UnitTests
 {
     [TestClass]
     public class SizeLimitedQueueTests
     {
-        private readonly SizeLimitedQueue<int> queue = new SizeLimitedQueue<int>(5);
+        private readonly SizeLimitedBlockingQueue<int> queue = new SizeLimitedBlockingQueue<int>(5);
 
         [TestMethod]
         public void TestQueue1()

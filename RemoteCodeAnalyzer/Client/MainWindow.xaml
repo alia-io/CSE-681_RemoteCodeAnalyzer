@@ -56,7 +56,7 @@
                 </StackPanel>
 
                 <ScrollViewer x:Name="FileTextView" Grid.Row="1" Margin="20,5,20,20" Visibility="Collapsed">
-                    <TextBlock x:Name="FileText" Foreground="#EAE2B7" FontSize="14" TextWrapping="Wrap">
+                    <TextBlock x:Name="FileText" Foreground="#EAE2B7" FontSize="12" TextWrapping="Wrap">
                         <Span>Test for normal text: test test test test test test</Span>
                         <Span>More normal text: test test test test test test test</Span>
                         <Span Foreground="#FCBF49" FontWeight="Bold">Test for low priority text: test test test test test</Span>
