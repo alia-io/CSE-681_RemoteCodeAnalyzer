@@ -43,7 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AnalysisWriter.cs" />
-    <Compile Include="CentralData.cs" />
+    <Compile Include="ClassAnalyzer.cs" />
     <Compile Include="Executive.cs" />
     <Compile Include="FileAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

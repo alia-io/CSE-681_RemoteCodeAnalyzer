@@ -239,8 +239,6 @@ namespace Client
         public bool RequestAnalysisFile(string filename, out string fileText)
         {
             // TODO: include colored lines
-            MemoryStream s = new MemoryStream();
-            StreamReader r;     // Used to convert MemoryStream bytes into a string
             FileBlock block;    // The next file block
             string user = Directory.Attribute("author").Value;
             string project = Directory.Attribute("name").Value;
@@ -248,7 +246,7 @@ namespace Client
 
             fileText = "";  // Output file text
 
-            using (s)
+            using (MemoryStream s = new MemoryStream())
             {
                 do
                 {
@@ -266,10 +264,11 @@ namespace Client
                     s.Write(block.Buffer, 0, block.Length);
                 }
                 while (!block.LastBlock);
-            }
 
-            r = new StreamReader(s);
-            fileText = r.ReadToEnd();
+                using (StreamReader r = new StreamReader(s)) // Convert MemoryStream bytes into a string
+                    fileText = r.ReadToEnd();
+            }
+            
             return true;
         }
 

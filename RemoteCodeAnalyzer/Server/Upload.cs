@@ -78,23 +78,16 @@ namespace Server
         public XElement CompleteUpload()
         {
             XElement version = currentVersion;
-            string directoryPath = ".\\root\\" + version.Attribute("author").Value
-                + "\\" + version.Attribute("name").Value
-                + "\\" + version.Attribute("number").Value;
-            Executive analyzer = new Executive(currentFiles.Count, directoryPath);
+            string project = version.Attribute("name").Value;
+            string number = version.Attribute("number").Value;
+            string directoryPath = ".\\root\\" + version.Attribute("author").Value + "\\" + project + "\\" + number;
+            Executive analyzer = new Executive(currentFiles.Count, directoryPath, project, number);
 
-            Task.Run(() =>
-            {
-                foreach (XElement file in currentFiles)
-                {
-                    analyzer.EnqueueInputFile(file.Attribute("name") + "." + file.Attribute("type"));
-                }
-            });
+            _ = analyzer.EnqueueInputFiles(currentFiles);
 
             analyzer.PerformCodeAnalysis();
 
-            // TODO: make sure code analysis worked
-
+            // TODO:
             Host.AddNewVersion(currentVersion, new XElement("FA"), new XElement("RA"), currentFiles);
 
             currentVersion = null;
