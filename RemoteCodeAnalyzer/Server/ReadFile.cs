@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.ServiceModel;
 using RCALibrary;
+using System.ServiceModel.Channels;
 
 namespace Server
 {
@@ -19,6 +20,8 @@ namespace Server
         {
             string filepath = ".\\root\\" + user + "\\" + project + "\\" + version + "\\" + filename;
             FileBlock block = new FileBlock(filepath, blockNumber);
+
+            Console.WriteLine("Read Block Request Received from IP Address: {0}", (OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name] as RemoteEndpointMessageProperty).Address);
 
             using (FileStream s = new FileStream(filepath, FileMode.Open))
             {

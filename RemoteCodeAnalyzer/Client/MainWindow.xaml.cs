@@ -482,11 +482,11 @@ namespace Client
             }
             else
             {
-                if (app.Directory.Name.ToString().Equals("project") && app.Directory.Attribute("name").Value.Equals(newVersion.Attribute("name").Value)) // Add new version to Explorer view
+                if (app.Directory.Name.ToString().Equals("project") && app.Directory.Attribute("author").Value.Equals(app.User) && app.Directory.Attribute("name").Value.Equals(newVersion.Attribute("name").Value)) // Add new version to Explorer view
                 {
                     StackPanel outerPanel = new StackPanel { Orientation = Orientation.Horizontal };
                     StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left };
-                    Button button = new Button { Name = "V" + newVersion.Attribute("version"), Content = outerPanel, Height = 75, Margin = new Thickness(10, 5, 10, 5) };
+                    Button button = new Button { Name = "V" + newVersion.Attribute("number").Value, Content = outerPanel, Height = 75, Margin = new Thickness(10, 5, 10, 5) };
 
                     button.Click += DirectoryButton_Click;
                     DateTime.TryParseExact(newVersion.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
@@ -495,7 +495,7 @@ namespace Client
                     outerPanel.Children.Add(innerPanel);
 
                     innerPanel.Children.Add(new TextBlock { Text = newVersion.Attribute("name").Value, MaxWidth = 286, FontSize = 14, TextWrapping = TextWrapping.Wrap, Foreground = FindResource("TextColor") as SolidColorBrush });
-                    innerPanel.Children.Add(new TextBlock { Text = newVersion.Attribute("author").Value, FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
+                    innerPanel.Children.Add(new TextBlock { Text = "Author: " + newVersion.Attribute("author").Value, FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
                     innerPanel.Children.Add(new TextBlock { Text = "Uploaded: " + date.ToString("g"), FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
                     innerPanel.Children.Add(new TextBlock { Text = "Version: " + newVersion.Attribute("number").Value, FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
 

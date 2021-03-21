@@ -59,8 +59,8 @@ namespace CodeAnalyzer
 
         public SizeLimitedBlockingQueue(int capacity) : base()
         {
-            producer = new Semaphore(0, capacity);
-            consumer = new Semaphore(capacity, capacity);
+            producer = new Semaphore(capacity, capacity);
+            consumer = new Semaphore(0, capacity);
         }
 
         public new void Enqueue(T item)
@@ -109,10 +109,18 @@ namespace CodeAnalyzer
         {
             get
             {
-                ProgramType item;
+                ProgramType item = null;
                 lock (_lock)
                 {
-                    item = list[index];
+                    try
+                    {
+                        item = list[index];
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Cannot access ConcurrentOrderedList index: {0}", e.ToString());
+                        Console.WriteLine(e.StackTrace);
+                    }
                 }
                 return item;
             }
@@ -127,9 +135,20 @@ namespace CodeAnalyzer
             public int Compare(ProgramType x, ProgramType y) => x.Name.CompareTo(y.Name);
         }
 
-        public void Add(ProgramType item)
+        public bool Add(ProgramType item)
         {
-            lock (_lock) Insert(BinarySearch(item, 0, Count, new NameComparer()), item);
+            bool result = false;
+            lock (_lock)
+            {
+                int index = BinarySearch(item, 0, Count, new NameComparer());
+
+                if (index >= 0 && index <= Count)
+                {
+                    Insert(index, item);
+                    result = true;
+                }
+            }
+            return result;
         }
 
         private void Insert(int index, ProgramType item)
@@ -142,6 +161,8 @@ namespace CodeAnalyzer
 
         private int BinarySearch(ProgramType item, int low, int high, NameComparer comparer)
         {
+            if (low == Count) return Count;
+
             if (high >= low)
             {
                 int middle = low + ((high - low) / 2);
@@ -155,7 +176,7 @@ namespace CodeAnalyzer
                     else if (compare > 0) return middle + 1;
                 }
 
-                if (compare < 0) return BinarySearch(item, low, middle - 1, comparer);
+                if (compare < 0) return BinarySearch(item, low, middle, comparer);
                 
                 if (compare > 0) return BinarySearch(item, middle + 1, high, comparer);
             }

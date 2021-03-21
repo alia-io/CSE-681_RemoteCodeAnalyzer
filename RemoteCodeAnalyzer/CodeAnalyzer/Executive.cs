@@ -72,16 +72,13 @@ namespace CodeAnalyzer
             writer.Wait(); // Wait for all tasks to complete
 
             // Remove the temp directory
-            while (Directory.Exists(directoryPath + "\\temp"))
+            try
             {
-                try
-                {
-                    Directory.Delete(directoryPath + "\\temp");
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Failed to delete temp directory.\n{0}", e.ToString());
-                }
+                Directory.Delete(directoryPath + "\\temp", true);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Failed to delete temp directory.\n{0}", e.ToString());
             }
 
             return true;
@@ -93,7 +90,7 @@ namespace CodeAnalyzer
             await Task.Run(() =>
             {
                 foreach (XElement file in fileNames)
-                    inputFiles.Enqueue(file.Attribute("name") + "." + file.Attribute("type"));
+                    inputFiles.Enqueue(file.Attribute("name").Value + "." + file.Attribute("type").Value);
             });
         }
 

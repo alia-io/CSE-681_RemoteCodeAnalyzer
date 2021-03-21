@@ -265,6 +265,7 @@ namespace Client
                 }
                 while (!block.LastBlock);
 
+                s.Position = 0;
                 using (StreamReader r = new StreamReader(s)) // Convert MemoryStream bytes into a string
                     fileText = r.ReadToEnd();
             }
@@ -301,10 +302,8 @@ namespace Client
                 while (!block.LastBlock);
 
                 s.Position = 0;
-                using (StreamReader r = new StreamReader(s))
-                {
+                using (StreamReader r = new StreamReader(s)) // Convert MemoryStream bytes into a string
                     fileText = r.ReadToEnd();
-                }
             }
 
             return true;

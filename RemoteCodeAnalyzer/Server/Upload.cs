@@ -10,6 +10,7 @@ using System.ServiceModel;
 using System.Runtime.Serialization;
 using CodeAnalyzer;
 using RCALibrary;
+using System.ServiceModel.Channels;
 
 namespace Server
 {
@@ -30,25 +31,29 @@ namespace Server
                 new XAttribute("created", time),
                 new XAttribute("edited", time));
 
+            Console.WriteLine("New Project Request Received from IP Address: {0}", (OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name] as RemoteEndpointMessageProperty).Address);
+
             if (Host.AddNewProject(project)) return project;
             else return null;
         }
 
         public bool NewUpload(string username, string projectName)
         {
+            Console.WriteLine("New Upload Request Received from IP Address: {0}", (OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name] as RemoteEndpointMessageProperty).Address);
+
             if (currentVersion != null) return false; // Upload is already in progress
 
             currentVersion = Host.GetNewVersion(username, projectName, DateTime.Now.ToString("yyyyMMddHHmm"));
 
             if (currentVersion == null) return false;
 
-            // TODO: create new codeanalyzer
-
             return true;
         }
 
         public void UploadBlock(FileBlock block)
         {
+            Console.WriteLine("Upload Block Request Received from IP Address: {0}", (OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name] as RemoteEndpointMessageProperty).Address);
+
             if (block.Number == 0)
             {
                 if (currentFilePath != null)
@@ -87,6 +92,8 @@ namespace Server
 
             Executive analyzer = new Executive(currentFiles.Count, ".\\root\\" + author + "\\" + project + "\\" + number, project, number);
 
+            Console.WriteLine("Complete Upload Request Received from IP Address: {0}", (OperationContext.Current.IncomingMessageProperties[RemoteEndpointMessageProperty.Name] as RemoteEndpointMessageProperty).Address);
+
             _ = analyzer.EnqueueInputFiles(currentFiles);
 
             if (!analyzer.PerformCodeAnalysis())
@@ -100,14 +107,14 @@ namespace Server
             version.Add(new XElement("analysis",
                 new XAttribute("type", "function"),
                 new XAttribute("project", project),
-                new XAttribute("version", version),
+                new XAttribute("version", number),
                 new XAttribute("author", author),
                 new XAttribute("date", date)));
 
             version.Add(new XElement("analysis",
                 new XAttribute("type", "relationship"),
                 new XAttribute("project", project),
-                new XAttribute("version", version),
+                new XAttribute("version", number),
                 new XAttribute("author", author),
                 new XAttribute("date", date)));
 
