@@ -241,12 +241,16 @@ namespace CodeAnalyzer
 
             if (programClassTypes.Contains(name))
             {
-                ProgramClassType otherProgramClassType = programClassTypes[name];
-
-
-
-                Console.WriteLine("\n\nError: Cannot determine data for two classes with the same name.\n\n");
-                return;
+                if (GetUniqueNames(parent, programClassTypes[name].Parent, name, out string currentName, out string otherName))
+                {
+                    programClassTypes[name].Name = otherName;
+                    name = currentName;
+                }
+                else
+                {
+                    Console.WriteLine("\n\nError: Cannot determine data for two classes with the same name.\n\n");
+                    return;
+                }
             }
 
             // Create the new class or interface object
@@ -259,15 +263,45 @@ namespace CodeAnalyzer
         }
 
         /* If there is a name conflict in ProgramClassTypes collection, try to set unique names */
-        private bool GetUniqueNames(ProgramType currentParent, string name)
+        private bool GetUniqueNames(ProgramType currentParent, ProgramType otherParent, string name, out string currentName, out string otherName)
         {
             List<string> currentParentNames = new List<string>();
             List<string> otherParentNames = new List<string>();
+            int index;
+
+            currentName = name;
+            otherName = name;
 
             while (currentParent != null)
             {
                 currentParentNames.Add(currentParent.Name);
                 currentParent = currentParent.Parent;
+            }
+
+            while (otherParent != null)
+            {
+                otherParentNames.Add(otherParent.Name);
+                otherParent = otherParent.Parent;
+            }
+
+            for (index = 0; index < currentParentNames.Count && index < otherParentNames.Count; index++)
+            {
+                currentName = currentParentNames[index] + "." + currentName;
+                otherName = otherParentNames[index] + "." + otherName;
+
+                if (!currentName.Equals(otherName)) return true;
+            }
+
+            if (currentParentNames.Count > otherParentNames.Count)
+            {
+                currentName = currentParentNames[index] + "." + currentName;
+                return true;
+            }
+
+            if (otherParentNames.Count > currentParentNames.Count)
+            {
+                otherName = otherParentNames[index] + "." + otherName;
+                return true;
             }
 
             return false;
@@ -883,7 +917,7 @@ namespace CodeAnalyzer
         {
             if (text.Equals(" ")) return 0;
 
-            if ((!char.IsSymbol((char)text[0]) && !char.IsPunctuation((char)text[0])) || ((char)text[0]).Equals('_'))
+            if ((!char.IsSymbol(text[0]) && !char.IsPunctuation(text[0])) || (text[0]).Equals('_'))
             {
                 name = text;
                 if (typeStack.Count > 0 && typeStack.Peek().GetType() == typeof(ProgramFunction) && typeStack.Peek().Name.Equals(name))
@@ -905,7 +939,7 @@ namespace CodeAnalyzer
                 return -1;
             }
 
-            if (brackets == 0 && periods == 0 && (!char.IsSymbol((char)text[0]) && !char.IsPunctuation((char)text[0])) || ((char)text[0]).Equals('_'))
+            if (brackets == 0 && periods == 0 && (!char.IsSymbol(text[0]) && !char.IsPunctuation(text[0])) || (text[0]).Equals('_'))
             {
                 modifiers.Add(name);
                 name = text;

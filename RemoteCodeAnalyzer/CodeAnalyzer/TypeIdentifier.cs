@@ -20,7 +20,7 @@ namespace CodeAnalyzer
     /* Defines core information for all relevant program types: files, namespaces, classes, interfaces, and functions */
     public abstract class ProgramType
     {
-        public virtual string Name { get; protected set; }
+        public virtual string Name { get; set; }
         public virtual string DirectoryPath { get; protected set; }
         public virtual ProgramType Parent { get; protected set; }
         public List<ProgramType> ChildList { get; }
@@ -66,7 +66,8 @@ namespace CodeAnalyzer
         public override string Name // Maintain the ProgramClassTypeCollection if a name changes
         {
             get { return base.Name; }
-            protected set
+
+            set
             {
                 if (ProgramClassTypes != null) ProgramClassTypes.NotifyNameChange(this, value);
                 base.Name = value;
