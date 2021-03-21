@@ -1,0 +1,9 @@
+Money
+=
+money
+;
+DailySalary
+=
+dailySalary
+;
+}

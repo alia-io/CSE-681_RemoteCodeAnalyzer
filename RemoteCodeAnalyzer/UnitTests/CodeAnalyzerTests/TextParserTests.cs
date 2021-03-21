@@ -13,33 +13,23 @@ namespace UnitTests.CodeAnalyzerTests
     public class TextParserTests
     {
         [TestMethod]
-        public void TextParser1()
+        public void Test1()
         {
-            string filePath = "..\\..\\TestFiles\\TextParser1_Input.txt";
-            string tempFilePath = "..\\..\\TestFiles\\temp\\TextParser1_Input.txt.txt";
-            string expected = File.ReadAllText("..\\..\\TestFiles\\TextParser1_Expected.txt");
-            string actual;
+            new TextParser("..\\..\\TestFiles\\TextParser", "TestInput1.txt").ProcessFile();
 
-            TextParser parser = new TextParser(filePath, tempFilePath);
-            parser.ProcessFile();
-
-            actual = File.ReadAllText(tempFilePath);
+            string expected = File.ReadAllText("..\\..\\TestFiles\\TextParser\\TestExpected1.txt");
+            string actual = File.ReadAllText("..\\..\\TestFiles\\TextParser\\temp\\TestInput1.txt.txt");
 
             Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
-        public void TestParser2()
+        public void Test2()
         {
-            string filePath = "..\\..\\TestFiles\\TextParser2_Input.txt";
-            string tempFilePath = "..\\..\\TestFiles\\temp\\TextParser2_Input.txt.txt";
-            string expected = File.ReadAllText("..\\..\\TestFiles\\TextParser2_Expected.txt");
-            string actual;
+            new TextParser("..\\..\\TestFiles\\TextParser", "TestInput2.txt").ProcessFile();
 
-            TextParser parser = new TextParser(filePath, tempFilePath);
-            parser.ProcessFile();
-
-            actual = File.ReadAllText(tempFilePath);
+            string expected = File.ReadAllText("..\\..\\TestFiles\\TextParser\\TestExpected2.txt");
+            string actual = File.ReadAllText("..\\..\\TestFiles\\TextParser\\temp\\TestInput2.txt.txt");
 
             Assert.AreEqual(expected, actual);
         }

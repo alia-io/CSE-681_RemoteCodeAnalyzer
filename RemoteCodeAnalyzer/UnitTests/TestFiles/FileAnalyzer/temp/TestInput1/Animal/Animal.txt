@@ -1,0 +1,13 @@
+LocationX
+=
+locationX
+;
+LocationY
+=
+locationY
+;
+Speed
+=
+speed
+;
+}

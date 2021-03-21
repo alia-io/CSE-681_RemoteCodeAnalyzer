@@ -1,0 +1,12 @@
+:
+Animal
+ 
+{
+public
+int
+Cost
+{
+get
+;
+}
+}

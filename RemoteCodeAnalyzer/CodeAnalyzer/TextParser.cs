@@ -18,10 +18,12 @@ namespace CodeAnalyzer
         private readonly string tempFilePath;
         private readonly StringBuilder item = new StringBuilder();
 
-        public TextParser(string filePath, string tempFilePath)
+        // filePath = directoryPath + "\\" + filename, 
+        // tempFilePath = directoryPath + "\\temp\\" + filename + ".txt"
+        public TextParser(string directoryPath, string fileName)
         {
-            this.filePath = filePath;
-            this.tempFilePath = tempFilePath;
+            filePath = directoryPath + "\\" + fileName;
+            tempFilePath = directoryPath + "\\temp\\" + fileName + ".txt";
         }
 
         /* Parses the file text into a list of strings (stored in temp txt file), dividing elements logically */

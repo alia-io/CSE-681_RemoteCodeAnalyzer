@@ -1,0 +1,13 @@
+this
+.
+programClassType
+=
+programClassType
+;
+this
+.
+programClassTypeCollection
+=
+programClassTypeCollection
+;
+}

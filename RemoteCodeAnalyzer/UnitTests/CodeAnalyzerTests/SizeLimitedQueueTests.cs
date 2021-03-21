@@ -14,7 +14,7 @@ namespace UnitTests.CodeAnalyzerTests
         private readonly SizeLimitedBlockingQueue<int> queue = new SizeLimitedBlockingQueue<int>(5);
 
         [TestMethod]
-        public void TestQueue1()
+        public void Test1()
         {
             Task.Run(Enqueuer);
             Task.Run(Dequeuer);

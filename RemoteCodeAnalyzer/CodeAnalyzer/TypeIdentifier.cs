@@ -24,6 +24,9 @@ namespace CodeAnalyzer
         public virtual string DirectoryPath { get; protected set; }
         public virtual ProgramType Parent { get; protected set; }
         public List<ProgramType> ChildList { get; }
+
+        public ProgramType() => ChildList = new List<ProgramType>();
+
         public ProgramType(ProgramType parent, string name)
         {
             Name = name;
@@ -33,8 +36,11 @@ namespace CodeAnalyzer
             {
                 Parent = parent;
                 parent.ChildList.Add(this);
-                DirectoryPath = parent.DirectoryPath + "\\" + 
-                    new Regex(string.Format("[{0}]", Regex.Escape(new string(Path.GetInvalidPathChars())))).Replace(parent.Name, "");
+
+                string directoryName = new Regex(string.Format("[{0}]", Regex.Escape(new string(Path.GetInvalidPathChars())))).Replace(parent.Name, "");
+                if (directoryName.Contains(".")) directoryName = directoryName.Substring(0, directoryName.LastIndexOf('.'));
+
+                DirectoryPath = parent.DirectoryPath + "\\" + directoryName;
             }
         }
     }
@@ -89,10 +95,16 @@ namespace CodeAnalyzer
     public class ProgramFile : ProgramType
     {
         public string FileType { get; }
-        public ProgramFile(string fileName, string directoryPath) : base(null, fileName)
+        public ProgramFile(string fileName, string directoryPath) : base()
         {
-            FileType = fileName.Substring(fileName.LastIndexOf('.') + 1);
-            DirectoryPath = directoryPath;
+            Name = fileName;
+            DirectoryPath = directoryPath + "\\temp";
+
+            if (fileName.Contains("."))
+            {
+                Name = fileName.Substring(0, fileName.LastIndexOf('.'));
+                FileType = fileName.Substring(fileName.LastIndexOf('.') + 1);
+            }
         }
     }
 

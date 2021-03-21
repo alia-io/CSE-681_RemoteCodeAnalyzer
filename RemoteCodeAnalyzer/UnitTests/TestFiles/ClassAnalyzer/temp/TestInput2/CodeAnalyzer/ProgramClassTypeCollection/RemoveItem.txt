@@ -1,0 +1,17 @@
+this
+[
+index
+]
+.
+ProgramClassCollection
+=
+null
+;
+base
+.
+RemoveItem
+(
+index
+)
+;
+}

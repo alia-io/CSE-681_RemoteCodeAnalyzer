@@ -6,7 +6,22 @@ using CodeAnalyzer;
 namespace UnitTests.CodeAnalyzerTests
 {
     [TestClass]
-    public class RulesTests
+    public class FunctionScopeRulesTests
+    {
+        [TestMethod]
+        public void ConstructorRule1()
+        {
+            string[] input = { "public", "Pet",
+                "(", "int", "locationX", ",", "int", "locationY", ",", "int", "speed", ",", "int", "price", ")",
+                ":", "base", "(", "locationX", ",", "locationY", ",", "speed", ")", "{" };
+
+            //TODO:
+            Assert.AreEqual(0, 0);
+        }
+    }
+
+    [TestClass]
+    public class ControlFlowScopeRulesTests
     {
         [TestMethod]
         public void IfRule1()
@@ -104,7 +119,7 @@ namespace UnitTests.CodeAnalyzerTests
                     }
                 }
 
-                newRule = CFScopeRuleFactory.GetRule(activeRules, entry, scopeCount, fileType);
+                newRule = ControlFlowScopeRuleFactory.GetRule(activeRules, entry, scopeCount, fileType);
                 if (newRule != null) activeRules.Add(newRule);
 
                 if (scopeOpener) activeRules.Clear();

@@ -112,7 +112,7 @@ namespace CodeAnalyzer
     }
 
     /* Processor of the file data (except relationship data), filling all internal Child ProgramType lists */
-    class CodeProcessor
+    public class CodeProcessor
     {
         private ProgramClassTypeCollection programClassTypes;
         private ProgramFile programFile;
@@ -1323,8 +1323,8 @@ namespace CodeAnalyzer
 
             if (programClassType.GetType() != typeof(ProgramClass)) return; // Interfaces only collect inheritance data
 
-             /* (1) Get the aggregation data from the class text and text of all children
-              * (2) Get the using data from the parameters fields of all child functions */
+            // (1) Get the aggregation data from the class text and text of all children
+            // (2) Get the using data from the parameters fields of all child functions
             this.SetAggregationAndUsingRelationships(programClassType);
         }
 

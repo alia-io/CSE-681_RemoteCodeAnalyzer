@@ -273,7 +273,7 @@ namespace CodeAnalyzer
         public override string GetScopeType() => "switch";
     }
 
-    public static class CFScopeRuleFactory
+    public static class ControlFlowScopeRuleFactory
     {
         public static ControlFlowScopeRule GetRule(List<ControlFlowScopeRule> activeRules, string rule, int scopeCount, string fileType)
         {
@@ -292,11 +292,11 @@ namespace CodeAnalyzer
 
             if (rule == "for")
             {
-                if (fileType.Equals("*.cs")) return new ForRule_CS(scopeCount);
-                if (fileType.Equals("*.java")) return new ForRule_JAVA(scopeCount);
+                if (fileType.Equals("cs")) return new ForRule_CS(scopeCount);
+                if (fileType.Equals("java")) return new ForRule_JAVA(scopeCount);
             }
 
-            if (rule == "foreach" && !fileType.Equals("*.java")) return new ForEachRule(scopeCount);
+            if (rule == "foreach" && !fileType.Equals("java")) return new ForEachRule(scopeCount);
 
             if (rule == "while") return new WhileRule(scopeCount);
 

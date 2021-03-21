@@ -1,0 +1,16 @@
+if
+(
+text
+.
+Equals
+(
+)
+)
+return
+7
+;
+return
+-
+1
+;
+}

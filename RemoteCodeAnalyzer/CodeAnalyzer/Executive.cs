@@ -104,11 +104,11 @@ namespace CodeAnalyzer
             {
                 for (int i = 0; i < numberOfFiles; i++)
                 {
-                    string filename = inputFiles.Dequeue();
+                    string fileName = inputFiles.Dequeue();
                     _ = Task.Run(() =>
                     {
-                        new TextParser(directoryPath + "\\" + filename, directoryPath + "\\temp\\" + filename + ".txt").ProcessFile();
-                        parsedFiles.Enqueue(filename);
+                        new TextParser(directoryPath, fileName).ProcessFile();
+                        parsedFiles.Enqueue(fileName);
                     });
                 }
             });
@@ -123,7 +123,7 @@ namespace CodeAnalyzer
                 tasks.Add(Task.Run(() =>
                 {
                     string filename = parsedFiles.Dequeue();
-                    ProgramFile file = new ProgramFile(filename, directoryPath + "\\temp");
+                    ProgramFile file = new ProgramFile(filename, directoryPath);
                     new FileAnalyzer(file, programClassTypes).ProcessFileCode();
                     processedFiles.Add(file);
                 }));

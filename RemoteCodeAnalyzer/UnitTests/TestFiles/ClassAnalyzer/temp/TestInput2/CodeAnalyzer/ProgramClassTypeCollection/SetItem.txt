@@ -1,0 +1,16 @@
+base
+.
+SetItem
+(
+index
+,
+item
+)
+;
+item
+.
+ProgramClassCollection
+=
+this
+;
+}

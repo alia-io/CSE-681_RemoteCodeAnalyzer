@@ -40,7 +40,7 @@ namespace CodeAnalyzer
         {
             string entry;
 
-            using (reader = File.OpenText(programFile.DirectoryPath + "\\" + programFile.Name + ".txt"))
+            using (reader = File.OpenText(programFile.DirectoryPath + "\\" + programFile.Name + "." + programFile.FileType + ".txt"))
             {
                 while (!reader.EndOfStream)
                 {
@@ -241,6 +241,10 @@ namespace CodeAnalyzer
 
             if (programClassTypes.Contains(name))
             {
+                ProgramClassType otherProgramClassType = programClassTypes[name];
+
+
+
                 Console.WriteLine("\n\nError: Cannot determine data for two classes with the same name.\n\n");
                 return;
             }
@@ -252,6 +256,21 @@ namespace CodeAnalyzer
             typeStack.Push(programClassType);
 
             ProcessProgramClassTypeData(type); // Send to method to analyze inside of a class/interface
+        }
+
+        /* If there is a name conflict in ProgramClassTypes collection, try to set unique names */
+        private bool GetUniqueNames(ProgramType currentParent, string name)
+        {
+            List<string> currentParentNames = new List<string>();
+            List<string> otherParentNames = new List<string>();
+
+            while (currentParent != null)
+            {
+                currentParentNames.Add(currentParent.Name);
+                currentParent = currentParent.Parent;
+            }
+
+            return false;
         }
 
         /* Creates a new function object and adds it as a child to the current type */
@@ -354,10 +373,9 @@ namespace CodeAnalyzer
                 NewFunction(name, modifiers, returnTypes, generics, parameters, new List<string>());
                 return true;
             }
-
             // If it failed normal function requirements, check rules for constructors and deconstructors
-            else if ((fileType.Equals("*.cs") || fileType.Equals("*.txt")) && CheckIfConstructor_cs()) return true;
-            else if (fileType.Equals("*.java") && CheckIfConstructor_java()) return true;
+            else if ((fileType.Equals("cs") || fileType.Equals("txt")) && CheckIfConstructor_cs()) return true;
+            else if (fileType.Equals("java") && CheckIfConstructor_java()) return true;
             else if (CheckIfDeconstructor()) return true;
 
             return false;
@@ -507,7 +525,7 @@ namespace CodeAnalyzer
         {
             switch (functionRequirement)
             {
-                case 0: // To pass: The name of function equals name of the class.
+                case 0: // To pass: Find text entry that could be a name.
                     functionRequirement = ConstructorStep0_cs(text, ref name);
                     break;
                 case 1: // To pass: Find opening parenthesis.
@@ -528,8 +546,8 @@ namespace CodeAnalyzer
                 case 6: // To pass: Find closing parenthesis.
                     functionRequirement = ConstructorStep6_cs(text, ref baseParameters);
                     break;
-                case 7: // To pass: Find no more text after closing parenthesis.
-                    functionRequirement = ConstructorStep7_cs(text);
+                case 7: // To pass: Function name == class name, and find no more text after closing parenthesis.
+                    functionRequirement = ConstructorStep7_cs(text, name);
                     break;
             }
             return functionRequirement;
@@ -741,16 +759,15 @@ namespace CodeAnalyzer
             return -1;
         }
 
-        /* Tests step 0 of constructor syntax (C#): The name of function equals name of the class (1 = success, -1 = fail) */
+        /* Tests step 0 of constructor syntax (C#): Find text entry that could be a name (2 = success, -1 = fail) */
         private int ConstructorStep0_cs(string text, ref string name)
         {
             if (text.Equals(" ")) return 0;
 
-            if ((!char.IsSymbol((char)text[0]) && !char.IsPunctuation((char)text[0])) || ((char)text[0]).Equals('_'))
+            if ((!char.IsSymbol(text[0]) && !char.IsPunctuation(text[0])) || text[0].Equals('_'))
             {
                 name = text;
-                if (typeStack.Count > 0 && typeStack.Peek().GetType() == typeof(ProgramFunction) && typeStack.Peek().Name.Equals(name))
-                    return 1;
+                return 1;
             }
 
             return -1;
@@ -853,10 +870,11 @@ namespace CodeAnalyzer
             return 6;
         }
 
-        /* Tests step 7 of constructor syntax (C#): Find no more text after closing parenthesis except { or => (-1 = fail) */
-        private int ConstructorStep7_cs(string text)
+        /* Tests step 7 of constructor syntax (C#): Function name == class name, and find no more text after closing parenthesis except { or => (-1 = fail) */
+        private int ConstructorStep7_cs(string text, string name)
         {
-            if (text.Equals(" ") || text.Equals("{") || text.Equals("=>")) return 7;
+            if (typeStack.Count > 0 && typeStack.Peek().GetType() == typeof(ProgramClass) && typeStack.Peek().Name.Equals(name)
+                && (text.Equals(" ") || text.Equals("{") || text.Equals("=>"))) return 7;
             return -1;
         }
 
@@ -994,11 +1012,11 @@ namespace CodeAnalyzer
                     scopeOpener = true;
                 }
 
-            newRule = CFScopeRuleFactory.GetRule(activeRules, entry, scopeStack.Count, fileType);
-            if (newRule != null) activeRules.Add(newRule);
-
             if (scopeOpener) ClearCurrentItems(writer);
             else activeRules.RemoveAll(rule => rule.Complete);
+
+            newRule = ControlFlowScopeRuleFactory.GetRule(activeRules, entry, scopeStack.Count, fileType);
+            if (newRule != null) activeRules.Add(newRule);
 
             return scopeOpener;
         }
@@ -1015,9 +1033,7 @@ namespace CodeAnalyzer
             {
                 if (scopeStack.Peek().Equals("function") && typeStack.Count > 0)
                 {
-                    if (((ProgramFunction)typeStack.Peek()).Size > 1)
-                        ((ProgramFunction)typeStack.Peek()).Size--; // The last line of a function is usually just the closing bracket
-                    else if (((ProgramFunction)typeStack.Peek()).Size == 0)
+                    if (((ProgramFunction)typeStack.Peek()).Size == 0)
                         ((ProgramFunction)typeStack.Peek()).Size++; // If it exists, it uses at least one line (even if the line is shared)
                 }
 
@@ -1108,15 +1124,6 @@ namespace CodeAnalyzer
                 ProcessFunctionData();
         }
 
-        /* Add entry to current ProgramDataType's text list for classes, interfaces, and functions */
-        /*private void UpdateTextData(string entry)
-        {
-            if (typeStack.Count > 0 && (typeStack.Peek().GetType() == typeof(ProgramClass)
-                    || typeStack.Peek().GetType() == typeof(ProgramInterface)
-                    || typeStack.Peek().GetType() == typeof(ProgramFunction)))
-                ((ProgramDataType)typeStack.Peek()).TextData.Add(entry);
-        }*/
-
         /* Increments the current function's size, if possible and appropriate */
         private void IncrementFunctionSize()
         {
@@ -1167,26 +1174,6 @@ namespace CodeAnalyzer
 
             return false;
         }
-
-        /* Remove the function signature from the current class's or interface's text (for relationship analysis) */
-        /*private void RemoveFunctionSignatureFromTextData(int size)
-        {
-            if (typeStack.Count > 0 && (typeStack.Peek().GetType() == typeof(ProgramClass)
-                || typeStack.Peek().GetType() == typeof(ProgramInterface) || typeStack.Peek().GetType() == typeof(ProgramFunction)))
-            {
-                int textDataIndex = ((ProgramDataType)typeStack.Peek()).TextData.Count - 1; // Last index of TextData
-
-                // Get the index of the last closing parentheses
-                while (textDataIndex >= 0 && !((ProgramDataType)typeStack.Peek()).TextData[textDataIndex].Equals(")"))
-                    textDataIndex--;
-
-                // Update the size of the function signature
-                size += ((ProgramDataType)typeStack.Peek()).TextData.Count - textDataIndex - 1;
-
-                // Remove the function signature
-                ((ProgramDataType)typeStack.Peek()).TextData = ((ProgramDataType)typeStack.Peek()).TextData.GetRange(0, ((ProgramDataType)typeStack.Peek()).TextData.Count - size);
-            }
-        }*/
 
         /* Updates the StringBuilder in the case of a new statement or scope */
         private void UpdateCurrentText(StreamWriter writer, string entry)
