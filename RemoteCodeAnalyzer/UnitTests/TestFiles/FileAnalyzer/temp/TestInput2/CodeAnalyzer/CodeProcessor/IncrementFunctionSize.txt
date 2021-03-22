@@ -1,3 +1,5 @@
+ 
+ 
 if
 (
 typeStack
@@ -32,6 +34,8 @@ Count
 >
 0
 )
+ 
+ 
 (
 (
 ProgramFunction
@@ -46,4 +50,6 @@ Peek
 Size
 ++
 ;
+ 
+ 
 }

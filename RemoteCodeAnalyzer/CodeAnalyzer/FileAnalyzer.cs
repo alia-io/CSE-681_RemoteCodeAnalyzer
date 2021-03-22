@@ -23,6 +23,7 @@ namespace CodeAnalyzer
 
         /* Reader and saved input text */
         StreamReader reader;
+        private int currentLine = 0;
         private readonly List<string> currentText = new List<string>();
 
         /* Scope syntax rules to check for */
@@ -46,8 +47,12 @@ namespace CodeAnalyzer
                 {
                     entry = reader.ReadLine();
 
+                    CheckIfNewLine(entry); // Maintain the file's line number
+
                     // Determine whether to ignore the entry (if it's part of a comment or string)
                     if (IgnoreEntry(entry)) continue;
+
+                    currentText.Add(entry); // Add entry to current text list
 
                     if (entry.Equals("}")) // Check for the end of an existing bracketed scope
                     {
@@ -79,6 +84,7 @@ namespace CodeAnalyzer
         private void ProcessProgramClassTypeData(string type)
         {
             string entry;
+            bool newLine;
 
             if (!Directory.Exists(typeStack.Peek().DirectoryPath))
             {
@@ -100,11 +106,13 @@ namespace CodeAnalyzer
                 {
                     entry = reader.ReadLine();
 
+                    newLine = CheckIfNewLine(entry); // Maintain the file's line number
+
                     // Determine whether to ignore the entry (if it's part of a comment or string)
                     if (IgnoreEntry(entry)) continue;
 
                     // Add entry to current text list to be written to ProgramDataType's temp file
-                    if (!entry.Equals(" ")) currentText.Add(entry);
+                    currentText.Add(entry);
 
                     if (entry.Equals("}")) // Check for the end of an existing bracketed scope
                     {
@@ -150,6 +158,7 @@ namespace CodeAnalyzer
             string entry;
             bool scopeOpener;
             bool beginningOfStream = true;
+            bool newLine;
 
             if (!Directory.Exists(typeStack.Peek().DirectoryPath))
             {
@@ -170,18 +179,21 @@ namespace CodeAnalyzer
                     entry = reader.ReadLine();
                     scopeOpener = false;
 
+                    newLine = CheckIfNewLine(entry); // Maintain the file's line number
+
                     // Determine whether to ignore the entry (if it's part of a comment or string)
                     if (IgnoreEntry(entry)) continue;
 
-                    if (!entry.Equals(" ")) currentText.Add(entry); // Add entry to current text list to be written to Function's temp file
-                    else if (!beginningOfStream) IncrementFunctionSize(); // Update function data if new line (except at beginning of function)
+                    currentText.Add(entry); // Add entry to current text list to be written to Function's temp file
+
+                    if (!beginningOfStream && newLine) IncrementFunctionSize(); // Update function data if new line (except at beginning of function)
                     beginningOfStream = false;
 
                     // Check for some closing scopes: ")", "}", ";"
                     if (CheckScopeClosersWithinFunction(writer, entry)) return; // Closing scope was the end of this function
 
                     // Check control flow scope openers
-                    if (!entry.Equals(" ") && typeStack.Count > 0 && typeStack.Peek().GetType() == typeof(ProgramFunction) && CheckControlFlowScopes(writer, entry))
+                    if (!newLine && typeStack.Count > 0 && typeStack.Peek().GetType() == typeof(ProgramFunction) && CheckControlFlowScopes(writer, entry))
                         scopeOpener = true;
 
                     CheckScopeOpenersWithinFunction(entry, scopeOpener); // Check for some opening scopes: "(", "{", "=>"
@@ -195,37 +207,34 @@ namespace CodeAnalyzer
         private void CreateNewNamespace()
         {
             ProgramNamespace newNamespace;
+            int line = currentLine;
             string entry;
-            string name;
+            string name = "";
+            bool newLine;
 
             scopeStack.Push("namespace"); // Push the namespace scope opener onto scopeStack
-            ClearCurrentItems(null);
 
             while (!reader.EndOfStream) // Get the name of the namespace
             {
                 entry = reader.ReadLine();
+
+                newLine = CheckIfNewLine(entry); // Maintain the file's line number
+
                 if (entry.Equals("{"))
                 {
                     scopeStack.Push("{"); // Push the new scope opener onto scopeStack
                     break;
                 }
-                if (!entry.Equals(" ")) currentText.Add(entry);
+
+                if (!newLine)
+                {
+                    name += entry;
+                    line = currentLine;
+                }
             }
 
-            // Create new namespace and add it to its parent's ChildList
-            if (currentText.Count > 0) name = currentText[0];
-            else name = "_";
-
-            if (typeStack.Count > 0)
-            {
-                newNamespace = new ProgramNamespace(typeStack.Peek(), name);
-                //typeStack.Peek().ChildList.Add(newNamespace);
-            }
-            else
-            {
-                newNamespace = new ProgramNamespace(programFile, name);
-                //programFile.ChildList.Add(newNamespace);
-            }
+            if (typeStack.Count > 0) newNamespace = new ProgramNamespace(typeStack.Peek(), name, line);
+            else newNamespace = new ProgramNamespace(programFile, name, line);
 
             ClearCurrentItems(null);
             typeStack.Push(newNamespace);
@@ -237,7 +246,7 @@ namespace CodeAnalyzer
             ProgramClassType programClassType;
 
             // Gather the ProgramClassType data
-            GetClassTypeData(type, out ProgramType parent, out string name, out List<string> modifiers, out List<string> generics);
+            GetClassTypeData(type, out ProgramType parent, out string name, out int line, out List<string> modifiers, out List<string> generics);
 
             if (programClassTypes.Contains(name))
             {
@@ -254,8 +263,8 @@ namespace CodeAnalyzer
             }
 
             // Create the new class or interface object
-            if (type.Equals("class")) programClassType = new ProgramClass(programClassTypes, parent, name, modifiers, generics);
-            else programClassType = new ProgramInterface(programClassTypes, parent, name, modifiers, generics);
+            if (type.Equals("class")) programClassType = new ProgramClass(programClassTypes, parent, name, line, modifiers, generics);
+            else programClassType = new ProgramInterface(programClassTypes, parent, name, line, modifiers, generics);
 
             typeStack.Push(programClassType);
 
@@ -308,7 +317,7 @@ namespace CodeAnalyzer
         }
 
         /* Creates a new function object and adds it as a child to the current type */
-        private void NewFunction(string name, List<string> modifiers, List<string> returnTypes, List<string> generics, List<string> parameters, List<string> baseParameters)
+        private void NewFunction(string name, int line, List<string> modifiers, List<string> returnTypes, List<string> generics, List<string> parameters, List<string> baseParameters)
         {
             ProgramType parent = programFile;
 
@@ -316,7 +325,7 @@ namespace CodeAnalyzer
 
             if (typeStack.Count > 0) parent = typeStack.Peek(); // Get the parent
 
-            ProgramFunction programFunction = new ProgramFunction(parent, name, modifiers, returnTypes, generics, parameters, baseParameters);
+            ProgramFunction programFunction = new ProgramFunction(parent, name, line, modifiers, returnTypes, generics, parameters, baseParameters);
 
             // Add the function and scope to scopeStack
             scopeStack.Push("function");
@@ -325,20 +334,24 @@ namespace CodeAnalyzer
         }
 
         /* Finds all data required to create a new class or interface */
-        private void GetClassTypeData(string type, out ProgramType parent, out string name, out List<string> modifiers, out List<string> generics)
+        private void GetClassTypeData(string type, out ProgramType parent, out string name, out int line, out List<string> modifiers, out List<string> generics)
         {
             string entry;
+            bool newLine;
             parent = programFile;
             name = "";
-            string[] modifiersArray = currentText.ToString().Split(' ');
+            line = currentLine;
             modifiers = new List<string>();
             generics = new List<string>();
             int brackets = 0;
 
             if (typeStack.Count > 0) parent = typeStack.Peek(); // Get the parent
 
-            foreach (string modifier in modifiersArray) // Get the modifiers
-                if (modifier.Length > 0) modifiers.Add(modifier);
+            foreach (string modifier in currentText) // Get the modifiers
+            {
+                if (!modifier.Equals("class") && !modifiers.Equals(" "))
+                    modifiers.Add(modifier);
+            }
 
             scopeStack.Push(type); // Push the type of scope opener (class or interface)
             ClearCurrentItems(null);
@@ -346,6 +359,8 @@ namespace CodeAnalyzer
             while (!reader.EndOfStream)
             {
                 entry = reader.ReadLine();
+
+                newLine = CheckIfNewLine(entry); // Maintain the file's line number
 
                 // Determine whether to ignore the entry (if it's part of a comment or string)
                 if (IgnoreEntry(entry)) continue;
@@ -364,8 +379,11 @@ namespace CodeAnalyzer
 
                 if (name.Length == 0) // The next entry after "class" or "interface" will be the name
                 {
-                    if (!entry.Equals(" ")) name = entry;
-                    ClearCurrentItems(null);
+                    if (!newLine)
+                    {
+                        name = entry;
+                        line = currentLine;
+                    }
                 }
             }
         }
@@ -377,6 +395,7 @@ namespace CodeAnalyzer
             int functionRequirement = 0;
 
             string name = "";
+            int line = currentLine;
             List<string> modifiers = new List<string>();
             List<string> returnTypes = new List<string>();
             List<string> generics = new List<string>();
@@ -404,7 +423,10 @@ namespace CodeAnalyzer
 
             if (functionRequirement == 4 || functionRequirement == 7) // Function signature detected - create a new function
             {
-                NewFunction(name, modifiers, returnTypes, generics, parameters, new List<string>());
+                for (int i = currentText.FindIndex(text => text.Equals(name)) + 1; i < currentText.Count; i++)
+                    if (currentText[i].Equals(" ")) line--;
+
+                NewFunction(name, line, modifiers, returnTypes, generics, parameters, new List<string>());
                 return true;
             }
             // If it failed normal function requirements, check rules for constructors and deconstructors
@@ -421,8 +443,9 @@ namespace CodeAnalyzer
             // The constructor requirement to check next. If this ends at 3 or 7, there is a new function. If this ends at -1, there is not a new function.
             int functionRequirement = 0;
 
-            List<string> modifiers = new List<string>();
             string name = "";
+            int line = currentLine;
+            List<string> modifiers = new List<string>();
             List<string> parameters = new List<string>();
             List<string> baseParameters = new List<string>();
 
@@ -448,7 +471,10 @@ namespace CodeAnalyzer
 
             if (functionRequirement == 3 || functionRequirement == 7) // Constructor signature detected - create a new function
             {
-                NewFunction(name, modifiers, new List<string>(), new List<string>(), parameters, baseParameters);
+                for (int i = currentText.FindIndex(text => text.Equals(name)) + 1; i < currentText.Count; i++)
+                    if (currentText[i].Equals(" ")) line--;
+
+                NewFunction(name, line, modifiers, new List<string>(), new List<string>(), parameters, baseParameters);
                 return true;
             }
 
@@ -461,8 +487,9 @@ namespace CodeAnalyzer
             // The constructor requirement to check next. If this ends at ???, there is a new function. If this ends at -1, there is not a new function.
             int functionRequirement = 0;
 
-            List<string> modifiers = new List<string>();
             string name = "";
+            int line = currentLine;
+            List<string> modifiers = new List<string>();
             List<string> parameters = new List<string>();
 
             // Ensure the same number of opening and closing parentheses/brackets
@@ -490,7 +517,10 @@ namespace CodeAnalyzer
 
             if (functionRequirement == 4 || functionRequirement == 7) // Function signature detected - create a new function
             {
-                NewFunction(name, modifiers, new List<string>(), new List<string>(), parameters, new List<string>());
+                for (int i = currentText.FindIndex(text => text.Equals(name)) + 1; i < currentText.Count; i++)
+                    if (currentText[i].Equals(" ")) line--;
+
+                NewFunction(name, line, modifiers, new List<string>(), new List<string>(), parameters, new List<string>());
                 return true;
             }
 
@@ -504,6 +534,7 @@ namespace CodeAnalyzer
             int functionRequirement = 0;
 
             string name = "";
+            int line = currentLine;
 
             foreach (string text in currentText)
             {
@@ -514,7 +545,10 @@ namespace CodeAnalyzer
 
             if (functionRequirement == 4) // Deconstructor signature detected - create a new function
             {
-                NewFunction(name, new List<string>(), new List<string>(), new List<string>(), new List<string>(), new List<string>());
+                for (int i = currentText.FindIndex(text => text.Equals(name)) + 1; i < currentText.Count; i++)
+                    if (currentText[i].Equals(" ")) line--;
+
+                NewFunction(name, line, new List<string>(), new List<string>(), new List<string>(), new List<string>(), new List<string>());
                 return true;
             }
 
@@ -1209,17 +1243,15 @@ namespace CodeAnalyzer
             return false;
         }
 
-        /* Updates the StringBuilder in the case of a new statement or scope */
+        /* Adds current text to file in the case of a new statement or scope */
         private void UpdateCurrentText(StreamWriter writer, string entry)
         {
-            if (!entry.Equals(" "))
+            if (entry.Equals(";") || entry.Equals("}") || entry.Equals("{"))
             {
-                if (entry.Equals(";") || entry.Equals("}") || entry.Equals("{"))
-                {
-                    if (writer != null)
-                        foreach (string text in currentText) writer.WriteLine(text);
-                    currentText.Clear();
-                }
+                if (writer != null)
+                    foreach (string text in currentText)
+                        if (!text.Equals(" ")) writer.WriteLine(text);
+                currentText.Clear();
             }
         }
 
@@ -1230,6 +1262,18 @@ namespace CodeAnalyzer
                 foreach (string text in currentText) writer.WriteLine(text);
             currentText.Clear();
             activeRules.Clear();
+        }
+
+        /* Checks if the entry denotes a new line, increments the number of lines in the file */
+        private bool CheckIfNewLine(string entry)
+        {
+            if (entry.Equals(" "))
+            {
+                currentLine++;
+                currentText.Add(entry);
+                return true;
+            }
+            return false;
         }
     }
 }

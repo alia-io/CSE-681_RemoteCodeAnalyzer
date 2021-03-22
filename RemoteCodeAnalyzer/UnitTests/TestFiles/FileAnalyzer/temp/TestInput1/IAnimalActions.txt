@@ -1,3 +1,5 @@
+IAnimalActions
+ 
  
 {
 string
@@ -19,4 +21,6 @@ int
 seconds
 )
 ;
+ 
+ 
 }

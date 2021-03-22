@@ -1,3 +1,5 @@
+Car
+ 
  
 {
 private
@@ -35,6 +37,8 @@ fuelLevel
 /
 fuelCapacity
 ;
+ 
+ 
 }
 public
 int
@@ -55,6 +59,8 @@ fuelUsedPerMove
 )
 )
 ;
+ 
+ 
 }
 public
 int
@@ -71,6 +77,8 @@ MoveTimeLeftBeforeEmpty
 Speed
 )
 ;
+ 
+ 
 }
 private
 int
@@ -84,4 +92,6 @@ private
 double
 fuelUsedPerMove
 ;
+ 
+ 
 }

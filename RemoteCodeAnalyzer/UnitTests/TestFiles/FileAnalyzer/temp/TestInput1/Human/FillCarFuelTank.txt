@@ -1,3 +1,5 @@
+ 
+ 
 if
 (
 car
@@ -7,6 +9,10 @@ null
 return
 false
 ;
+ 
+ 
+ 
+ 
 int
 cost
 =
@@ -17,6 +23,10 @@ FillTank
 Money
 )
 ;
+ 
+ 
+ 
+ 
 if
 (
 cost
@@ -26,11 +36,19 @@ cost
 return
 false
 ;
+ 
+ 
+ 
+ 
 Money
 -=
 cost
 ;
+ 
+ 
 return
 true
 ;
+ 
+ 
 }

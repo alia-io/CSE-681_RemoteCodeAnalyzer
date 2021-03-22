@@ -1,9 +1,15 @@
+ 
+ 
 this
 .
 SetInheritanceRelationships
 (
 )
 ;
+ 
+ 
+ 
+ 
 if
 (
 programClassType
@@ -19,6 +25,14 @@ ProgramClass
 )
 return
 ;
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 this
 .
 SetAggregationAndUsingRelationships
@@ -26,4 +40,6 @@ SetAggregationAndUsingRelationships
 programClassType
 )
 ;
+ 
+ 
 }

@@ -17,6 +17,7 @@ using System.Globalization;
 using RCALibrary;
 using System.Windows.Threading;
 using System.Windows.Documents;
+using System.Text.RegularExpressions;
 
 namespace Client
 {
@@ -549,8 +550,22 @@ namespace Client
             TextBlock header = (TextBlock)((StackPanel)((StackPanel)(sender as Button).Content).Children[1]).Children[0];
             string analysisType = header.Text.Substring(0, header.Text.IndexOf(Environment.NewLine));
             string filename = char.ToLower(analysisType[0]) + analysisType.Substring(1) + "_analysis.xml";
-            string fileText = "";
             bool getFileText;
+
+            // Variables used for writing file text
+            string fileText = "";
+            XElement metadata = null;
+            string[] fileTextLines;
+            int currentLine = 1;
+            IEnumerator<int> lowSeverity;
+            IEnumerator<int> mediumSeverity;
+            IEnumerator<int> highSeverity;
+            int nextLowLine = -1;
+            int nextMediumLine = -1;
+            int nextHighLine = -1;
+            SolidColorBrush lowColor = FindResource("LowSeverity") as SolidColorBrush;
+            SolidColorBrush mediumColor = FindResource("MediumSeverity") as SolidColorBrush;
+            SolidColorBrush highColor = FindResource("HighSeverity") as SolidColorBrush;
 
             SetLastClickedButton(sender as Button);
 
@@ -579,7 +594,7 @@ namespace Client
             animate.Tick += LoadAnimation;
             animate.Start();
 
-            getFileText = await Task.Run(() => app.RequestAnalysisFile(filename, out fileText));
+            getFileText = await Task.Run(() => app.RequestAnalysisFile(filename, out fileText, out metadata));
             
             LeftAnimation.Visibility = Visibility.Collapsed;
             animate.Stop();
@@ -595,7 +610,55 @@ namespace Client
                 LFileType.Text = "XML";
                 RFileType.Text = "XML";
                 FileName.Text = analysisType + " Analysis";
-                FileText.Text = fileText;
+
+                if (metadata == null) FileText.Text = fileText;
+                else
+                {
+                    fileTextLines = Regex.Split(fileText, "\r\n|\r|\n");
+
+                    lowSeverity = (from XElement severity in metadata.Elements("severity")
+                                  where severity.Attribute("level").Value.Equals("low")
+                                  from XElement element in severity.Elements("line")
+                                  select int.Parse(element.Value)).GetEnumerator();
+
+                    mediumSeverity = (from XElement severity in metadata.Elements("severity")
+                                      where severity.Attribute("level").Value.Equals("medium")
+                                      from XElement element in severity.Elements("line")
+                                      select int.Parse(element.Value)).GetEnumerator();
+
+                    highSeverity = (from XElement severity in metadata.Elements("severity")
+                                    where severity.Attribute("level").Value.Equals("high")
+                                    from XElement element in severity.Elements("line")
+                                    select int.Parse(element.Value)).GetEnumerator();
+
+                    if (lowSeverity.MoveNext()) nextLowLine = lowSeverity.Current;
+                    if (mediumSeverity.MoveNext()) nextMediumLine = mediumSeverity.Current;
+                    if (highSeverity.MoveNext()) nextHighLine = highSeverity.Current;
+
+                    foreach (string line in fileTextLines)
+                    {
+                        if (nextLowLine == currentLine)
+                        {
+                            FileText.Inlines.Add(new Run(line + "\r\n") { FontWeight = FontWeights.Bold, Foreground = lowColor });
+                            if (lowSeverity.MoveNext()) nextLowLine = lowSeverity.Current;
+                            else nextLowLine = -1;
+                        }
+                        else if (nextMediumLine == currentLine)
+                        {
+                            FileText.Inlines.Add(new Run(line + "\r\n") { FontWeight = FontWeights.Bold, Foreground = mediumColor });
+                            if (mediumSeverity.MoveNext()) nextMediumLine = mediumSeverity.Current;
+                            else nextMediumLine = -1;
+                        }
+                        else if (nextHighLine == currentLine)
+                        {
+                            FileText.Inlines.Add(new Run(line + "\r\n") { FontWeight = FontWeights.Bold, Foreground = highColor });
+                            if (highSeverity.MoveNext()) nextHighLine = highSeverity.Current;
+                            else nextHighLine = -1;
+                        }
+                        else FileText.Inlines.Add(line + "\r\n");
+                        currentLine++;
+                    }
+                }
 
                 FileTextHeadersRow.Height = new GridLength(105);
                 FileTextHeaders.Visibility = Visibility.Visible;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace CodeAnalyzer
@@ -13,9 +14,9 @@ namespace CodeAnalyzer
         public static void WriteOutput(ConcurrentOrderedList processedFileList, string directoryPath, string projectName, string versionNumber)
         {
             XDocument xml = new XDocument(new XElement("analysis",
-                new XAttribute("type", "function"),
+                new XAttribute("version", versionNumber),
                 new XAttribute("project", projectName),
-                new XAttribute("version", versionNumber)));
+                new XAttribute("type", "function")));
 
             for (int i = 0; i < processedFileList.Count; i++)
                 SetElements(xml.Root, processedFileList[i]);
@@ -37,7 +38,7 @@ namespace CodeAnalyzer
 
             // Find the type and create the new element
             if (programType.GetType() == typeof(ProgramFile))
-                element = new XElement("file", new XAttribute("name", programType.Name));
+                element = new XElement("file", new XAttribute("name", programType.Name + "." + ((ProgramFile)programType).FileType));
 
             else if (programType.GetType() == typeof(ProgramNamespace))
                 element = new XElement("namespace", new XAttribute("name", programType.Name));
@@ -68,9 +69,9 @@ namespace CodeAnalyzer
         public static void WriteOutput(ConcurrentOrderedList processedFileList, string directoryPath, string projectName, string versionNumber)
         {
             XDocument xml = new XDocument(new XElement("analysis",
-                new XAttribute("type", "relationship"),
+                new XAttribute("version", versionNumber),
                 new XAttribute("project", projectName),
-                new XAttribute("version", versionNumber)));
+                new XAttribute("type", "relationship")));
 
             for (int i = 0; i < processedFileList.Count; i++)
                 SetElements(xml.Root, processedFileList[i]);
@@ -92,7 +93,7 @@ namespace CodeAnalyzer
 
             // Find the type and open the new element
             if (programType.GetType() == typeof(ProgramFile))
-                element = new XElement("file", new XAttribute("name", programType.Name));
+                element = new XElement("file", new XAttribute("name", programType.Name + "." + ((ProgramFile)programType).FileType));
 
             else if (programType.GetType() == typeof(ProgramNamespace))
                 element = new XElement("namespace", new XAttribute("name", programType.Name));
@@ -154,6 +155,153 @@ namespace CodeAnalyzer
             if (programClassType.SubClasses.Count > 0) // Inheritance, children
                 foreach (ProgramClassType subclass in programClassType.SubClasses)
                     element.Add(new XElement("inheritance_child", subclass.Name));
+        }
+    }
+
+    public static class AnalysisMetadataWriter
+    {
+        /* Writes the metadata file - contains "severity" information for elements in code analysis */
+        public static void WriteMetadata(string directoryPath)
+        {
+            XDocument functions;
+            XDocument relationships;
+
+            XDocument metadata = new XDocument();
+            XElement severity = new XElement("severity");
+            XElement fAnalysis = new XElement("analysis", new XAttribute("type", "function"));
+            XElement rAnalysis = new XElement("analysis", new XAttribute("type", "relationship"));
+
+            severity.Add(fAnalysis, rAnalysis);
+            metadata.Add(severity);
+
+            try
+            {
+                functions = XDocument.Load(directoryPath + "\\function_analysis.xml", LoadOptions.SetLineInfo);
+                WriteFunctionSeverity(fAnalysis, functions.Root);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Unable to open function analysis file: {0}", e.ToString());
+            }
+
+            try
+            {
+                relationships = XDocument.Load(directoryPath + "\\relationship_analysis.xml", LoadOptions.SetLineInfo);
+                WriteRelationshipSeverity(rAnalysis, relationships.Root);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Unable to open relationship analysis file: {0}", e.ToString());
+            }
+
+            try
+            {
+                metadata.Save(directoryPath + "\\metadata.xml");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Unable to save analysis metadata file: {0}", e.ToString());
+            }
+        }
+
+        private static void WriteFunctionSeverity(XElement metadata, XElement analysis)
+        {
+            IEnumerable<XElement> functions = analysis.Descendants("function");
+            XElement low = new XElement("severity", new XAttribute("level", "low"));
+            XElement medium = new XElement("severity", new XAttribute("level", "medium"));
+            XElement high = new XElement("severity", new XAttribute("level", "high"));
+            XElement size;
+            XElement complexity;
+            int _size;
+            int _complexity;
+
+            metadata.Add(low, medium, high);
+
+            foreach (XElement function in functions)
+            {
+                size = function.Element("size");
+                complexity = function.Element("complexity");
+                _size = int.Parse(size.Value);
+                _complexity = int.Parse(complexity.Value);
+
+                if (_size > 150 || _complexity > 30)
+                {
+                    high.Add(new XElement("line", (function as IXmlLineInfo).LineNumber));
+
+                    if (_size > 150) high.Add(new XElement("line", (size as IXmlLineInfo).LineNumber));
+                    else if (_size > 100) medium.Add(new XElement("line", (size as IXmlLineInfo).LineNumber));
+                    else if (_size > 50) low.Add(new XElement("line", (size as IXmlLineInfo).LineNumber));
+
+                    if (_complexity > 30) high.Add(new XElement("line", (complexity as IXmlLineInfo).LineNumber));
+                    else if (_complexity > 20) medium.Add(new XElement("line", (complexity as IXmlLineInfo).LineNumber));
+                    else if (_complexity > 10) low.Add(new XElement("line", (complexity as IXmlLineInfo).LineNumber));
+                }
+                else if (_size > 100 || _complexity > 20)
+                {
+                    medium.Add(new XElement("line", (function as IXmlLineInfo).LineNumber));
+
+                    if (_size > 100) medium.Add(new XElement("line", (size as IXmlLineInfo).LineNumber));
+                    else if (_size > 50) low.Add(new XElement("line", (size as IXmlLineInfo).LineNumber));
+
+                    if (_complexity > 20) medium.Add(new XElement("line", (complexity as IXmlLineInfo).LineNumber));
+                    else if (_complexity > 10) low.Add(new XElement("line", (complexity as IXmlLineInfo).LineNumber));
+                }
+                else if (_size > 50 || _complexity > 10)
+                {
+                    low.Add(new XElement("line", (function as IXmlLineInfo).LineNumber));
+                    if (_size > 50) low.Add(new XElement("line", (size as IXmlLineInfo).LineNumber));
+                    if (_complexity > 10) low.Add(new XElement("line", (complexity as IXmlLineInfo).LineNumber));
+                }
+            }
+        }
+
+        private static void WriteRelationshipSeverity(XElement metadata, XElement analysis)
+        {
+            IEnumerable<XElement> classesAndInterfaces = from XElement element in analysis.Descendants()
+                                                         where element.Name.ToString().Equals("class")
+                                                            || element.Name.ToString().Equals("interface")
+                                                         select element;
+
+            XElement low = new XElement("severity", new XAttribute("level", "low"));
+            XElement medium = new XElement("severity", new XAttribute("level", "medium"));
+            XElement high = new XElement("severity", new XAttribute("level", "high"));
+            IEnumerable<XElement> relationships;
+            int _relationships;
+
+            metadata.Add(low, medium, high);
+
+            foreach (XElement classOrInterface in classesAndInterfaces)
+            {
+                relationships = from XElement element in classOrInterface.Elements()
+                                where element.Name.ToString().Equals("inheritance_parent") || element.Name.ToString().Equals("inheritance_child")
+                                    || element.Name.ToString().Equals("aggregation_parent") || element.Name.ToString().Equals("aggregation_child")
+                                    || element.Name.ToString().Equals("using_parent") || element.Name.ToString().Equals("using_child")
+                                select element;
+
+                _relationships = relationships.Count();
+
+                if (_relationships > 15)
+                {
+                    high.Add(new XElement("line", (classOrInterface as IXmlLineInfo).LineNumber));
+
+                    //foreach (XElement relationship in relationships)
+                        //high.Add(new XElement("line", (relationship as IXmlLineInfo).LineNumber));
+                }
+                else if (_relationships > 10)
+                {
+                    medium.Add(new XElement("line", (classOrInterface as IXmlLineInfo).LineNumber));
+
+                    //foreach (XElement relationship in relationships)
+                        //medium.Add(new XElement("line", (relationship as IXmlLineInfo).LineNumber));
+                }
+                else if (_relationships > 5)
+                {
+                    low.Add(new XElement("line", (classOrInterface as IXmlLineInfo).LineNumber));
+
+                    //foreach (XElement relationship in relationships)
+                        //low.Add(new XElement("line", (relationship as IXmlLineInfo).LineNumber));
+                }
+            }
         }
     }
 }

@@ -1,3 +1,5 @@
+ 
+ 
 if
 (
 car
@@ -6,6 +8,10 @@ null
 )
 return
 ;
+ 
+ 
+ 
+ 
 Money
 +=
 (
@@ -21,12 +27,18 @@ Price
 5
 )
 ;
+ 
+ 
 car
 =
 null
 ;
+ 
+ 
 IsDriving
 =
 false
 ;
+ 
+ 
 }

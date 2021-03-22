@@ -10,6 +10,9 @@
             <SolidColorBrush x:Key="TextColor" Color="#F4F1DE"/>
             <SolidColorBrush x:Key="BackgroundColor" Color="#2E2425"/>
             <SolidColorBrush x:Key="LineColor" Color="#ADD8E6"/>
+            <SolidColorBrush x:Key="LowSeverity" Color="#FCBF49"/>
+            <SolidColorBrush x:Key="MediumSeverity" Color="#F77F00"/>
+            <SolidColorBrush x:Key="HighSeverity" Color="#D62828"/>
 
             <!--Source: https://stackoverflow.com/questions/55686112/ismouseover-property-on-button-not-working-->
             <Style TargetType="{x:Type Button}">
@@ -249,8 +252,8 @@
             </Style>
 
             <!--Source: https://stackoverflow.com/questions/6005534/how-can-i-put-a-separator-between-every-listboxitem-in-my-listbox-->
-            <!--TODO: Create lines between items-->
-            <!--<Style TargetType="{x:Type ListBoxItem}">
+            <!--TODO: fix this-->
+            <Style TargetType="{x:Type ListBoxItem}">
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ListBoxItem">
@@ -266,7 +269,7 @@
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
-            </Style>-->
+            </Style>
 
         </ResourceDictionary>
     </Application.Resources>

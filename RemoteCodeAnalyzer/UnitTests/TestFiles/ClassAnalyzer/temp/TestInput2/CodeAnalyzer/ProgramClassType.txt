@@ -1,5 +1,7 @@
+ProgramClassType
 :
 ProgramDataType
+ 
  
 {
 public
@@ -68,6 +70,12 @@ Name
 =
 value
 ;
+ 
+ 
 }
+ 
+ 
 }
+ 
+ 
 }

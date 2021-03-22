@@ -21,15 +21,17 @@ namespace CodeAnalyzer
     public abstract class ProgramType
     {
         public virtual string Name { get; set; }
-        public virtual string DirectoryPath { get; protected set; }
-        public virtual ProgramType Parent { get; protected set; }
+        public int Line { get; protected set; }
+        public string DirectoryPath { get; protected set; }
+        public ProgramType Parent { get; protected set; }
         public List<ProgramType> ChildList { get; }
 
         public ProgramType() => ChildList = new List<ProgramType>();
 
-        public ProgramType(ProgramType parent, string name)
+        public ProgramType(ProgramType parent, string name, int line)
         {
             Name = name;
+            Line = line;
             ChildList = new List<ProgramType>();
 
             if (parent != null)
@@ -50,7 +52,8 @@ namespace CodeAnalyzer
     {
         public List<string> Modifiers { get; }
         public List<string> Generics { get; }
-        public ProgramDataType(ProgramType parent, string name, List<string> modifiers, List<string> generics) : base(parent, name)
+        public ProgramDataType(ProgramType parent, string name, int line, List<string> modifiers, List<string> generics)
+            : base(parent, name, line)
         {
             Modifiers = modifiers;
             Generics = generics;
@@ -74,8 +77,8 @@ namespace CodeAnalyzer
             }
         }
 
-        public ProgramClassType(ProgramClassTypeCollection programClassTypes, ProgramType parent, string name, List<string> modifiers, List<string> generics) 
-            : base(parent, name, modifiers, generics)
+        public ProgramClassType(ProgramClassTypeCollection programClassTypes, ProgramType parent, string name, int line, List<string> modifiers, List<string> generics) 
+            : base(parent, name, line, modifiers, generics)
         {
             ProgramClassTypes = programClassTypes;
             programClassTypes.Add(this);
@@ -112,8 +115,8 @@ namespace CodeAnalyzer
     /* Defines unique data contained in an object representing a namespace */
     public class ProgramNamespace : ProgramType
     {
-        public ProgramNamespace(ProgramType parent, string name)
-            : base(parent, name) { }
+        public ProgramNamespace(ProgramType parent, string name, int line)
+            : base(parent, name, line) { }
     }
 
     /* Defines unique data contained in an object representing a class */
@@ -123,8 +126,8 @@ namespace CodeAnalyzer
         public List<ProgramClassType> OwnedByClasses { get; }   // Composition/Aggregation (parent data): ProgramClass(es) that this class is owned by ("part of")
         public List<ProgramClassType> UsedClasses { get; }      // Using (child data): ProgramClass(es) that this class uses
         public List<ProgramClassType> UsedByClasses { get; }    // Using (parent data): ProgramClass(es) that this class is used by
-        public ProgramClass(ProgramClassTypeCollection programClassTypes, ProgramType parent, string name, List<string> modifiers, List<string> generics)
-            : base(programClassTypes, parent, name, modifiers, generics)
+        public ProgramClass(ProgramClassTypeCollection programClassTypes, ProgramType parent, string name, int line, List<string> modifiers, List<string> generics)
+            : base(programClassTypes, parent, name, line, modifiers, generics)
         {
             OwnedClasses = new List<ProgramClassType>();
             OwnedByClasses = new List<ProgramClassType>();
@@ -136,8 +139,8 @@ namespace CodeAnalyzer
     /* Defines unique data contained in an object representing an interface */
     public class ProgramInterface : ProgramClassType
     {
-        public ProgramInterface(ProgramClassTypeCollection programClassTypes, ProgramType parent, string name, List<string> modifiers, List<string> generics)
-            : base(programClassTypes, parent, name, modifiers, generics) { }
+        public ProgramInterface(ProgramClassTypeCollection programClassTypes, ProgramType parent, string name, int line, List<string> modifiers, List<string> generics)
+            : base(programClassTypes, parent, name, line, modifiers, generics) { }
     }
 
     /* Defines unique data contained in an object representing a function */
@@ -148,8 +151,8 @@ namespace CodeAnalyzer
         public List<string> BaseParameters { get; }
         public int Size { get; set; }
         public int Complexity { get; set; }
-        public ProgramFunction(ProgramType parent, string name, List<string> modifiers, List<string> returnTypes, List<string> generics, List<string> parameters, List<string> baseParameters)
-            : base(parent, name, modifiers, generics)
+        public ProgramFunction(ProgramType parent, string name, int line, List<string> modifiers, List<string> returnTypes, List<string> generics, List<string> parameters, List<string> baseParameters)
+            : base(parent, name, line, modifiers, generics)
         {
             ReturnTypes = returnTypes;
             Parameters = parameters;

@@ -1,3 +1,5 @@
+ 
+ 
 Dog
 dog
 =
@@ -15,6 +17,8 @@ price
 breed
 )
 ;
+ 
+ 
 if
 (
 BuyPet
@@ -24,10 +28,16 @@ dog
 price
 )
 )
+ 
+ 
 return
 true
 ;
+ 
+ 
 return
 false
 ;
+ 
+ 
 }

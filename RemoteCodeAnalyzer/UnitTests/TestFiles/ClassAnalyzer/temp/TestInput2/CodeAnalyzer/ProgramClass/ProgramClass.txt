@@ -1,3 +1,5 @@
+ 
+ 
 this
 .
 OwnedClasses
@@ -10,6 +12,8 @@ ProgramClassType
 (
 )
 ;
+ 
+ 
 this
 .
 OwnedByClasses
@@ -22,6 +26,8 @@ ProgramClassType
 (
 )
 ;
+ 
+ 
 this
 .
 UsedClasses
@@ -34,6 +40,8 @@ ProgramClassType
 (
 )
 ;
+ 
+ 
 this
 .
 UsedByClasses
@@ -46,4 +54,6 @@ ProgramClassType
 (
 )
 ;
+ 
+ 
 }

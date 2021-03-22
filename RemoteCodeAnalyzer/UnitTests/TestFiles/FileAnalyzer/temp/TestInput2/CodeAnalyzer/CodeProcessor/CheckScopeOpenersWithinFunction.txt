@@ -1,3 +1,5 @@
+ 
+ 
 if
 (
 entry
@@ -13,6 +15,10 @@ Push
 entry
 )
 ;
+ 
+ 
+ 
+ 
 if
 (
 entry
@@ -21,7 +27,11 @@ Equals
 (
 )
 )
+ 
+ 
 {
+ 
+ 
 if
 (
 !
@@ -33,7 +43,11 @@ CheckIfFunction
 (
 )
 )
+ 
+ 
 {
+ 
+ 
 scopeStack
 .
 Push
@@ -41,6 +55,8 @@ Push
 entry
 )
 ;
+ 
+ 
 index
 =
 this
@@ -51,8 +67,14 @@ ProcessFunctionData
 index
 )
 ;
+ 
+ 
 }
+ 
+ 
 else
+ 
+ 
 scopeStack
 .
 Push
@@ -60,7 +82,13 @@ Push
 entry
 )
 ;
+ 
+ 
 }
+ 
+ 
+ 
+ 
 if
 (
 entry
@@ -69,6 +97,8 @@ Equals
 (
 )
 )
+ 
+ 
 if
 (
 this
@@ -77,6 +107,8 @@ CheckIfFunction
 (
 )
 )
+ 
+ 
 index
 =
 this
@@ -87,4 +119,6 @@ ProcessFunctionData
 index
 )
 ;
+ 
+ 
 }

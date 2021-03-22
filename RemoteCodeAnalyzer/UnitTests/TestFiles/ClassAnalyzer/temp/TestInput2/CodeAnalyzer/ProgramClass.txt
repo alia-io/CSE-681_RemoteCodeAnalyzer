@@ -1,5 +1,7 @@
+ProgramClass
 :
 ProgramClassType
+ 
  
 {
 public
@@ -42,4 +44,6 @@ UsedByClasses
 get
 ;
 }
+ 
+ 
 }

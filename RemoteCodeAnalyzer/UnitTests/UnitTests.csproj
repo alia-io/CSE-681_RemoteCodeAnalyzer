@@ -191,7 +191,7 @@
     <Compile Include="CodeAnalyzerTests\TextParserTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CodeAnalyzerTests\ControlFlowScopeRulesTests.cs" />
-    <Compile Include="CodeAnalyzerTests\SizeLimitedQueueTests.cs" />
+    <Compile Include="CodeAnalyzerTests\CustomCollectionsTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Client\Client.csproj">

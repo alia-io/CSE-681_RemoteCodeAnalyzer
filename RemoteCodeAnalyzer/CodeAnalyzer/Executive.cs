@@ -69,7 +69,10 @@ namespace CodeAnalyzer
             analyzer.Wait();
             WriteRelationshipAnalysis();
 
-            writer.Wait(); // Wait for all tasks to complete
+            writer.Wait(); // Wait for all above tasks to complete
+
+            // Write metadata file to store "severity" of analysis elements for GUI to display
+            AnalysisMetadataWriter.WriteMetadata(directoryPath);
 
             // Remove the temp directory
             try

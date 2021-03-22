@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.ServiceModel;
 using RCALibrary;
 using System.ServiceModel.Channels;
+using System.Xml.Linq;
 
 namespace Server
 {
@@ -45,6 +46,31 @@ namespace Server
             }
 
             return block;
+        }
+
+        public XElement GetFileMetadata(string user, string project, string version, string filename)
+        {
+            string filePath = ".\\root\\" + user + "\\" + project + "\\" + version + "\\metadata.xml";
+            XDocument metadata;
+
+            try
+            {
+                metadata = XDocument.Load(filePath);
+                try
+                {
+                    return metadata.Elements("severity").Elements("analysis").Where(element => element.Attribute("type").Value.Equals(filename)).First();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Could not retrieve file metadata: {0}", e.ToString());
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Unable to open project metadata file: {0}", e.ToString());
+            }
+
+            return null;
         }
     }
 }

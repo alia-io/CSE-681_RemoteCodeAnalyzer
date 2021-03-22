@@ -1,9 +1,11 @@
+Human
 :
 Animal
 ,
 IAnimalActions
 ,
 IHumanActions
+ 
  
 {
 public
@@ -62,4 +64,6 @@ internal
 set
 ;
 }
+ 
+ 
 }

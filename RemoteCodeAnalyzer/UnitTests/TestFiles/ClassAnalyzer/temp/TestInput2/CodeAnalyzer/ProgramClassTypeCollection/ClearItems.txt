@@ -1,3 +1,5 @@
+ 
+ 
 foreach
 (
 ProgramClassType
@@ -11,10 +13,14 @@ ProgramClassCollection
 =
 null
 ;
+ 
+ 
 base
 .
 ClearItems
 (
 )
 ;
+ 
+ 
 }

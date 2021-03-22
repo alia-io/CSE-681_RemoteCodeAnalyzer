@@ -21,13 +21,13 @@ namespace UnitTests.CodeAnalyzerTests
             ProgramClassTypeCollection expectedProgramClassTypes = new ProgramClassTypeCollection();
             ProgramClassTypeCollection actualProgramClassTypes = new ProgramClassTypeCollection();
 
-            ProgramInterface iAnimalActions = new ProgramInterface(expectedProgramClassTypes, expectedProgramFile, "IAnimalActions", empty, empty);
-            ProgramInterface iHumanActions = new ProgramInterface(expectedProgramClassTypes, expectedProgramFile, "IHumanActions", empty, empty);
-            ProgramClass animal = new ProgramClass(expectedProgramClassTypes, expectedProgramFile, "Animal", empty, empty);
-            ProgramClass pet = new ProgramClass(expectedProgramClassTypes, expectedProgramFile, "Pet", empty, empty);
-            ProgramClass dog = new ProgramClass(expectedProgramClassTypes, expectedProgramFile, "Dog", empty, empty);
-            ProgramClass human = new ProgramClass(expectedProgramClassTypes, expectedProgramFile, "Human", empty, empty);
-            ProgramClass car = new ProgramClass(expectedProgramClassTypes, expectedProgramFile, "Car", empty, empty);
+            ProgramInterface iAnimalActions = new ProgramInterface(expectedProgramClassTypes, expectedProgramFile, "IAnimalActions", 0, empty, empty);
+            ProgramInterface iHumanActions = new ProgramInterface(expectedProgramClassTypes, expectedProgramFile, "IHumanActions", 0, empty, empty);
+            ProgramClass animal = new ProgramClass(expectedProgramClassTypes, expectedProgramFile, "Animal", 0, empty, empty);
+            ProgramClass pet = new ProgramClass(expectedProgramClassTypes, expectedProgramFile, "Pet", 0, empty, empty);
+            ProgramClass dog = new ProgramClass(expectedProgramClassTypes, expectedProgramFile, "Dog", 0, empty, empty);
+            ProgramClass human = new ProgramClass(expectedProgramClassTypes, expectedProgramFile, "Human", 0, empty, empty);
+            ProgramClass car = new ProgramClass(expectedProgramClassTypes, expectedProgramFile, "Car", 0, empty, empty);
 
             iAnimalActions.SubClasses.Add(dog);
             iAnimalActions.SubClasses.Add(human);
@@ -68,16 +68,16 @@ namespace UnitTests.CodeAnalyzerTests
             ProgramClassTypeCollection expectedProgramClassTypes = new ProgramClassTypeCollection();
             ProgramClassTypeCollection actualProgramClassTypes = new ProgramClassTypeCollection();
 
-            ProgramNamespace codeAnalyzer = new ProgramNamespace(expectedProgramFile, "CodeAnalyzer");
-            ProgramClass programType = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramType", empty, empty);
-            ProgramClass programDataType = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramDataType", empty, empty);
-            ProgramClass programClassType = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramClassType", empty, empty);
-            ProgramClass programFile = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramFile", empty, empty);
-            ProgramClass programNamespace = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramNamespace", empty, empty);
-            ProgramClass programClass = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramClass", empty, empty);
-            ProgramClass programInterface = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramInterface", empty, empty);
-            ProgramClass programFunction = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramFunction", empty, empty);
-            ProgramClass programClassTypeCollection = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramClassTypeCollection", empty, empty);
+            ProgramNamespace codeAnalyzer = new ProgramNamespace(expectedProgramFile, "CodeAnalyzer", 0);
+            ProgramClass programType = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramType", 0, empty, empty);
+            ProgramClass programDataType = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramDataType", 0, empty, empty);
+            ProgramClass programClassType = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramClassType", 0, empty, empty);
+            ProgramClass programFile = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramFile", 0, empty, empty);
+            ProgramClass programNamespace = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramNamespace", 0, empty, empty);
+            ProgramClass programClass = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramClass", 0, empty, empty);
+            ProgramClass programInterface = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramInterface", 0, empty, empty);
+            ProgramClass programFunction = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramFunction", 0, empty, empty);
+            ProgramClass programClassTypeCollection = new ProgramClass(expectedProgramClassTypes, codeAnalyzer, "ProgramClassTypeCollection", 0, empty, empty);
 
             programType.SubClasses.Add(programDataType);
             programType.SubClasses.Add(programFile);

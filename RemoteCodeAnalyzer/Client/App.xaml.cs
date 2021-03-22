@@ -236,7 +236,7 @@ namespace Client
             }
         }
 
-        public bool RequestAnalysisFile(string filename, out string fileText)
+        public bool RequestAnalysisFile(string filename, out string fileText, out XElement metadata)
         {
             // TODO: include colored lines
             FileBlock block;    // The next file block
@@ -244,7 +244,8 @@ namespace Client
             string project = Directory.Attribute("name").Value;
             string version = Directory.Attribute("number").Value;
 
-            fileText = "";  // Output file text
+            fileText = "";      // Output file text
+            metadata = null;    // Metadata for analysis file - which lines need severity highlighting
 
             using (MemoryStream s = new MemoryStream())
             {
@@ -268,6 +269,15 @@ namespace Client
                 s.Position = 0;
                 using (StreamReader r = new StreamReader(s)) // Convert MemoryStream bytes into a string
                     fileText = r.ReadToEnd();
+            }
+
+            try
+            {
+                metadata = filereader.GetFileMetadata(user, project, version, filename.Substring(0, filename.IndexOf('_')));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Unable to connect to readfile service: {0}", e.ToString());
             }
             
             return true;
