@@ -275,6 +275,7 @@ namespace Client
 
         private void NewProjectButton_Click(object sender, RoutedEventArgs e)
         {
+            FileListGrid.RowDefinitions[1].Height = new GridLength(50);
             NewProjectPanel.Visibility = Visibility.Visible;
         }
 
@@ -340,6 +341,7 @@ namespace Client
                 Projects.SelectedIndex = 0;
 
                 NewProjectName.Text = "";
+                FileListGrid.RowDefinitions[1].Height = new GridLength(0);
                 NewProjectPanel.Visibility = Visibility.Collapsed;
                 MessageBox.Show("New project added!");
             }
@@ -354,7 +356,7 @@ namespace Client
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             IEnumerable<string> filenames = from string filepath in newFiles select System.IO.Path.GetFileName(filepath);
-            int currentCount = FileList.Items.Count - 1;
+            int currentCount = FileList.Children.Count;
             
             openFileDialog.Filter = "Text Files (*.txt)|*.txt|C# Files (*.cs)|*.cs|Java Files (*.java)|*.java";
             openFileDialog.FilterIndex = 2;
@@ -378,49 +380,81 @@ namespace Client
 
         private void AddToFileList(string filename, int index)
         {
-            DockPanel panel = new DockPanel { LastChildFill = true };
+            DockPanel panel = new DockPanel { Name = "I" + index.ToString(), LastChildFill = true, Margin = new Thickness(0, 0, 0, 5) };
+
+            if (FileList.Children.Count == 0)
+            {
+                Rectangle top = new Rectangle
+                {
+                    Margin = new Thickness(0, 0, 0, 5),
+                    Height = 1,
+                    Fill = (SolidColorBrush)new BrushConverter().ConvertFrom("#888888"),
+                    HorizontalAlignment = HorizontalAlignment.Stretch
+                };
+                DockPanel.SetDock(top, Dock.Top);
+                panel.Children.Add(top);
+            }
+
+            Rectangle bottom = new Rectangle
+            {
+                Margin = new Thickness(0, 5, 0, 0),
+                Height = 1,
+                Fill = (SolidColorBrush)new BrushConverter().ConvertFrom("#888888"),
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+            DockPanel.SetDock(bottom, Dock.Bottom);
+            panel.Children.Add(bottom);
+
             Button button = new Button
             {
                 Content = new Image { Style = FindResource("RemoveIcon") as Style },
                 ToolTip = "Remove File",
+                Margin = new Thickness(0, 0, 5, 0),
                 Width = 20,
                 Height = 12
             };
-
             DockPanel.SetDock(button, Dock.Right);
             button.Click += RemoveButton_Click;
-
             panel.Children.Add(button);
-            panel.Children.Add(new TextBlock
+
+            TextBlock text = new TextBlock
             {
                 Text = filename,
                 FontSize = 14,
                 FontWeight = FontWeights.Light,
-                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(5, 0, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Left,
                 Foreground = FindResource("TextColor") as SolidColorBrush
-            });
+            };
+            DockPanel.SetDock(text, Dock.Left);
+            panel.Children.Add(text);
 
-            FileList.Items.Insert(FileList.Items.Count - 1, new ListBoxItem { Name = "I" + index.ToString(), Content = panel });
+            FileList.Children.Add(panel);
         }
 
         private void RemoveButton_Click(object sender, RoutedEventArgs e)
         {
-            ListBoxItem listBoxItem = (ListBoxItem)((DockPanel)(sender as Button).Parent).Parent;
-            int index = int.Parse(listBoxItem.Name[1].ToString());
+            DockPanel panel = (DockPanel)(sender as Button).Parent;
+            int index = int.Parse(panel.Name.Substring(1));
 
-            if (FileList.Items.Count <= 2)
+            if (index == 0 && FileList.Children.Count > 1)
             {
-                FileList.Items.Clear();
-                newFiles.Clear();
-                FileList.Items.Add(new ListBoxItem());
-                return;
+                Rectangle top = new Rectangle
+                {
+                    Margin = new Thickness(0, 0, 0, 5),
+                    Height = 1,
+                    Fill = (SolidColorBrush)new BrushConverter().ConvertFrom("#888888"),
+                    HorizontalAlignment = HorizontalAlignment.Stretch
+                };
+                DockPanel.SetDock(top, Dock.Top);
+                ((DockPanel)FileList.Children[1]).Children.Insert(0, top);
             }
 
             newFiles.RemoveAt(index);
-            FileList.Items.Remove(listBoxItem);
+            FileList.Children.RemoveAt(index);
 
-            for (int i = index; i < FileList.Items.Count - 1; i++)
-                ((ListBoxItem)FileList.Items[i]).Name = "I" + i.ToString();
+            for (int i = index; i < FileList.Children.Count; i++)
+                ((DockPanel)FileList.Children[i]).Name = "I" + i.ToString();
         }
 
         private async void UploadButton_Click(object sender, RoutedEventArgs e)
@@ -443,10 +477,9 @@ namespace Client
             UploadProjectButton.IsEnabled = false;
             ResetButton.IsEnabled = false;
             Projects.IsEnabled = false;
-            FileList.Items.Clear();
-            FileList.Items.Add(new ListBoxItem());
+            FileList.Children.Clear();
             NewProjectPanel.Visibility = Visibility.Collapsed;
-            FileListPanel.Visibility = Visibility.Collapsed;
+            FileListGrid.Visibility = Visibility.Collapsed;
             RightAnimation.Visibility = Visibility.Visible;
 
             animate.Interval = TimeSpan.FromMilliseconds(50);
@@ -465,7 +498,7 @@ namespace Client
 
             RightAnimation.Visibility = Visibility.Collapsed;
             animate.Stop();
-            FileListPanel.Visibility = Visibility.Visible;
+            FileListGrid.Visibility = Visibility.Visible;
             RightAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Uploading/uploading-0.png", UriKind.Relative));
             UploadTab.MouseEnter -= MouseWait;
             UploadTab.MouseLeave -= MouseArrow;
@@ -512,9 +545,14 @@ namespace Client
         private void ResetButton_Click(object sender, RoutedEventArgs e)
         {
             Projects.SelectedItem = null;
-            FileList.Items.Clear();
-            FileList.Items.Add(new ListBoxItem());
+            FileList.Children.Clear();
             newFiles.Clear();
+            NewProjectName.Text = "";
+            FileListGrid.RowDefinitions[1].Height = new GridLength(0);
+            NewProjectPanel.Visibility = Visibility.Collapsed;
+            UploadProjectMessage.Text = "";
+            FileListGrid.RowDefinitions[0].Height = new GridLength(0); // GridLength is 25 when open
+            UploadProjectMessage.Visibility = Visibility.Collapsed;
         }
 
         private void DirectoryButton_Click(object sender, RoutedEventArgs e)

@@ -253,7 +253,7 @@
 
             <!--Source: https://stackoverflow.com/questions/6005534/how-can-i-put-a-separator-between-every-listboxitem-in-my-listbox-->
             <!--TODO: fix this-->
-            <Style TargetType="{x:Type ListBoxItem}">
+            <!--<Style TargetType="{x:Type ListBoxItem}">
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ListBoxItem">
@@ -262,14 +262,14 @@
                                 <ContentPresenter/>
                             </StackPanel>
                             <ControlTemplate.Triggers>
-                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource PreviousData}}" Value="{x:Null}">
+                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource PreviousData}}">
                                     <Setter Property="Visibility" TargetName="Separator" Value="Visible"/>
                                 </DataTrigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
-            </Style>
+            </Style>-->
 
         </ResourceDictionary>
     </Application.Resources>

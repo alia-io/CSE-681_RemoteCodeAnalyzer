@@ -56,24 +56,7 @@
                 </StackPanel>
 
                 <ScrollViewer x:Name="FileTextView" Grid.Row="1" Margin="20,5,20,20" Visibility="Collapsed">
-                    <TextBlock x:Name="FileText" Foreground="#EAE2B7" FontSize="12" TextWrapping="Wrap">
-                        <Span>Test for normal text: test test test test test test</Span>
-                        <Span>More normal text: test test test test test test test</Span>
-                        <Span Foreground="#FCBF49" FontWeight="Bold">Test for low priority text: test test test test test</Span>
-                        <Span>More normal text: test test test test test test test</Span>
-                        <Span>More normal text: test test test test test test test</Span>
-                        <Span>More normal text: test test test test test test test</Span>
-                        <Span Foreground="#F77F00" FontWeight="Bold">Test for medium priority text: test test test</Span>
-                        <Span>More normal text: test test test test test test test</Span>
-                        <Span>More normal text: test test test test test test test</Span>
-                        <Span>More normal text: test test test test test test test</Span>
-                        <Span>More normal text: test test test test test test test</Span>
-                        <Span>More normal text: test test test test test test test</Span>
-                        <Span Foreground="#D62828" FontWeight="Bold">Test for high priority text: test test test test</Span>
-                        <Span>More normal text: test test test test test test test</Span>
-                        <Span>More normal text: test test test test test test test</Span>
-                        <Span>More normal text: test test test test test test test</Span>
-                    </TextBlock>
+                    <TextBlock x:Name="FileText" Text="" Foreground="#EAE2B7" FontSize="12" TextWrapping="Wrap" />
                 </ScrollViewer>
             </Grid>
         </Border>
@@ -111,9 +94,8 @@
                             </StackPanel>
 
                             <ScrollViewer Grid.Row="1" Margin="20,5,20,20" VerticalAlignment="Stretch" Grid.ColumnSpan="2">
-                                <WrapPanel x:Name="Explorer" Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10">
+                                <WrapPanel x:Name="Explorer" Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10"/>
                                     <!--Populated programmatically with directories or files-->
-                                </WrapPanel>
                             </ScrollViewer>
                         </Grid>
                     </Border>
@@ -130,6 +112,7 @@
                             </Grid.RowDefinitions>
 
                             <StackPanel Grid.Row="0" Orientation="Vertical">
+                                
                                 <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5" Margin="0,0,0,0"/>
                                 <DockPanel LastChildFill="True">
                                     <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
@@ -148,12 +131,17 @@
                             </StackPanel>
 
                             <Image x:Name="RightAnimation" Source="Assets/Animations/Uploading/uploading-0.png" Grid.Row="1" Width="250" Height="250" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
-                            
-                            <StackPanel x:Name="FileListPanel" Grid.Row="1" Visibility="Visible">
 
-                                <TextBlock x:Name="UploadProjectMessage" Text="" HorizontalAlignment="Center" FontSize="14" Margin="0,0,0,10" Visibility="Collapsed"/>
+                            <Grid x:Name="FileListGrid" Grid.Row="1" Visibility="Visible">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="0"/>
+                                    <RowDefinition Height="0"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
 
-                                <DockPanel x:Name="NewProjectPanel" LastChildFill="True" Margin="10,0,10,0" Visibility="Collapsed">
+                                <TextBlock x:Name="UploadProjectMessage" Text="" HorizontalAlignment="Center" FontSize="14" Margin="0,0,0,10" Visibility="Visible"/>
+
+                                <DockPanel x:Name="NewProjectPanel" Grid.Row="1" LastChildFill="True" Margin="10,10,10,10" Visibility="Visible">
                                     <TextBlock DockPanel.Dock="Left" Text="Project Name:" FontSize="14" VerticalAlignment="Center"/>
                                     <Button DockPanel.Dock="Right" Name="ConfirmButton" ToolTip="Confirm New Project Name" Click="ConfirmButton_Click" Width="30" Height="30" Background="Transparent" BorderThickness="0">
                                         <Button.Content>
@@ -174,14 +162,12 @@
                                     <TextBox x:Name="NewProjectName" KeyDown="NewProjectName_KeyDown" Text="" Cursor="IBeam" FontSize="18" Margin="10,0,10,0" TextWrapping="NoWrap" VerticalContentAlignment="Center" Background="#FF3F3F3F" Foreground="{StaticResource TextColor}" BorderBrush="#888888"/>
                                 </DockPanel>
 
-                                <ScrollViewer Margin="20,5,20,20" VerticalAlignment="Stretch" Visibility="Visible">
-                                    <ListBox x:Name="FileList" Grid.Row="1" Background="Transparent" Foreground="{StaticResource TextColor}" BorderThickness="0">
+                                <ScrollViewer Grid.Row="2" Margin="20,5,20,20">
+                                    <StackPanel x:Name="FileList"/>
                                         <!--Populated programmatically with file names-->
-                                        <ListBoxItem x:Name="LastItem"/>
-                                    </ListBox>
                                 </ScrollViewer>
-                            </StackPanel>
 
+                            </Grid>
                         </Grid>
                     </Border>
                 </TabItem>
