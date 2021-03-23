@@ -238,6 +238,8 @@ namespace Client
 
         public bool RequestAnalysisFile(string filename, out string fileText, out XElement metadata)
         {
+            Thread.Sleep(30000);
+
             // TODO: include colored lines
             FileBlock block;    // The next file block
             string user = Directory.Attribute("author").Value;

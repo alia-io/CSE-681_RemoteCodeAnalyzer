@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Timers;
+using System.Threading;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
@@ -849,7 +850,7 @@ namespace Client
                 if (int.TryParse(source.Substring(index, source.Length - index - 4), out int number))
                 {
                     if (++number > 15) number = 0;
-                    RightAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Loading/loading-" + number + ".png", UriKind.Relative));
+                    LeftAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Loading/loading-" + number + ".png", UriKind.Relative));
                 }
             }
         }
