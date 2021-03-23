@@ -26,7 +26,7 @@ namespace UnitTests
             bool expectedResponse = true;
             bool actualResponse;
 
-            Task.Run(() => Host.Main());
+            Host.Main();
             authenticationFactory = new ChannelFactory<IAuthentication>(new WSHttpBinding(), new EndpointAddress("http://localhost:8000/Authentication/"));
             authenticator = authenticationFactory.CreateChannel();
 
