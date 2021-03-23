@@ -9,7 +9,7 @@ using System.Xml.Linq;
 namespace Server
 {
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerSession)]
-    class Navigation : INavigation
+    public class Navigation : INavigation
     {
         private readonly object ThisLock = new object(); // Lock for Root and Current
         private XElement Root; // More thread-safe version of directory tree while in PerSession mode

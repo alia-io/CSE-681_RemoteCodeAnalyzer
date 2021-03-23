@@ -12,14 +12,14 @@ using RCALibrary;
 
 namespace Server
 {
-    class Host
+    public static class Host
     {
         private static readonly object DirectoryTreeLock = new object();
         private static readonly object NavigatorsLock = new object();
         private static XDocument DirectoryTree = null;
         private static readonly List<Navigation> Navigators = new List<Navigation>();
 
-        static void Main()
+        public static void Main()
         {
             // Make sure all necessary directories and files exist
             CheckRoot();
@@ -106,6 +106,8 @@ namespace Server
             uploader.Close();
             filereader.Close();
         }
+
+        public static void CloseHost() => Environment.Exit(0);
 
         public static void AddNavigator(Navigation navigator)
         {
