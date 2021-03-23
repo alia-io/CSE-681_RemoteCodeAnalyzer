@@ -188,7 +188,7 @@
   <ItemGroup>
     <Compile Include="CodeAnalyzerTests\ClassAnalyzerTests.cs" />
     <Compile Include="CodeAnalyzerTests\FileAnalyzerTests.cs" />
-    <Compile Include="CodeAnalyzerTests\RequestTests.cs" />
+    <Compile Include="RequestTests.cs" />
     <Compile Include="CodeAnalyzerTests\TextParserTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CodeAnalyzerTests\ControlFlowScopeRulesTests.cs" />

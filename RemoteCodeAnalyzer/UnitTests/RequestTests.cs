@@ -10,7 +10,7 @@ using Server;
 using System.ServiceModel;
 using System.Collections;
 
-namespace UnitTests.CodeAnalyzerTests
+namespace UnitTests
 {
     [TestClass]
     public class RequestTests
@@ -26,7 +26,7 @@ namespace UnitTests.CodeAnalyzerTests
             bool expectedResponse = true;
             bool actualResponse;
 
-            Host.Main();
+            Task.Run(() => Host.Main());
             authenticationFactory = new ChannelFactory<IAuthentication>(new WSHttpBinding(), new EndpointAddress("http://localhost:8000/Authentication/"));
             authenticator = authenticationFactory.CreateChannel();
 
