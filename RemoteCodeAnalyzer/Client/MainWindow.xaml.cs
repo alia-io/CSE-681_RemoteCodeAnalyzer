@@ -295,6 +295,7 @@ namespace Client
             XElement newProject;
             bool isUserDirectory = false;
             bool isThisUser = false;
+            DispatcherTimer message = new DispatcherTimer(DispatcherPriority.Normal);
 
             // TODO: add some additional requirements for project name
             if (NewProjectName.Text.Length < 1)
@@ -347,13 +348,23 @@ namespace Client
                 NewProjectName.Text = "";
                 FileListGrid.RowDefinitions[1].Height = new GridLength(0);
                 NewProjectPanel.Visibility = Visibility.Collapsed;
-                MessageBox.Show("New project added!");
+
+                UploadProjectMessage.Text = "";
+                UploadProjectMessage.Inlines.Add(new Run("New project added") { Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#40C5B5") });
             }
             else
             {
                 NewProjectName.Text = "";
-                MessageBox.Show("Unable to create new project." + Environment.NewLine + "The project may already exist.");
+                UploadProjectMessage.Text = "";
+                UploadProjectMessage.Inlines.Add(new Run("Unable to create new project") { Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#BC4749") });
+                
             }
+
+            UploadProjectMessage.Visibility = Visibility.Visible;
+            FileListGrid.RowDefinitions[0].Height = new GridLength(30);
+            message.Interval = TimeSpan.FromMilliseconds(5000);
+            message.Tick += EndNewProjectMessage;
+            message.Start();
         }
 
         private void AddFileButton_Click(object sender, RoutedEventArgs e)
@@ -466,6 +477,7 @@ namespace Client
             XElement newVersion = null;
             string projectName;
             DispatcherTimer animate = new DispatcherTimer(DispatcherPriority.Normal);
+            DispatcherTimer message = new DispatcherTimer(DispatcherPriority.Normal);
 
             // TODO: Message: Select a project to upload to, or create a new one.
             if (Projects.SelectedItem == null) return;
@@ -516,7 +528,10 @@ namespace Client
 
             if (newVersion == null)
             {
-                // TODO: display error message ("Could not upload files?")
+                ProjectExplorerMessage.Text = "";
+                UploadProjectMessage.Text = "";
+                ProjectExplorerMessage.Inlines.Add(new Run("New files uploaded") { Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#BC4749") });
+                UploadProjectMessage.Inlines.Add(new Run("New files uploaded") { Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#BC4749") });
             }
             else
             {
@@ -541,10 +556,20 @@ namespace Client
                     Explorer.Children.Insert(0, border);
                 }
 
-                // TODO: change this.
-                // TODO: Display: Files uploaded! for a few seconds, then disappear --> put this message on the top of BOTH tabs
-                MessageBox.Show("New version added!");
+                ProjectExplorerMessage.Text = "";
+                UploadProjectMessage.Text = "";
+                ProjectExplorerMessage.Inlines.Add(new Run("New files uploaded") { Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#40C5B5") });
+                UploadProjectMessage.Inlines.Add(new Run("New files uploaded") { Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#40C5B5") });
             }
+
+            ProjectExplorerMessage.Visibility = Visibility.Visible;
+            UploadProjectMessage.Visibility = Visibility.Visible;
+            ProjectExplorerGrid.RowDefinitions[0].Height = new GridLength(30);
+            FileListGrid.RowDefinitions[0].Height = new GridLength(30);
+
+            message.Interval = TimeSpan.FromMilliseconds(5000);
+            message.Tick += EndNewUploadMessage;
+            message.Start();
         }
 
         private void ResetButton_Click(object sender, RoutedEventArgs e)
@@ -556,7 +581,7 @@ namespace Client
             FileListGrid.RowDefinitions[1].Height = new GridLength(0);
             NewProjectPanel.Visibility = Visibility.Collapsed;
             UploadProjectMessage.Text = "";
-            FileListGrid.RowDefinitions[0].Height = new GridLength(0); // GridLength is 25 when open
+            FileListGrid.RowDefinitions[0].Height = new GridLength(0);
             UploadProjectMessage.Visibility = Visibility.Collapsed;
         }
 
@@ -628,6 +653,9 @@ namespace Client
             LeftPanel.MouseLeave += MouseArrow;
             ExplorerTab.MouseEnter += MouseWait;
             ExplorerTab.MouseLeave += MouseArrow;
+            FileTextMessageRow.Height = new GridLength(0);
+            FileTextMessage.Text = "";
+            FileTextMessage.Visibility = Visibility.Collapsed;
             FileTextHeaders.Visibility = Visibility.Collapsed;
             FileTextView.Visibility = Visibility.Collapsed;
             FileTextHeadersRow.Height = new GridLength(0);
@@ -706,12 +734,18 @@ namespace Client
                 FileTextHeadersRow.Height = new GridLength(105);
                 FileTextHeaders.Visibility = Visibility.Visible;
                 FileTextView.Visibility = Visibility.Visible;
-                // TODO: success message (temp)
             }
             else
             {
-                // TODO: error message (temp)
-                // FileTextView.Visibility = Visibility.Visible; //???
+                DispatcherTimer message = new DispatcherTimer(DispatcherPriority.Normal);
+
+                FileTextMessage.Text = "Error: Unable to retrieve the file.";
+                FileTextMessage.Visibility = Visibility.Visible;
+                FileTextMessageRow.Height = new GridLength(100);
+
+                animate.Interval = TimeSpan.FromMilliseconds(5000);
+                animate.Tick += EndReadFileMessage;
+                animate.Start();
             }
 
             Explorer.IsEnabled = true;
@@ -759,6 +793,9 @@ namespace Client
             LeftPanel.MouseLeave += MouseArrow;
             ExplorerTab.MouseEnter += MouseWait;
             ExplorerTab.MouseLeave += MouseArrow;
+            FileTextMessageRow.Height = new GridLength(0);
+            FileTextMessage.Text = "";
+            FileTextMessage.Visibility = Visibility.Collapsed;
             FileTextHeaders.Visibility = Visibility.Collapsed;
             FileTextView.Visibility = Visibility.Collapsed;
             FileTextHeadersRow.Height = new GridLength(0);
@@ -789,12 +826,18 @@ namespace Client
                 FileTextHeadersRow.Height = new GridLength(105);
                 FileTextHeaders.Visibility = Visibility.Visible;
                 FileTextView.Visibility = Visibility.Visible;
-                // TODO: success message (temp)
             }
             else
             {
-                // TODO: error message (temp)
-                // FileTextView.Visibility = Visibility.Visible; //???
+                DispatcherTimer message = new DispatcherTimer(DispatcherPriority.Normal);
+
+                FileTextMessage.Text = "Error: Unable to retrieve the file.";
+                FileTextMessage.Visibility = Visibility.Visible;
+                FileTextMessageRow.Height = new GridLength(100);
+
+                animate.Interval = TimeSpan.FromMilliseconds(5000);
+                animate.Tick += EndReadFileMessage;
+                animate.Start();
             }
 
             Explorer.IsEnabled = true;
@@ -853,6 +896,36 @@ namespace Client
                     LeftAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Loading/loading-" + number + ".png", UriKind.Relative));
                 }
             }
+        }
+
+        private void EndNewProjectMessage(object sender, EventArgs e)
+        {
+            ProjectExplorerGrid.RowDefinitions[0].Height = new GridLength(0);
+            FileListGrid.RowDefinitions[0].Height = new GridLength(0);
+            ProjectExplorerMessage.Text = "";
+            UploadProjectMessage.Text = "";
+            ProjectExplorerMessage.Visibility = Visibility.Collapsed;
+            UploadProjectMessage.Visibility = Visibility.Collapsed;
+            (sender as DispatcherTimer).Stop();
+        }
+
+        private void EndReadFileMessage(object sender, EventArgs e)
+        {
+            FileTextMessageRow.Height = new GridLength(0);
+            FileTextMessage.Text = "";
+            FileTextMessage.Visibility = Visibility.Collapsed;
+            (sender as DispatcherTimer).Stop();
+        }
+
+        private void EndNewUploadMessage(object sender, EventArgs e)
+        {
+            ProjectExplorerGrid.RowDefinitions[0].Height = new GridLength(0);
+            FileListGrid.RowDefinitions[0].Height = new GridLength(0);
+            ProjectExplorerMessage.Text = "";
+            UploadProjectMessage.Text = "";
+            ProjectExplorerMessage.Visibility = Visibility.Collapsed;
+            UploadProjectMessage.Visibility = Visibility.Collapsed;
+            (sender as DispatcherTimer).Stop();
         }
 
         private void ClearLastClickedButton()

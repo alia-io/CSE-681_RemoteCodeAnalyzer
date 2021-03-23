@@ -248,6 +248,8 @@ namespace Client
 
         public bool RequestAnalysisFile(string filename, out string fileText, out XElement metadata)
         {
+            fileText = "";
+            metadata = null;
             FileBlock block;    // The next file block
             string user = Directory.Attribute("author").Value;
             string project = Directory.Attribute("name").Value;
