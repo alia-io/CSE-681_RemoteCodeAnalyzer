@@ -114,10 +114,11 @@ namespace Client
             foreach (XElement child in children)
             {
                 StackPanel outerPanel = new StackPanel { Orientation = Orientation.Horizontal };
-                StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left };
-                Image image = new Image { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right };
+                StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center };
+                Image image = new Image();
                 TextBlock header = new TextBlock { FontSize = 14, TextWrapping = TextWrapping.Wrap, Foreground = FindResource("TextColor") as SolidColorBrush };
-                Button button;
+                Button button = new Button { Content = outerPanel, HorizontalAlignment = HorizontalAlignment.Left };
+                Border border = new Border { Child = button, Margin = new Thickness(10) };
 
                 type = child.Name.ToString();
 
@@ -127,12 +128,13 @@ namespace Client
 
                 if (type.Equals("user") || type.Equals("project") || type.Equals("version"))
                 {
-                    TextBlock line1 = new TextBlock { FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
-                    TextBlock line2 = new TextBlock { FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
+                    TextBlock line1 = new TextBlock { FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
+                    TextBlock line2 = new TextBlock { FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
 
-                    button = new Button { Content = outerPanel, Height = 75, Margin = new Thickness(10, 5, 10, 5) };
+                    border.Height = 75;
+                    border.Width = 260;
+                    innerPanel.MaxWidth = 160;
                     button.Click += DirectoryButton_Click;
-                    header.MaxWidth = 286;
                     header.Text = child.Attribute("name").Value;
                     innerPanel.Children.Add(line1);
                     innerPanel.Children.Add(line2);
@@ -147,7 +149,7 @@ namespace Client
                     }
                     else
                     {
-                        TextBlock line3 = new TextBlock { FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
+                        TextBlock line3 = new TextBlock { FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
 
                         line1.Text = "Author: " + child.Attribute("author").Value;
                         innerPanel.Children.Add(line3);
@@ -173,13 +175,13 @@ namespace Client
                 }
                 else if (type.Equals("code") || type.Equals("analysis"))
                 {
-                    button = new Button { Height = 100, Margin = new Thickness(15, 5, 15, 5) };
-                    button.Content = outerPanel;
-                    header.MaxWidth = 186;
+                    border.Height = 100;
+                    border.Width = 210;
+                    innerPanel.MaxWidth = 130;
 
                     if (type.Equals("code"))
                     {
-                        TextBlock line = new TextBlock { FontSize = 10, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
+                        TextBlock line = new TextBlock { FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
 
                         button.Name = "C" + i++;
                         button.Click += CodeButton_Click;
@@ -202,7 +204,7 @@ namespace Client
                 }
                 else continue;
 
-                Explorer.Children.Add(button);
+                Explorer.Children.Add(border);
             }
         }
 
@@ -319,21 +321,22 @@ namespace Client
                 if (isUserDirectory && isThisUser) // Add new project to Explorer view
                 {
                     StackPanel outerPanel = new StackPanel { Orientation = Orientation.Horizontal };
-                    StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left };
-                    Button button = new Button { Name = "P" + Explorer.Children.Count, Content = outerPanel, Height = 75, Margin = new Thickness(10, 5, 10, 5) };
+                    StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 160 };
+                    Button button = new Button { Name = "P" + Explorer.Children.Count, Content = outerPanel, HorizontalAlignment = HorizontalAlignment.Left };
+                    Border border = new Border { Child = button, Height = 75, Width = 260, Margin = new Thickness(10) };
 
                     button.Click += DirectoryButton_Click;
                     DateTime.TryParseExact(newProject.Attribute("created").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
 
-                    outerPanel.Children.Add(new Image { Source = new BitmapImage(new Uri("/Assets/Icons/project-directory.png", UriKind.Relative)), VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right });
+                    outerPanel.Children.Add(new Image { Source = new BitmapImage(new Uri("/Assets/Icons/project-directory.png", UriKind.Relative)) });
                     outerPanel.Children.Add(innerPanel);
 
-                    innerPanel.Children.Add(new TextBlock { Text = newProject.Attribute("name").Value, MaxWidth = 286, FontSize = 14, TextWrapping = TextWrapping.Wrap, Foreground = FindResource("TextColor") as SolidColorBrush });
-                    innerPanel.Children.Add(new TextBlock { Text = "Author: " + newProject.Attribute("author").Value, FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
-                    innerPanel.Children.Add(new TextBlock { Text = "Created: " + date.ToString("g"), FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
-                    innerPanel.Children.Add(new TextBlock { Text = "Last Upload: " + date.ToString("g"), FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
+                    innerPanel.Children.Add(new TextBlock { Text = newProject.Attribute("name").Value, FontSize = 14, TextWrapping = TextWrapping.Wrap, Foreground = FindResource("TextColor") as SolidColorBrush });
+                    innerPanel.Children.Add(new TextBlock { Text = "Author: " + newProject.Attribute("author").Value, FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
+                    innerPanel.Children.Add(new TextBlock { Text = "Created: " + date.ToString("g"), FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
+                    innerPanel.Children.Add(new TextBlock { Text = "Last Upload: " + date.ToString("g"), FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
 
-                    Explorer.Children.Insert(0, button);
+                    Explorer.Children.Insert(0, border);
                 }
 
                 // Add new project to Projects dropdown and select it
@@ -519,21 +522,22 @@ namespace Client
                 if (app.Directory.Name.ToString().Equals("project") && app.Directory.Attribute("author").Value.Equals(app.User) && app.Directory.Attribute("name").Value.Equals(newVersion.Attribute("name").Value)) // Add new version to Explorer view
                 {
                     StackPanel outerPanel = new StackPanel { Orientation = Orientation.Horizontal };
-                    StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left };
-                    Button button = new Button { Name = "V" + newVersion.Attribute("number").Value, Content = outerPanel, Height = 75, Margin = new Thickness(10, 5, 10, 5) };
+                    StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 160 };
+                    Button button = new Button { Name = "V" + newVersion.Attribute("number").Value, Content = outerPanel, HorizontalAlignment = HorizontalAlignment.Left };
+                    Border border = new Border { Child = button, Height = 75, Width = 260, Margin = new Thickness(10) };
 
                     button.Click += DirectoryButton_Click;
                     DateTime.TryParseExact(newVersion.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
 
-                    outerPanel.Children.Add(new Image { Source = new BitmapImage(new Uri("/Assets/Icons/version-directory.png", UriKind.Relative)), VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right });
+                    outerPanel.Children.Add(new Image { Source = new BitmapImage(new Uri("/Assets/Icons/version-directory.png", UriKind.Relative)) });
                     outerPanel.Children.Add(innerPanel);
 
-                    innerPanel.Children.Add(new TextBlock { Text = newVersion.Attribute("name").Value, MaxWidth = 286, FontSize = 14, TextWrapping = TextWrapping.Wrap, Foreground = FindResource("TextColor") as SolidColorBrush });
-                    innerPanel.Children.Add(new TextBlock { Text = "Author: " + newVersion.Attribute("author").Value, FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
-                    innerPanel.Children.Add(new TextBlock { Text = "Uploaded: " + date.ToString("g"), FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
-                    innerPanel.Children.Add(new TextBlock { Text = "Version: " + newVersion.Attribute("number").Value, FontSize = 10, MaxWidth = 289, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
+                    innerPanel.Children.Add(new TextBlock { Text = newVersion.Attribute("name").Value, FontSize = 14, TextWrapping = TextWrapping.Wrap, Foreground = FindResource("TextColor") as SolidColorBrush });
+                    innerPanel.Children.Add(new TextBlock { Text = "Author: " + newVersion.Attribute("author").Value, FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
+                    innerPanel.Children.Add(new TextBlock { Text = "Uploaded: " + date.ToString("g"), FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
+                    innerPanel.Children.Add(new TextBlock { Text = "Version: " + newVersion.Attribute("number").Value, FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
 
-                    Explorer.Children.Insert(0, button);
+                    Explorer.Children.Insert(0, border);
                 }
 
                 // TODO: change this.

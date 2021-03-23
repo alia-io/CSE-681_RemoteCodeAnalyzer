@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Client"
         mc:Ignorable="d"
-        Title="Remote Code Analyzer" Height="625" Width="1050" Background="#D6D6D6">
+        Title="Remote Code Analyzer" Height="750" Width="1300" Background="#D6D6D6">
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -95,7 +95,7 @@
 
                             <ScrollViewer Grid.Row="1" Margin="20,5,20,20" VerticalAlignment="Stretch" Grid.ColumnSpan="2">
                                 <WrapPanel x:Name="Explorer" Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10"/>
-                                    <!--Populated programmatically with directories or files-->
+                                <!--Populated programmatically with directories or files-->
                             </ScrollViewer>
                         </Grid>
                     </Border>
