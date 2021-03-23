@@ -36,7 +36,7 @@ namespace Client
             SetProjects(children);
         }
 
-        ~MainWindow() => app.RemoveNavigator();
+        ~MainWindow() => app.LogOut();
 
         private void SetExplorer(XElement current, List<XElement> children)
         {

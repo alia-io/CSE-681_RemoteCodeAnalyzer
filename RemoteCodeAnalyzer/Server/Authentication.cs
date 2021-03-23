@@ -15,6 +15,8 @@ namespace Server
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single)]
     class Authentication : IAuthentication
     {
+        private static HashSet<string> loggedInUsers = new HashSet<string>();
+
         public bool Login(AuthenticationRequest credentials)
         {
             XDocument secret;
@@ -39,9 +41,9 @@ namespace Server
                        where element.Attribute("name").Value.Equals(credentials.Username)
                        select element.Attribute("password").Value;
 
-            if (password.Count() == 1 && password.First().Equals(credentials.Password))
+            if (password.Count() == 1 && password.First().Equals(credentials.Password) && !loggedInUsers.Contains(credentials.Username))
             {
-                // TODO: make sure this user isn't already logged in / connected
+                loggedInUsers.Add(credentials.Username);
                 return true;
             }
 
@@ -100,6 +102,8 @@ namespace Server
 
             return false;
         }
+
+        public void Logout(string username) => loggedInUsers.Remove(username);
 
         private bool AddUser(XDocument secret, AuthenticationRequest credentials)
         {

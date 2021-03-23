@@ -71,14 +71,14 @@ namespace Client
         /* Logout of the main application by loading the login window */
         public void Login_Window()
         {
-            RemoveNavigator();
+            LogOut();
             User = null;
             lw = new LoginWindow(this);
             mw.Close();
             lw.Show();
         }
 
-        public void RemoveNavigator()
+        public void LogOut()
         {
             try
             {
@@ -88,6 +88,16 @@ namespace Client
             catch (Exception e)
             {
                 Console.WriteLine("Unable to connect to navigation service: {0}", e.ToString());
+            }
+
+            try
+            {
+                authenticator.Logout(User);
+                User = null;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Unable to connect to authentication service: {0}", e.ToString());
             }
         }
 
@@ -238,9 +248,6 @@ namespace Client
 
         public bool RequestAnalysisFile(string filename, out string fileText, out XElement metadata)
         {
-            Thread.Sleep(30000);
-
-            // TODO: include colored lines
             FileBlock block;    // The next file block
             string user = Directory.Attribute("author").Value;
             string project = Directory.Attribute("name").Value;

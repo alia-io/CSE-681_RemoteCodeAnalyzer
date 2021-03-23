@@ -16,5 +16,8 @@ namespace RCALibrary
 
         [OperationContract]
         bool NewUser(AuthenticationRequest credentials);
+
+        [OperationContract]
+        void Logout(string username);
     }
 }
