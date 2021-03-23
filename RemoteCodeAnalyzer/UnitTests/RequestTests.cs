@@ -18,6 +18,7 @@ namespace UnitTests
         [TestMethod]
         public void Test1()
         {
+            Task host;
             string secretPath = "..\\..\\..\\Server\\bin\\Debug\\root\\secret.xml";
             ChannelFactory<IAuthentication> authenticationFactory;
             IAuthentication authenticator;
@@ -25,10 +26,6 @@ namespace UnitTests
             IEnumerable<XElement> testUser;
             bool expectedResponse = true;
             bool actualResponse;
-
-            Host.Main();
-            authenticationFactory = new ChannelFactory<IAuthentication>(new WSHttpBinding(), new EndpointAddress("http://localhost:8000/Authentication/"));
-            authenticator = authenticationFactory.CreateChannel();
 
             try
             {
@@ -61,6 +58,11 @@ namespace UnitTests
                 }
             }
 
+            host = Task.Run(() => Host.Main());
+
+            authenticationFactory = new ChannelFactory<IAuthentication>(new WSHttpBinding(), new EndpointAddress("http://localhost:8000/Authentication/"));
+            authenticator = authenticationFactory.CreateChannel();
+
             try
             {
                 actualResponse = authenticator.Login(new AuthenticationRequest { Username = "testname1", Password = "testpass1" });
@@ -73,7 +75,7 @@ namespace UnitTests
             }
             finally
             {
-                Host.CloseHost();
+                host = Task.Run(() => Host.CloseHost());
             }
 
             Assert.AreEqual(expectedResponse, actualResponse);

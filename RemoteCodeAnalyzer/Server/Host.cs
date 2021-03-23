@@ -18,6 +18,10 @@ namespace Server
         private static readonly object NavigatorsLock = new object();
         private static XDocument DirectoryTree = null;
         private static readonly List<Navigation> Navigators = new List<Navigation>();
+        private static ServiceHost authenticator;
+        private static ServiceHost navigator;
+        private static ServiceHost uploader;
+        private static ServiceHost filereader;
 
         public static void Main()
         {
@@ -28,7 +32,7 @@ namespace Server
 
             Console.WriteLine("Initializing the Authentication service.");
             Uri authenticationAddress = new Uri("http://localhost:8000/Authentication/");
-            ServiceHost authenticator = new ServiceHost(typeof(Authentication), authenticationAddress);
+            authenticator = new ServiceHost(typeof(Authentication), authenticationAddress);
 
             // Use to test what happens while server is fulfilling contract
             //WSHttpBinding binding = new WSHttpBinding();
@@ -51,7 +55,7 @@ namespace Server
 
             Console.WriteLine("Initializing the Navigation service.");
             Uri navigationAddress = new Uri("http://localhost:8000/Navigation/");
-            ServiceHost navigator = new ServiceHost(typeof(Navigation), navigationAddress);
+            navigator = new ServiceHost(typeof(Navigation), navigationAddress);
 
             try
             {
@@ -68,7 +72,7 @@ namespace Server
 
             Console.WriteLine("Initializing the Upload service.");
             Uri uploadAddress = new Uri("http://localhost:8000/Upload/");
-            ServiceHost uploader = new ServiceHost(typeof(Upload), uploadAddress);
+            uploader = new ServiceHost(typeof(Upload), uploadAddress);
 
             try
             {
@@ -85,7 +89,7 @@ namespace Server
 
             Console.WriteLine("Initializing the ReadFile service.");
             Uri readFileAddress = new Uri("http://localhost:8000/ReadFile/");
-            ServiceHost filereader = new ServiceHost(typeof(ReadFile), readFileAddress);
+            filereader = new ServiceHost(typeof(ReadFile), readFileAddress);
 
             try
             {
@@ -101,13 +105,17 @@ namespace Server
             }
 
             Console.ReadKey();
+            CloseHost();
+        }
+
+        public static void CloseHost()
+        {
             authenticator.Close();
             navigator.Close();
             uploader.Close();
             filereader.Close();
+            Environment.Exit(0);
         }
-
-        public static void CloseHost() => Environment.Exit(0);
 
         public static void AddNavigator(Navigation navigator)
         {
