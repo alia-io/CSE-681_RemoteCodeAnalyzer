@@ -19,19 +19,17 @@ namespace UnitTests
         [TestMethod]
         public void Test1()
         {
-            Task host;
-            string secretPath = ".\\root\\secret.xml";
-            string userPath = ".\\root\\testname1";
             ChannelFactory<IAuthentication> authenticationFactory;
             IAuthentication authenticator;
             XDocument secret;
+            Task host;
             IEnumerable<XElement> testUser;
             bool expectedResponse = true;
             bool actualResponse;
 
             try
             {
-                secret = XDocument.Load(secretPath);
+                secret = XDocument.Load(".\\root\\secret.xml");
             }
             catch (Exception e)
             {
@@ -50,18 +48,7 @@ namespace UnitTests
 
                 try
                 {
-                    Directory.CreateDirectory(userPath);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Failed to create new user directory.\n{0}", e.ToString());
-                    Assert.AreEqual(0, 1);
-                    return;
-                }
-
-                try
-                {
-                    secret.Save(secretPath);
+                    secret.Save(".\\root\\secret.xml");
                 }
                 catch (Exception e)
                 {
