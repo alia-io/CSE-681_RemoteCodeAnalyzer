@@ -9,6 +9,7 @@ using RCALibrary;
 using Server;
 using System.ServiceModel;
 using System.Collections;
+using System.IO;
 
 namespace UnitTests
 {
@@ -19,7 +20,8 @@ namespace UnitTests
         public void Test1()
         {
             Task host;
-            string secretPath = "..\\..\\..\\Server\\bin\\Debug\\root\\secret.xml";
+            string secretPath = ".\\root\\secret.xml";
+            string userPath = ".\\root\\testname1";
             ChannelFactory<IAuthentication> authenticationFactory;
             IAuthentication authenticator;
             XDocument secret;
@@ -48,6 +50,17 @@ namespace UnitTests
 
                 try
                 {
+                    Directory.CreateDirectory(userPath);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Failed to create new user directory.\n{0}", e.ToString());
+                    Assert.AreEqual(0, 1);
+                    return;
+                }
+
+                try
+                {
                     secret.Save(secretPath);
                 }
                 catch (Exception e)
@@ -65,7 +78,7 @@ namespace UnitTests
 
             try
             {
-                actualResponse = authenticator.Login(new AuthenticationRequest { Username = "testname1", Password = "testpass1" });
+                actualResponse = authenticator.Login(new AuthenticationRequest { Username = "testname1", Password = "testpass1", ConfirmPassword = "" });
             }
             catch (Exception e)
             {
@@ -75,10 +88,11 @@ namespace UnitTests
             }
             finally
             {
-                host = Task.Run(() => Host.CloseHost());
+                // TODO: somehow close the host
             }
 
             Assert.AreEqual(expectedResponse, actualResponse);
+            return;
         }
 
     }

@@ -88,16 +88,13 @@ namespace Server
             if (user.Count() == 0 && credentials.Password.Equals(credentials.ConfirmPassword))
                 return AddUser(secret, credentials);
 
-            while (Directory.Exists(".\\root\\" + credentials.Username))
+            try
             {
-                try
-                {
-                    Directory.Delete(".\\root\\" + credentials.Username);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Failed to remove user directory.\n{0}", e.ToString());
-                }
+                Directory.Delete(".\\root\\" + credentials.Username);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Failed to remove user directory.\n{0}", e.ToString());
             }
 
             return false;

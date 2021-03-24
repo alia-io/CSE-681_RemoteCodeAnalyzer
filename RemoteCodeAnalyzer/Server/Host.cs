@@ -105,16 +105,10 @@ namespace Server
             }
 
             Console.ReadKey();
-            CloseHost();
-        }
-
-        public static void CloseHost()
-        {
             authenticator.Close();
             navigator.Close();
             uploader.Close();
             filereader.Close();
-            Environment.Exit(0);
         }
 
         public static void AddNavigator(Navigation navigator)
