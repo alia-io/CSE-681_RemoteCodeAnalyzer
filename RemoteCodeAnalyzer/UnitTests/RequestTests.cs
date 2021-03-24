@@ -66,20 +66,17 @@ namespace UnitTests
             try
             {
                 actualResponse = authenticator.Login(new AuthenticationRequest { Username = "testname1", Password = "testpass1", ConfirmPassword = "" });
+                Assert.AreEqual(expectedResponse, actualResponse);
             }
             catch (Exception e)
             {
                 Console.WriteLine("Error connecting to authentication login service: {0}", e.ToString());
                 Assert.AreEqual(0, 1);
-                return;
             }
             finally
             {
                 // TODO: somehow close the host
             }
-
-            Assert.AreEqual(expectedResponse, actualResponse);
-            return;
         }
 
     }
