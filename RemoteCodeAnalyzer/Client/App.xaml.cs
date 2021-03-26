@@ -39,9 +39,12 @@ using System;
 using System.IO;
 using System.Windows;
 using System.Xml.Linq;
+using System.Threading;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.ServiceModel;
 using RCALibrary;
+using System.Threading.Tasks;
 
 namespace Client
 {
@@ -92,7 +95,7 @@ namespace Client
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to connect to navigation service: {0}", e.ToString());
+                Trace.WriteLine("Unable to connect to navigation service: {0}", e.ToString());
             }
 
             if (directory != null)
@@ -127,7 +130,7 @@ namespace Client
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to connect to navigation service: {0}", e.ToString());
+                Trace.WriteLine("Unable to connect to navigation service: {0}", e.ToString());
             }
 
             try
@@ -137,7 +140,7 @@ namespace Client
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to connect to authentication service: {0}", e.ToString());
+                Trace.WriteLine("Unable to connect to authentication service: {0}", e.ToString());
             }
         }
 
@@ -153,7 +156,7 @@ namespace Client
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to connect to authentication service: {0}", e.ToString());
+                Trace.WriteLine("Unable to connect to authentication service: {0}", e.ToString());
             }
 
             return response;
@@ -168,7 +171,7 @@ namespace Client
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to connect to authentication service: {0}", e.ToString());
+                Trace.WriteLine("Unable to connect to authentication service: {0}", e.ToString());
                 return false;
             }
         }
@@ -184,7 +187,7 @@ namespace Client
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to connect to navigation service: {0}", e.ToString());
+                Trace.WriteLine("Unable to connect to navigation service: {0}", e.ToString());
             }
 
             if (data != null) Directory = data.CurrentDirectory;
@@ -203,7 +206,7 @@ namespace Client
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to connect to navigation service: {0}", e.ToString());
+                Trace.WriteLine("Unable to connect to navigation service: {0}", e.ToString());
             }
 
             if (data != null) Directory = data.CurrentDirectory;
@@ -220,7 +223,7 @@ namespace Client
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to connect to upload service: {0}", e.ToString());
+                Trace.WriteLine("Unable to connect to upload service: {0}", e.ToString());
                 return null;
             }
         }
@@ -237,7 +240,7 @@ namespace Client
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to connect to upload service: {0}", e.ToString());
+                Trace.WriteLine("Unable to connect to upload service: {0}", e.ToString());
                 return false;
             }
 
@@ -263,7 +266,7 @@ namespace Client
                             }
                             catch (Exception e)
                             {
-                                Console.WriteLine("Unable to connect to upload service: {0}", e.ToString());
+                                Trace.WriteLine("Unable to connect to upload service: {0}", e.ToString());
                                 return false;
                             }
                             blockNumber++;
@@ -285,7 +288,7 @@ namespace Client
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to connect to upload service: {0}", e.ToString());
+                Trace.WriteLine("Unable to connect to upload service: {0}", e.ToString());
                 return null;
             }
         }
@@ -293,10 +296,14 @@ namespace Client
         /* Sends requests to read a file to the server, then sends file metadata ReadFile request to server */
         public bool RequestAnalysisFile(string filename, out string fileText, out XElement metadata)
         {
+            Trace.WriteLine("Request thread: " + Task.CurrentId);
+
             string user = Directory.Attribute("author").Value;
             string project = Directory.Attribute("name").Value;
             string version = Directory.Attribute("number").Value;
             metadata = null;    // Metadata for analysis element - list of lines that need severity highlighting
+
+            //Thread.Sleep(20); // Wait to allow animation to begin
 
             if (!RequestReadFile(user, project, version, filename, out fileText)) return false; // File reading failed
 
@@ -307,8 +314,10 @@ namespace Client
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to connect to readfile service: {0}", e.ToString());
+                Trace.WriteLine("Unable to connect to readfile service: {0}", e.ToString());
             }
+
+            Trace.WriteLine("Completed request");
             
             return true;
         }
@@ -316,9 +325,13 @@ namespace Client
         /* Sends requests to read a file to the server */
         public bool RequestCodeFile(string filename, out string fileText)
         {
+            Trace.WriteLine("Request thread: " + Task.CurrentId);
+
             string user = Directory.Attribute("author").Value;
             string project = Directory.Attribute("name").Value;
             string version = Directory.Attribute("number").Value;
+
+            //Thread.Sleep(10); // Wait to allow animation to begin
 
             return RequestReadFile(user, project, version, filename, out fileText);
         }
@@ -339,7 +352,7 @@ namespace Client
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("Unable to connect to readfile service: {0}", e.ToString());
+                        Trace.WriteLine("Unable to connect to readfile service: {0}", e.ToString());
                         return false;
                     }
 

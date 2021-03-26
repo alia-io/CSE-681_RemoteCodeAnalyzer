@@ -38,6 +38,7 @@ using System.Windows.Threading;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using RCALibrary;
+using System.Diagnostics;
 
 namespace Client
 {
@@ -378,39 +379,45 @@ namespace Client
             string fileText = "";
             XElement metadata = null;
 
-            DispatcherTimer animate = DisableNavigation(sender as Button);
+            Trace.WriteLine("Original gui thread: " + Task.CurrentId);
+
+            DisableNavigation(sender as Button, out DispatcherTimer animate);
 
             getFileText = await Task.Run(() => app.RequestAnalysisFile(filename, out fileText, out metadata));
-            
-            LeftAnimation.Visibility = Visibility.Collapsed;
-            animate.Stop();
 
-            if (getFileText)
+            await Task.Run(() => // Write the analysis file text
             {
-                SetFileTextHeader(analysisType + " Analysis", "XML", (SolidColorBrush)new BrushConverter().ConvertFrom("#2A9D8F"));
-
-                if (metadata == null) FileText.Text = fileText;
-                else
+                if (getFileText)
                 {
-                    IEnumerator<int> lowSeverity = (from XElement severity in metadata.Elements("severity")
-                                                    where severity.Attribute("level").Value.Equals("low")
-                                                    from XElement element in severity.Elements("line")
-                                                    select int.Parse(element.Value)).GetEnumerator();
+                    if (metadata == null) Dispatcher.Invoke(() => FileText.Text = fileText);
+                    else
+                    {
+                        IEnumerator<int> lowSeverity = (from XElement severity in metadata.Elements("severity")
+                                                        where severity.Attribute("level").Value.Equals("low")
+                                                        from XElement element in severity.Elements("line")
+                                                        select int.Parse(element.Value)).GetEnumerator();
 
-                    IEnumerator<int> mediumSeverity = (from XElement severity in metadata.Elements("severity")
-                                                       where severity.Attribute("level").Value.Equals("medium")
-                                                       from XElement element in severity.Elements("line")
-                                                       select int.Parse(element.Value)).GetEnumerator();
+                        IEnumerator<int> mediumSeverity = (from XElement severity in metadata.Elements("severity")
+                                                           where severity.Attribute("level").Value.Equals("medium")
+                                                           from XElement element in severity.Elements("line")
+                                                           select int.Parse(element.Value)).GetEnumerator();
 
-                    IEnumerator<int> highSeverity = (from XElement severity in metadata.Elements("severity")
-                                                     where severity.Attribute("level").Value.Equals("high")
-                                                     from XElement element in severity.Elements("line")
-                                                     select int.Parse(element.Value)).GetEnumerator();
+                        IEnumerator<int> highSeverity = (from XElement severity in metadata.Elements("severity")
+                                                         where severity.Attribute("level").Value.Equals("high")
+                                                         from XElement element in severity.Elements("line")
+                                                         select int.Parse(element.Value)).GetEnumerator();
 
-                    WriteAnalysisFileText(fileText, lowSeverity, mediumSeverity, highSeverity);
+                        WriteAnalysisFileText(fileText, lowSeverity, mediumSeverity, highSeverity);
+                    }
                 }
-            }
+            });
+
+            if (getFileText) SetFileTextHeader(analysisType + " Analysis", "XML", (SolidColorBrush)new BrushConverter().ConvertFrom("#2A9D8F"));
             else StartFilePanelMessage("An error occurred while attempting to retrieve the file.");
+
+            LeftAnimation.Visibility = Visibility.Collapsed;
+            Trace.WriteLine("Stopping animation");
+            animate.Stop();
 
             EnableNavigation();
         }
@@ -430,7 +437,7 @@ namespace Client
             else if (type.Equals("C#")) fileType = "cs";
             else if (type.Equals("Java")) fileType = "java";
 
-            DispatcherTimer animate = DisableNavigation(sender as Button);
+            DisableNavigation(sender as Button, out DispatcherTimer animate);
 
             getFileText = await Task.Run(() => app.RequestCodeFile(filename + "." + fileType, out fileText));
 
@@ -463,35 +470,36 @@ namespace Client
             if (mediumSeverity.MoveNext()) nextMediumLine = mediumSeverity.Current;
             if (highSeverity.MoveNext()) nextHighLine = highSeverity.Current;
 
+            // TOTO: create new TextBlock object to write inlines to
             foreach (string line in fileTextLines)
             {
                 if (nextLowLine == currentLine)
                 {
-                    FileText.Inlines.Add(new Run(line + "\r\n") { FontWeight = FontWeights.Bold, Foreground = lowColor });
+                    Dispatcher.Invoke(() => FileText.Inlines.Add(new Run(line + "\r\n") { FontWeight = FontWeights.Bold, Foreground = lowColor }));
                     if (lowSeverity.MoveNext()) nextLowLine = lowSeverity.Current;
                     else nextLowLine = -1;
                 }
                 else if (nextMediumLine == currentLine)
                 {
-                    FileText.Inlines.Add(new Run(line + "\r\n") { FontWeight = FontWeights.Bold, Foreground = mediumColor });
+                    Dispatcher.Invoke(() => FileText.Inlines.Add(new Run(line + "\r\n") { FontWeight = FontWeights.Bold, Foreground = mediumColor }));
                     if (mediumSeverity.MoveNext()) nextMediumLine = mediumSeverity.Current;
                     else nextMediumLine = -1;
                 }
                 else if (nextHighLine == currentLine)
                 {
-                    FileText.Inlines.Add(new Run(line + "\r\n") { FontWeight = FontWeights.Bold, Foreground = highColor });
+                    Dispatcher.Invoke(() => FileText.Inlines.Add(new Run(line + "\r\n") { FontWeight = FontWeights.Bold, Foreground = highColor }));
                     if (highSeverity.MoveNext()) nextHighLine = highSeverity.Current;
                     else nextHighLine = -1;
                 }
-                else FileText.Inlines.Add(line + "\r\n");
+                else Dispatcher.Invoke(() => FileText.Inlines.Add(line + "\r\n"));
                 currentLine++;
             }
         }
 
         /* Disables navigation tab while retrieving file text */
-        private DispatcherTimer DisableNavigation(Button button)
+        private void DisableNavigation(Button button, out DispatcherTimer animate)
         {
-            DispatcherTimer animate = new DispatcherTimer(DispatcherPriority.Normal);
+            animate = new DispatcherTimer(DispatcherPriority.Render);
 
             SetLastClickedButton(button);
 
@@ -522,8 +530,6 @@ namespace Client
             animate.Interval = TimeSpan.FromMilliseconds(10);
             animate.Tick += LoadAnimation;
             animate.Start();
-
-            return animate;
         }
 
         /* Enables navigation tab after file text is written */
@@ -637,6 +643,7 @@ namespace Client
                 if (int.TryParse(source.Substring(index, source.Length - index - 4), out int number))
                 {
                     if (++number > 15) number = 0;
+                    Trace.WriteLine("number = " + number);
                     LeftAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Loading/loading-" + number + ".png", UriKind.Relative));
                 }
             }
@@ -765,7 +772,7 @@ namespace Client
 
             if (type.Equals("user") || type.Equals("project"))
                 left = current.Name.ToString().Substring(0, 1).ToUpper() + current.Name.ToString().Substring(1);
-            else if (type.Equals("version")) SetVersionHeader(current);
+            else if (type.Equals("version")) left = SetVersionHeader(current);
 
             leftPanel.Children.Add(new TextBlock
             {

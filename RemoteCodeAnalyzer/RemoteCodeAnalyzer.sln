@@ -10,6 +10,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{35224765-D3E9-4D54-AF09-32A33F262EB5}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		Server\bin\Debug\root\alifa\Project4_RemoteCodeAnalyzer\7\function_analysis.xml = Server\bin\Debug\root\alifa\Project4_RemoteCodeAnalyzer\7\function_analysis.xml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RCALibrary", "RCALibrary\RCALibrary.csproj", "{2CDC6288-41D8-48F0-83F4-49F45446AB96}"
