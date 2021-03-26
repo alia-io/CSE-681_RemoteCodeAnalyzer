@@ -43,14 +43,14 @@ This application provides remote version control and code analysis for C# and Ja
 
 ## :sparkles: Features ##
 
-:heavy_check_mark: New user creation, login authentication;\
-:heavy_check_mark: Navigation throughout user, project, and version directories;\
-:heavy_check_mark: View project code files and analysis files;\
-:heavy_check_mark: New project creation within user's personal directory;\
-:heavy_check_mark: File upload supports multiple files of any supported type (.txt, .cs, .java);\
-:heavy_check_mark: New project version automatically created when files are uploaded;\
-:heavy_check_mark: Function analysis and relationship analysis .xml files automatically created for each new version;\
-:heavy_check_mark: Potentially problematic classes and functions are highlighted in analysis files according to severity, using three tiers;
+:heavy_check_mark: New user creation, login authentication\
+:heavy_check_mark: Navigation throughout user, project, and version directories\
+:heavy_check_mark: View project code files and analysis files\
+:heavy_check_mark: New project creation within user's personal directory\
+:heavy_check_mark: File upload supports multiple files of any supported type (.txt, .cs, .java)\
+:heavy_check_mark: New project version automatically created when files are uploaded\
+:heavy_check_mark: Function analysis and relationship analysis .xml files automatically created for each new version\
+:heavy_check_mark: Potentially problematic classes and functions highlighted in analysis files according to severity
 
 ## :rocket: Technologies ##
 
