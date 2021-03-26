@@ -1,7 +1,5 @@
 ﻿<div align="center" id="top"> 
-  <img src="./.github/app.gif" alt="Your Project" />
-
-  &#xa0;
+  
 
 
 </div>
@@ -36,7 +34,7 @@
   <a href="#checkered_flag-starting">Starting</a> &#xa0; | &#xa0;
   <a href="https://github.com/silver-lotus" target="_blank">Author</a>
 </p>
-
+<img src="./clientView.png" alt="Code Analyzer" />
 <br>
 
 ## :dart: About ##
