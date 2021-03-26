@@ -96,7 +96,7 @@ If the Client does not open shortly after the Server, try building clean or rebu
 
 
 
-Created by <a href="https://github.com/silver-lotus" target="_blank">Alifa</a>
+Created by <a href="https://github.com/silver-lotus" target="_blank">Alifa Stith</a>
 
 &#xa0;
 
