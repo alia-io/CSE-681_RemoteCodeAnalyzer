@@ -71,11 +71,20 @@ $ git clone https://github.com/silver-lotus/CSE-681_RemoteCodeAnalyzer.git
 # Access
 $ cd CSE-681_RemoteCodeAnalyzer
 
+
 # Install dependencies
-$ yarn
+$ nuget restore // this requires nuget.exe as an environment variable
+
 
 # Run the project
-$ yarn start
+Open the project solution (RemoteCodeAnalyzer.sln) in Visual Studio as Administrator. 
+Right-click on the Solution at the top of the SolutionExplorer tab. 
+Select "Set Startup Projects..." from the dropdown menu. 
+In the Property Pages window that opens, in Common Properties > Startup Project, select "Multiple startup projects:". 
+Set the Actions for Server and Client to "Start", and all others to "None". 
+Arrange the projects so that the Server is above the Client. 
+The Server and Client can now be run using the "Start" button. 
+If the Client does not open shortly after the Server, try building clean or rebuilding
 
 # The server will initialize in the <http://localhost:8000>
 ```
