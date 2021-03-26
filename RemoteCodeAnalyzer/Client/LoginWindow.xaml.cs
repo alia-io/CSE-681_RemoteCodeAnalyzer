@@ -1,27 +1,46 @@
-﻿using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Xml.Linq;
-using System.Linq;
+﻿///////////////////////////////////////////////////////////////////////////////////
+///                                                                             ///
+///  LoginWindow.xaml.cs - Startup and event handlers for the login window      ///
+///                                                                             ///
+///  Language:      C# .Net Framework 4.7.2, Visual Studio 2019                 ///
+///  Platform:      Dell G5 5090, Intel Core i7-9700, 16GB RAM, Windows 10      ///
+///  Application:   RemoteCodeAnalyzer - Project #4 for CSE 681:                ///
+///                 Software Modeling and Analysis, 2021                        ///
+///  Author:        Alifa Stith, Syracuse University, astith@syr.edu            ///
+///                                                                             ///
+///////////////////////////////////////////////////////////////////////////////////
+
+/*
+ *   Module Operations
+ *   -----------------
+ *   This module renders the login window and handles login window events.
+ * 
+ *   Public Interface
+ *   ----------------
+ *   LoginWindow loginWindow = new LoginWindow((App) app);
+ *   ***All public methods from inherited Window class***
+ */
+
+using System;
 using System.Windows;
-using System.Windows.Input;
-using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Threading;
+using System.Windows.Input;
+using System.Windows.Documents;
 
 namespace Client
 {
+    /* Window for creating new users and for logging into the main application */
     public partial class LoginWindow : Window
     {
         private readonly App app; // Saved reference to App
+
         public LoginWindow(App app)
         {
             this.app = app;
             InitializeComponent();
         }
 
+        /* If Return or Enter key was pressed, triggers either login button or confirm button (depending on whether in login mode or new user mode) */
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Return || e.Key == Key.Enter)
@@ -33,20 +52,21 @@ namespace Client
             }
         }
 
-        public void LoginButton_Click(object sender, RoutedEventArgs e)
+        /* Attempts to login to the main application window */
+        private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
             string user = Username.Text;
-
             Mouse.OverrideCursor = Cursors.Wait;
-            if (app.RequestLogin(user, Password.Password))
+
+            if (app.RequestLogin(user, Password.Password)) // Login was successful
             {
                 Mouse.OverrideCursor = Cursors.Arrow;
                 Message.Text = "Enter your username and password to login.";
                 Username.Text = "";
                 Password.Password = "";
-                app.Main_Application(user);
+                app.MainApplication(user);
             }
-            else
+            else // Login failed
             {
                 Message.Text = "";
                 Message.Inlines.Add(new Run("Invalid username or password.") { FontWeight = FontWeights.Bold, Foreground = Brushes.Red });
@@ -56,10 +76,12 @@ namespace Client
             }
         }
 
-        public void ConfirmButton_Click(object sender, RoutedEventArgs e)
+        /* Attempts to add a new user */
+        private void ConfirmButton_Click(object sender, RoutedEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            if (app.RequestNewUser(Username.Text, Password.Password, ConfirmPassword.Password))
+
+            if (app.RequestNewUser(Username.Text, Password.Password, ConfirmPassword.Password)) // New user request was successful
             {
                 Username.Text = "";
                 Password.Password = "";
@@ -75,7 +97,7 @@ namespace Client
                 Message.Inlines.Add(new Run("New account created!") { FontWeight = FontWeights.Bold, Foreground = Brushes.Red });
                 Mouse.OverrideCursor = Cursors.Arrow;
             }
-            else
+            else // New user request failed
             {
                 Message.Text = "";
                 Message.Inlines.Add(new Run("Failed to create new account.") { FontWeight = FontWeights.Bold, Foreground = Brushes.Red });
@@ -86,7 +108,8 @@ namespace Client
             }
         }
 
-        public void NewUserButton_Click(object sender, RoutedEventArgs e)
+        /* Switches from Login mode to New User mode */
+        private void NewUserButton_Click(object sender, RoutedEventArgs e)
         {
             Title = "Remote Code Analyzer: New User";
             Message.Text = "Enter a new username and password to create an account.";
@@ -98,7 +121,8 @@ namespace Client
             ConfirmPassword.Visibility = Visibility.Visible;
         }
 
-        public void BackButton_Click(object sender, RoutedEventArgs e)
+        /* Switches from New User mode to Login mode */
+        private void BackButton_Click(object sender, RoutedEventArgs e)
         {
             Title = "Remote Code Analyzer: Login";
             Message.Text = "Enter your username and password to login.";
@@ -110,9 +134,7 @@ namespace Client
             ConfirmPassword.Visibility = Visibility.Collapsed;
         }
 
-        public void QuitButton_Click(object sender, RoutedEventArgs e)
-        {
-            Environment.Exit(0);
-        }
+        /* Exits the application */
+        private void QuitButton_Click(object sender, RoutedEventArgs e) => Environment.Exit(0);
     }
 }

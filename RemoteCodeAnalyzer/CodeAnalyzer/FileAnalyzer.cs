@@ -1,15 +1,45 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿///////////////////////////////////////////////////////////////////////////////////////////
+///                                                                                     ///
+///  FileAnalyzer.cs - Analyzes all parsed code input from a file, stores analysis data ///
+///                                                                                     ///
+///  Language:      C# .Net Framework 4.7.2, Visual Studio 2019                         ///
+///  Platform:      Dell G5 5090, Intel Core i7-9700, 16GB RAM, Windows 10              ///
+///  Application:   RemoteCodeAnalyzer - Project #4 for CSE 681:                        ///
+///                 Software Modeling and Analysis, 2021                                ///
+///  Author:        Alifa Stith, Syracuse University, astith@syr.edu                    ///
+///                                                                                     ///
+///////////////////////////////////////////////////////////////////////////////////////////
+
+/*
+ *   Module Operations
+ *   -----------------
+ *   This class accepts a single file object and uses its parsed text to create
+ *   namespace, class, interface, and function objects. It establishes a hierarchical
+ *   structure based on the location and scope of these entities within the input
+ *   file. It also performs function analysis and sets every function instance's
+ *   size (based on number of lines) and complexity (based on number of elements in
+ *   its scope tree). Additionally, it populates the collection of classes and interfaces
+ *   for future relationship analysis.
+ *   
+ *   The class's public method requires a file that has already been parsed and expects
+ *   the parsed file to be in a specific location; these requirements are fulfilled
+ *   by the TextParser. So, the method should be called only for files that have
+ *   already been run through TextParser.
+ * 
+ *   Public Interface
+ *   ----------------
+ *   FileAnalyzer fileAnalyzer = new FileAnalyzer((ProgramFile) programFile, (ProgramClassTypeCollection) programClassTypes);
+ *   fileAnalyzer.ProcessFileCode();
+ */
+
+using System;
 using System.IO;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace CodeAnalyzer
 {
-    //public enum ControlFlowType { _if, _elseif, _else, _for, _foreach, _while, _dowhile, _switch };
-
-    /* Processor of the file data (except relationship data), filling all internal Child ProgramType lists */
+    /* Processes the file data (except relationship data), filling all internal Child ProgramType lists */
     public class FileAnalyzer
     {
         /* Saved input data */
@@ -86,17 +116,7 @@ namespace CodeAnalyzer
             string entry;
             bool newLine;
 
-            if (!Directory.Exists(typeStack.Peek().DirectoryPath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(typeStack.Peek().DirectoryPath);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Unable to create temp subdirectory: {0}", e.ToString());
-                }
-            }
+            CreateCurrentSubdirectory(); // Create subdirectory to write temp file into
 
             using (StreamWriter writer = File.CreateText(typeStack.Peek().DirectoryPath + "\\" + typeStack.Peek().Name + ".txt"))
             {
@@ -107,12 +127,8 @@ namespace CodeAnalyzer
                     entry = reader.ReadLine();
 
                     newLine = CheckIfNewLine(entry); // Maintain the file's line number
-
-                    // Determine whether to ignore the entry (if it's part of a comment or string)
-                    if (IgnoreEntry(entry)) continue;
-
-                    // Add entry to current text list to be written to ProgramDataType's temp file
-                    currentText.Add(entry);
+                    if (IgnoreEntry(entry)) continue; // Determine whether to ignore the entry (if it's part of a comment or string)
+                    currentText.Add(entry); // Add entry to current text list to be written to ProgramDataType's temp file
 
                     if (entry.Equals("}")) // Check for the end of an existing bracketed scope
                     {
@@ -134,18 +150,15 @@ namespace CodeAnalyzer
                             ProcessFunctionData();
                             continue;
                         }
-                        else // Push scope opener onto scopeStack
-                            scopeStack.Push(entry);
+                        else scopeStack.Push(entry); // Push scope opener onto scopeStack
                     }
 
                     if (entry.Equals("=>"))
-                    {
                         if (CheckIfFunction()) // Check if a new lambda function is being started
                         {
                             ProcessFunctionData();
                             continue;
                         }
-                    }
 
                     UpdateCurrentText(writer, entry);
                 }
@@ -160,17 +173,7 @@ namespace CodeAnalyzer
             bool beginningOfStream = true;
             bool newLine;
 
-            if (!Directory.Exists(typeStack.Peek().DirectoryPath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(typeStack.Peek().DirectoryPath);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Unable to create temp subdirectory: {0}", e.ToString());
-                }
-            }
+            CreateCurrentSubdirectory(); // Create subdirectory to write temp file into
 
             using (StreamWriter writer = File.CreateText(typeStack.Peek().DirectoryPath + "\\" + typeStack.Peek().Name + ".txt"))
             {
@@ -1197,6 +1200,22 @@ namespace CodeAnalyzer
         {
             if (typeStack.Peek().GetType() == typeof(ProgramFunction))
                 ((ProgramFunction)typeStack.Peek()).Size++;
+        }
+
+        /* Creates subdirectory corresponding to the current class/function in the temp directory */
+        private void CreateCurrentSubdirectory()
+        {
+            if (!Directory.Exists(typeStack.Peek().DirectoryPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(typeStack.Peek().DirectoryPath);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Unable to create temp subdirectory: {0}", e.ToString());
+                }
+            }
         }
 
         /* Maintains stack for commented areas; returns true if text is within a comment */

@@ -1,226 +1,76 @@
-﻿using Microsoft.Win32;
+﻿///////////////////////////////////////////////////////////////////////////////////
+///                                                                             ///
+///  MainWindow.xaml.cs - Startup and event handlers for the main window        ///
+///                                                                             ///
+///  Language:      C# .Net Framework 4.7.2, Visual Studio 2019                 ///
+///  Platform:      Dell G5 5090, Intel Core i7-9700, 16GB RAM, Windows 10      ///
+///  Application:   RemoteCodeAnalyzer - Project #4 for CSE 681:                ///
+///                 Software Modeling and Analysis, 2021                        ///
+///  Author:        Alifa Stith, Syracuse University, astith@syr.edu            ///
+///                                                                             ///
+///////////////////////////////////////////////////////////////////////////////////
+
+/*
+ *   Module Operations
+ *   -----------------
+ *   This module renders the main window and handles main window events.
+ * 
+ *   Public Interface
+ *   ----------------
+ *   MainWindow mainWindow = new MainWindow((App) app, (XElement) current, (List<XElement>) children);
+ *   ***All public methods from inherited Window class***
+ */
+
 using System;
-using System.IO;
-using System.Timers;
-using System.Threading;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Linq;
 using System.Xml.Linq;
+using System.Globalization;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Media;
-using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Shapes;
-using System.Windows.Media.Imaging;
-using System.Globalization;
-using RCALibrary;
-using System.Windows.Threading;
+using System.Windows.Controls;
 using System.Windows.Documents;
-using System.Text.RegularExpressions;
+using System.Windows.Threading;
+using System.Windows.Media.Imaging;
+using Microsoft.Win32;
+using RCALibrary;
 
 namespace Client
 {
     public partial class MainWindow : Window
     {
-        private readonly App app; // Saved reference to App
-        private readonly List<string> newFiles = new List<string>();
-        private (Button button, long timestamp) LastClickedButton = (null, 0);
+        private readonly App app;                                               // Saved reference to App
+        private readonly List<string> newFiles = new List<string>();            // List of filepaths from files added to upload list
+        private (Button button, long timestamp) LastClickedButton = (null, 0);  // Saved button that was last clicked
 
         public MainWindow(App app, XElement current, List<XElement> children)
         {
             this.app = app;
             InitializeComponent();
+            Title = "Remote Code Analyzer - " + app.User;
             SetExplorer(current, children);
             SetProjects(children);
         }
 
-        ~MainWindow() => app.LogOut();
+        ~MainWindow() => app.ExitMainWindow();
 
-        private void SetExplorer(XElement current, List<XElement> children)
-        {
-            string type = current.Name.ToString();
-            int i = 0;
-            DateTime date;
+        /* Sets mouse cursor to wait icon/animation */
+        private void MouseWait(object sender, MouseEventArgs e) => Mouse.OverrideCursor = Cursors.Wait;
 
-            ExplorerHeader.Children.RemoveRange(0, ExplorerHeader.Children.Count - 1);
-            Explorer.Children.Clear();
-            DirectoryName.Text = "";
+        /* Sets mouse cursor to normal arrow */
+        private void MouseArrow(object sender, MouseEventArgs e) => Mouse.OverrideCursor = Cursors.Arrow;
 
-            if (type.Equals("root"))
-            {
-                DirectoryName.Text = "Users";
-            }
-            else
-            {
-                StackPanel leftPanel = new StackPanel { Orientation = Orientation.Horizontal };
-                string left = "";
+        /* Logs out of the main application and opens the login window */
+        private void LogOutButton_Click(object sender, RoutedEventArgs e) => app.LoginWindow();
 
-                DirectoryName.Text = current.Attribute("name").Value;
+        /* Exits the application */
+        private void QuitButton_Click(object sender, RoutedEventArgs e) => Environment.Exit(0);
 
-                DockPanel.SetDock(leftPanel, Dock.Left);
-                ExplorerHeader.Children.Insert(0, leftPanel);
-
-                if (type.Equals("user") || type.Equals("project"))
-                    left = current.Name.ToString().Substring(0, 1).ToUpper() + current.Name.ToString().Substring(1);
-
-                else if (type.Equals("version"))
-                {
-                    StackPanel rightPanel = new StackPanel { Orientation = Orientation.Horizontal };
-                    left = current.Attribute("number").Value;
-
-                    DockPanel.SetDock(rightPanel, Dock.Right);
-                    ExplorerHeader.Children.Insert(1, rightPanel);
-                    DateTime.TryParseExact(current.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
-                    
-                    rightPanel.Children.Add(new Rectangle
-                    {
-                        Fill = FindResource("LineColor") as SolidColorBrush,
-                        VerticalAlignment = VerticalAlignment.Stretch,
-                        Width = 3
-                    });
-
-                    rightPanel.Children.Add(new TextBlock
-                    {
-                        Text = date.ToString("d"),
-                        FontSize = 16,
-                        FontWeight = FontWeights.Bold,
-                        TextWrapping = TextWrapping.Wrap,
-                        Margin = new Thickness(10, 5, 10, 5),
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        Foreground = FindResource("TextColor") as SolidColorBrush
-                    });
-                }
-
-                leftPanel.Children.Add(new TextBlock
-                {
-                    Text = left,
-                    FontSize = 16,
-                    FontWeight = FontWeights.Bold,
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(10, 5, 10, 5),
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Foreground = FindResource("TextColor") as SolidColorBrush
-                });
-
-                leftPanel.Children.Add(new Rectangle
-                {
-                    Fill = FindResource("LineColor") as SolidColorBrush,
-                    VerticalAlignment = VerticalAlignment.Stretch,
-                    Width = 3
-                });
-            }
-
-            foreach (XElement child in children)
-            {
-                StackPanel outerPanel = new StackPanel { Orientation = Orientation.Horizontal };
-                StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center };
-                Image image = new Image();
-                TextBlock header = new TextBlock { FontSize = 14, TextWrapping = TextWrapping.Wrap, Foreground = FindResource("TextColor") as SolidColorBrush };
-                Button button = new Button { Content = outerPanel, HorizontalAlignment = HorizontalAlignment.Left };
-                Border border = new Border { Child = button, Margin = new Thickness(10) };
-
-                type = child.Name.ToString();
-
-                outerPanel.Children.Add(image);
-                outerPanel.Children.Add(innerPanel);
-                innerPanel.Children.Add(header);
-
-                if (type.Equals("user") || type.Equals("project") || type.Equals("version"))
-                {
-                    TextBlock line1 = new TextBlock { FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
-                    TextBlock line2 = new TextBlock { FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
-
-                    border.Height = 75;
-                    border.Width = 260;
-                    innerPanel.MaxWidth = 160;
-                    button.Click += DirectoryButton_Click;
-                    header.Text = child.Attribute("name").Value;
-                    innerPanel.Children.Add(line1);
-                    innerPanel.Children.Add(line2);
-
-                    if (type.Equals("user"))
-                    {
-                        DateTime.TryParseExact(child.Attribute("date").Value, "yyyyMMdd", null, DateTimeStyles.None, out date);
-                        button.Name = "U" + i++;
-                        image.Source = new BitmapImage(new Uri("/Assets/Icons/user-directory.png", UriKind.Relative));
-                        line1.Text = "Joined: " + date.ToString("d");
-                        line2.Text = child.Attribute("projects").Value + " Projects";
-                    }
-                    else
-                    {
-                        TextBlock line3 = new TextBlock { FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
-
-                        line1.Text = "Author: " + child.Attribute("author").Value;
-                        innerPanel.Children.Add(line3);
-
-                        if (type.Equals("project"))
-                        {
-                            button.Name = "P" + i++;
-                            image.Source = new BitmapImage(new Uri("/Assets/Icons/project-directory.png", UriKind.Relative));
-                            DateTime.TryParseExact(child.Attribute("created").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
-                            line2.Text = "Created: " + date.ToString("g");
-                            DateTime.TryParseExact(child.Attribute("edited").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
-                            line3.Text = "Last Upload: " + date.ToString("g");
-                        }
-                        else if (type.Equals("version"))
-                        {
-                            DateTime.TryParseExact(child.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
-                            button.Name = "V" + child.Attribute("number").Value;
-                            image.Source = new BitmapImage(new Uri("/Assets/Icons/version-directory.png", UriKind.Relative));
-                            line2.Text = "Uploaded: " + date.ToString("g");
-                            line3.Text = "Version: " + child.Attribute("number").Value;
-                        }
-                    }
-                }
-                else if (type.Equals("code") || type.Equals("analysis"))
-                {
-                    border.Height = 100;
-                    border.Width = 210;
-                    innerPanel.MaxWidth = 130;
-
-                    if (type.Equals("code"))
-                    {
-                        TextBlock line = new TextBlock { FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
-
-                        button.Name = "C" + i++;
-                        button.Click += CodeButton_Click;
-                        image.Source = new BitmapImage(new Uri("/Assets/Icons/file.png", UriKind.Relative));
-                        header.Text = child.Attribute("name").Value;
-                        innerPanel.Children.Add(line);
-
-                        if (child.Attribute("type").Value.Equals("txt")) line.Text = "Language: Text";
-                        else if (child.Attribute("type").Value.Equals("cs")) line.Text = "Language: C#";
-                        else if (child.Attribute("type").Value.Equals("java")) line.Text = "Language: Java";
-                    }
-                    else if (type.Equals("analysis"))
-                    {
-                        button.Name = "A" + i++;
-                        button.Click += AnalysisButton_Click;
-                        image.Source = new BitmapImage(new Uri("/Assets/Icons/xml-file.png", UriKind.Relative));
-                        header.Text = char.ToUpper(child.Attribute("type").Value[0]) + child.Attribute("type").Value.Substring(1)
-                            + Environment.NewLine + "Analysis";
-                    }
-                }
-                else continue;
-
-                Explorer.Children.Add(border);
-            }
-        }
-
-        private void SetProjects(List<XElement> projects)
-        {
-            foreach (XElement project in projects)
-                Projects.Items.Add(new ComboBoxItem 
-                { 
-                    Content = project.Attribute("name").Value, 
-                    FontSize = 12, 
-                    HorizontalAlignment = HorizontalAlignment.Stretch, 
-                    HorizontalContentAlignment = HorizontalAlignment.Center 
-                });
-        }
-
+        /* Changes active buttons depending on which tab is currently active */
         private void TabSelectionChanged(object sender, SelectionChangedEventArgs args)
         {
             TabItem tabItem;
@@ -254,6 +104,7 @@ namespace Client
             ResetLastClickedButton();
         }
 
+        /* Attempts to navigate back to the parent directory and rerenders the file explorer */
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
             DirectoryData data = app.RequestNavigateBack();
@@ -266,42 +117,30 @@ namespace Client
             else ResetLastClickedButton();
         }
 
-        private void LogOutButton_Click(object sender, RoutedEventArgs e)
-        {
-            app.Login_Window();
-        }
-
-        private void QuitButton_Click(object sender, RoutedEventArgs e)
-        {
-            Environment.Exit(0);
-        }
-
+        /* Displays the grid area used to enter a new project name */
         private void NewProjectButton_Click(object sender, RoutedEventArgs e)
         {
             FileListGrid.RowDefinitions[1].Height = new GridLength(50);
             NewProjectPanel.Visibility = Visibility.Visible;
         }
 
+        /* If Return or Enter key was pressed, triggers confirm button */
         private void NewProjectName_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Return || e.Key == Key.Enter)
                 ConfirmButton_Click(NewProjectButton, e);
         }
 
-        // TODO: change MessageBoxes to Red(?) message text above the TextBox
-        // TODO: on success, collapse the TextBox but still display the success message on a timer. At the end of the timer, collapse the message.
+        /* Attempts to add a new project with user-provided name */
         private void ConfirmButton_Click(object sender, RoutedEventArgs e)
         {
             XElement newProject;
-            bool isUserDirectory = false;
-            bool isThisUser = false;
-            DispatcherTimer message = new DispatcherTimer(DispatcherPriority.Normal);
 
-            // TODO: add some additional requirements for project name
+            // TODO: probably sanitize this input
             if (NewProjectName.Text.Length < 1)
             {
                 NewProjectName.Text = "";
-                MessageBox.Show("Unable to create a new project without a name.");
+                StartUploadTabMessage("Unable to create new project without a name.", (SolidColorBrush)new BrushConverter().ConvertFrom("#BC4749"));
                 return;
             }
 
@@ -309,64 +148,23 @@ namespace Client
 
             if (newProject != null)
             {
-                if (ExplorerHeader.Children.Count == 2)
-                {
-                    foreach (UIElement element in ExplorerHeader.Children)
-                        if (element.GetType() == typeof(TextBlock) && ((TextBlock)element).Name.Equals("DirectoryName") && ((TextBlock)element).Text.Equals(app.User))
-                            isThisUser = true;
-                        else if (element.GetType() == typeof(StackPanel) && ((StackPanel)element).Children.Count == 2)
-                            foreach (UIElement child in ((StackPanel)element).Children)
-                                if (child.GetType() == typeof(TextBlock) && ((TextBlock)child).Text.Equals("User"))
-                                    isUserDirectory = true;
-                }
-
-                if (isUserDirectory && isThisUser) // Add new project to Explorer view
-                {
-                    StackPanel outerPanel = new StackPanel { Orientation = Orientation.Horizontal };
-                    StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 160 };
-                    Button button = new Button { Name = "P" + Explorer.Children.Count, Content = outerPanel, HorizontalAlignment = HorizontalAlignment.Left };
-                    Border border = new Border { Child = button, Height = 75, Width = 260, Margin = new Thickness(10) };
-
-                    button.Click += DirectoryButton_Click;
-                    DateTime.TryParseExact(newProject.Attribute("created").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
-
-                    outerPanel.Children.Add(new Image { Source = new BitmapImage(new Uri("/Assets/Icons/project-directory.png", UriKind.Relative)) });
-                    outerPanel.Children.Add(innerPanel);
-
-                    innerPanel.Children.Add(new TextBlock { Text = newProject.Attribute("name").Value, FontSize = 14, TextWrapping = TextWrapping.Wrap, Foreground = FindResource("TextColor") as SolidColorBrush });
-                    innerPanel.Children.Add(new TextBlock { Text = "Author: " + newProject.Attribute("author").Value, FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
-                    innerPanel.Children.Add(new TextBlock { Text = "Created: " + date.ToString("g"), FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
-                    innerPanel.Children.Add(new TextBlock { Text = "Last Upload: " + date.ToString("g"), FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
-
-                    Explorer.Children.Insert(0, border);
-                }
+                if (app.Directory.Name.ToString().Equals("user") && app.Directory.Attribute("name").Value.Equals(app.User))
+                    AddExplorerChild(newProject, 0, Explorer.Children.Count); // Add new project to Explorer view
 
                 // Add new project to Projects dropdown and select it
                 Projects.Items.Insert(0, new ComboBoxItem { Content = newProject.Attribute("name").Value, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Center });
                 Projects.SelectedIndex = 0;
 
-                NewProjectName.Text = "";
                 FileListGrid.RowDefinitions[1].Height = new GridLength(0);
                 NewProjectPanel.Visibility = Visibility.Collapsed;
-
-                UploadProjectMessage.Text = "";
-                UploadProjectMessage.Inlines.Add(new Run("New project added") { Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#40C5B5") });
+                StartUploadTabMessage("New project added!", (SolidColorBrush)new BrushConverter().ConvertFrom("#40C5B5"));
             }
-            else
-            {
-                NewProjectName.Text = "";
-                UploadProjectMessage.Text = "";
-                UploadProjectMessage.Inlines.Add(new Run("Unable to create new project") { Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#BC4749") });
-                
-            }
+            else StartUploadTabMessage("Unable to create new project.", (SolidColorBrush)new BrushConverter().ConvertFrom("#BC4749"));
 
-            UploadProjectMessage.Visibility = Visibility.Visible;
-            FileListGrid.RowDefinitions[0].Height = new GridLength(30);
-            message.Interval = TimeSpan.FromMilliseconds(5000);
-            message.Tick += EndNewProjectMessage;
-            message.Start();
+            NewProjectName.Text = "";
         }
 
+        /* Creates OpenFileDialog to explore and add local files to list */
         private void AddFileButton_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -393,6 +191,7 @@ namespace Client
             }
         }
 
+        /* Renders the new file name to the list of files to upload */
         private void AddToFileList(string filename, int index)
         {
             DockPanel panel = new DockPanel { Name = "I" + index.ToString(), LastChildFill = true, Margin = new Thickness(0, 0, 0, 5) };
@@ -447,6 +246,7 @@ namespace Client
             FileList.Children.Add(panel);
         }
 
+        /* Removes a file from the list of files to upload */
         private void RemoveButton_Click(object sender, RoutedEventArgs e)
         {
             DockPanel panel = (DockPanel)(sender as Button).Parent;
@@ -472,32 +272,27 @@ namespace Client
                 ((DockPanel)FileList.Children[i]).Name = "I" + i.ToString();
         }
 
+        /* Attempts to upload a new project version */
         private async void UploadButton_Click(object sender, RoutedEventArgs e)
         {
+            DispatcherTimer animate = new DispatcherTimer(DispatcherPriority.Normal);
             XElement newVersion = null;
             string projectName;
-            DispatcherTimer animate = new DispatcherTimer(DispatcherPriority.Normal);
-            DispatcherTimer message = new DispatcherTimer(DispatcherPriority.Normal);
+            
+            if (Projects.SelectedItem == null)
+            {
+                StartUploadTabMessage("Select a project to upload to, or create a new one.", (SolidColorBrush)new BrushConverter().ConvertFrom("#BC4749"));
+                return;
+            }
 
-            // TODO: Message: Select a project to upload to, or create a new one.
-            if (Projects.SelectedItem == null) return;
-            if (newFiles.Count < 1) return; // TODO: Message: add files to upload
+            if (newFiles.Count < 1)
+            {
+                StartUploadTabMessage("Add at least one file to upload.", (SolidColorBrush)new BrushConverter().ConvertFrom("#BC4749"));
+                return;
+            }
 
             projectName = ((ComboBoxItem)Projects.SelectedItem).Content.ToString();
-
-            NewProjectName.Text = "";
-            UploadTab.MouseEnter += MouseWait;
-            UploadTab.MouseLeave += MouseArrow;
-            NewProjectButton.IsEnabled = false;
-            AddFileButton.IsEnabled = false;
-            UploadProjectButton.IsEnabled = false;
-            ResetButton.IsEnabled = false;
-            Projects.IsEnabled = false;
-            FileList.Children.Clear();
-            NewProjectPanel.Visibility = Visibility.Collapsed;
-            FileListGrid.Visibility = Visibility.Collapsed;
-            RightAnimation.Visibility = Visibility.Visible;
-
+            DisableUpload();
             animate.Interval = TimeSpan.FromMilliseconds(50);
             animate.Tick += UploadAnimation;
             animate.Start();
@@ -512,79 +307,40 @@ namespace Client
                 newVersion = await Task.Run(() => app.RequestCompleteUpload());
             }
 
-            RightAnimation.Visibility = Visibility.Collapsed;
             animate.Stop();
-            FileListGrid.Visibility = Visibility.Visible;
-            RightAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Uploading/uploading-0.png", UriKind.Relative));
-            UploadTab.MouseEnter -= MouseWait;
-            UploadTab.MouseLeave -= MouseArrow;
-            NewProjectButton.IsEnabled = true;
-            AddFileButton.IsEnabled = true;
-            UploadProjectButton.IsEnabled = true;
-            ResetButton.IsEnabled = true;
-            Projects.IsEnabled = true;
-            Projects.SelectedItem = null;
-            newFiles.Clear();
+            EnableUpload();
 
             if (newVersion == null)
             {
-                ProjectExplorerMessage.Text = "";
-                UploadProjectMessage.Text = "";
-                ProjectExplorerMessage.Inlines.Add(new Run("New files uploaded") { Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#BC4749") });
-                UploadProjectMessage.Inlines.Add(new Run("New files uploaded") { Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#BC4749") });
+                StartUploadTabMessage("An error occurred while attempting to upload files.", (SolidColorBrush)new BrushConverter().ConvertFrom("#BC4749"));
+                StartExplorerTabMessage("An error occurred while attempting to upload files.", (SolidColorBrush)new BrushConverter().ConvertFrom("#BC4749"));
             }
             else
             {
-                if (app.Directory.Name.ToString().Equals("project") && app.Directory.Attribute("author").Value.Equals(app.User) && app.Directory.Attribute("name").Value.Equals(newVersion.Attribute("name").Value)) // Add new version to Explorer view
-                {
-                    StackPanel outerPanel = new StackPanel { Orientation = Orientation.Horizontal };
-                    StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 160 };
-                    Button button = new Button { Name = "V" + newVersion.Attribute("number").Value, Content = outerPanel, HorizontalAlignment = HorizontalAlignment.Left };
-                    Border border = new Border { Child = button, Height = 75, Width = 260, Margin = new Thickness(10) };
+                if (app.Directory.Name.ToString().Equals("project") && app.Directory.Attribute("author").Value.Equals(app.User)
+                    && app.Directory.Attribute("name").Value.Equals(newVersion.Attribute("name").Value))
+                        AddExplorerChild(newVersion, 0, Explorer.Children.Count); // Add new version to Explorer view
 
-                    button.Click += DirectoryButton_Click;
-                    DateTime.TryParseExact(newVersion.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
-
-                    outerPanel.Children.Add(new Image { Source = new BitmapImage(new Uri("/Assets/Icons/version-directory.png", UriKind.Relative)) });
-                    outerPanel.Children.Add(innerPanel);
-
-                    innerPanel.Children.Add(new TextBlock { Text = newVersion.Attribute("name").Value, FontSize = 14, TextWrapping = TextWrapping.Wrap, Foreground = FindResource("TextColor") as SolidColorBrush });
-                    innerPanel.Children.Add(new TextBlock { Text = "Author: " + newVersion.Attribute("author").Value, FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
-                    innerPanel.Children.Add(new TextBlock { Text = "Uploaded: " + date.ToString("g"), FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
-                    innerPanel.Children.Add(new TextBlock { Text = "Version: " + newVersion.Attribute("number").Value, FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush });
-
-                    Explorer.Children.Insert(0, border);
-                }
-
-                ProjectExplorerMessage.Text = "";
-                UploadProjectMessage.Text = "";
-                ProjectExplorerMessage.Inlines.Add(new Run("New files uploaded") { Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#40C5B5") });
-                UploadProjectMessage.Inlines.Add(new Run("New files uploaded") { Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#40C5B5") });
+                StartUploadTabMessage("New files uploaded!", (SolidColorBrush)new BrushConverter().ConvertFrom("#40C5B5"));
+                StartExplorerTabMessage("New files uploaded!", (SolidColorBrush)new BrushConverter().ConvertFrom("#40C5B5"));
             }
-
-            ProjectExplorerMessage.Visibility = Visibility.Visible;
-            UploadProjectMessage.Visibility = Visibility.Visible;
-            ProjectExplorerGrid.RowDefinitions[0].Height = new GridLength(30);
-            FileListGrid.RowDefinitions[0].Height = new GridLength(30);
-
-            message.Interval = TimeSpan.FromMilliseconds(5000);
-            message.Tick += EndNewUploadMessage;
-            message.Start();
         }
 
+        /* Clears the current file list and closes the new project grid area */
         private void ResetButton_Click(object sender, RoutedEventArgs e)
         {
             Projects.SelectedItem = null;
             FileList.Children.Clear();
             newFiles.Clear();
             NewProjectName.Text = "";
-            FileListGrid.RowDefinitions[1].Height = new GridLength(0);
-            NewProjectPanel.Visibility = Visibility.Collapsed;
             UploadProjectMessage.Text = "";
-            FileListGrid.RowDefinitions[0].Height = new GridLength(0);
+            FileListGrid.RowDefinitions[1].Height = new GridLength(0);
+            UploadProjectMessageRow.Height = new GridLength(0);
+            NewProjectPanel.Visibility = Visibility.Collapsed;
             UploadProjectMessage.Visibility = Visibility.Collapsed;
         }
 
+        /* Attempts to navigate into the selected directory */
         private void DirectoryButton_Click(object sender, RoutedEventArgs e)
         {
             if (LastClickedButton.button != null
@@ -610,11 +366,9 @@ namespace Client
             SetLastClickedButton(sender as Button);
         }
 
+        /* Attempts to display the text of the selected analysis file */
         private async void AnalysisButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: disable clicking code or analysis file buttons or back button --> ONLY DISABLE TEMPORARILY TO GET INFO?
-
-            DispatcherTimer animate = new DispatcherTimer(DispatcherPriority.Normal);
             TextBlock header = (TextBlock)((StackPanel)((StackPanel)(sender as Button).Content).Children[1]).Children[0];
             string analysisType = header.Text.Substring(0, header.Text.IndexOf(Environment.NewLine));
             string filename = char.ToLower(analysisType[0]) + analysisType.Substring(1) + "_analysis.xml";
@@ -623,47 +377,8 @@ namespace Client
             // Variables used for writing file text
             string fileText = "";
             XElement metadata = null;
-            string[] fileTextLines;
-            int currentLine = 1;
-            IEnumerator<int> lowSeverity;
-            IEnumerator<int> mediumSeverity;
-            IEnumerator<int> highSeverity;
-            int nextLowLine = -1;
-            int nextMediumLine = -1;
-            int nextHighLine = -1;
-            SolidColorBrush lowColor = FindResource("LowSeverity") as SolidColorBrush;
-            SolidColorBrush mediumColor = FindResource("MediumSeverity") as SolidColorBrush;
-            SolidColorBrush highColor = FindResource("HighSeverity") as SolidColorBrush;
 
-            SetLastClickedButton(sender as Button);
-
-            Version.Text = "";
-            Date.Text = "";
-            ProjectName.Text = "";
-            LFileTypeBox.Background = Brushes.Transparent;
-            RFileTypeBox.Background = Brushes.Transparent;
-            LFileType.Text = "";
-            RFileType.Text = "";
-            FileText.Text = "";
-
-            Mouse.OverrideCursor = Cursors.Wait;
-            Explorer.IsEnabled = false;
-            BackButton.IsEnabled = false;
-            LeftPanel.MouseEnter += MouseWait;
-            LeftPanel.MouseLeave += MouseArrow;
-            ExplorerTab.MouseEnter += MouseWait;
-            ExplorerTab.MouseLeave += MouseArrow;
-            FileTextMessageRow.Height = new GridLength(0);
-            FileTextMessage.Text = "";
-            FileTextMessage.Visibility = Visibility.Collapsed;
-            FileTextHeaders.Visibility = Visibility.Collapsed;
-            FileTextView.Visibility = Visibility.Collapsed;
-            FileTextHeadersRow.Height = new GridLength(0);
-            LeftAnimation.Visibility = Visibility.Visible;
-
-            animate.Interval = TimeSpan.FromMilliseconds(50);
-            animate.Tick += LoadAnimation;
-            animate.Start();
+            DispatcherTimer animate = DisableNavigation(sender as Button);
 
             getFileText = await Task.Run(() => app.RequestAnalysisFile(filename, out fileText, out metadata));
             
@@ -672,97 +387,37 @@ namespace Client
 
             if (getFileText)
             {
-                DateTime.TryParseExact(app.Directory.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
-                Version.Text = app.Directory.Attribute("number").Value;
-                Date.Text = date.ToString("d");
-                ProjectName.Text = app.Directory.Attribute("name").Value;
-                LFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#2A9D8F");
-                RFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#2A9D8F");
-                LFileType.Text = "XML";
-                RFileType.Text = "XML";
-                FileName.Text = analysisType + " Analysis";
+                SetFileTextHeader(analysisType + " Analysis", "XML", (SolidColorBrush)new BrushConverter().ConvertFrom("#2A9D8F"));
 
                 if (metadata == null) FileText.Text = fileText;
                 else
                 {
-                    fileTextLines = Regex.Split(fileText, "\r\n|\r|\n");
+                    IEnumerator<int> lowSeverity = (from XElement severity in metadata.Elements("severity")
+                                                    where severity.Attribute("level").Value.Equals("low")
+                                                    from XElement element in severity.Elements("line")
+                                                    select int.Parse(element.Value)).GetEnumerator();
 
-                    lowSeverity = (from XElement severity in metadata.Elements("severity")
-                                  where severity.Attribute("level").Value.Equals("low")
-                                  from XElement element in severity.Elements("line")
-                                  select int.Parse(element.Value)).GetEnumerator();
+                    IEnumerator<int> mediumSeverity = (from XElement severity in metadata.Elements("severity")
+                                                       where severity.Attribute("level").Value.Equals("medium")
+                                                       from XElement element in severity.Elements("line")
+                                                       select int.Parse(element.Value)).GetEnumerator();
 
-                    mediumSeverity = (from XElement severity in metadata.Elements("severity")
-                                      where severity.Attribute("level").Value.Equals("medium")
-                                      from XElement element in severity.Elements("line")
-                                      select int.Parse(element.Value)).GetEnumerator();
+                    IEnumerator<int> highSeverity = (from XElement severity in metadata.Elements("severity")
+                                                     where severity.Attribute("level").Value.Equals("high")
+                                                     from XElement element in severity.Elements("line")
+                                                     select int.Parse(element.Value)).GetEnumerator();
 
-                    highSeverity = (from XElement severity in metadata.Elements("severity")
-                                    where severity.Attribute("level").Value.Equals("high")
-                                    from XElement element in severity.Elements("line")
-                                    select int.Parse(element.Value)).GetEnumerator();
-
-                    if (lowSeverity.MoveNext()) nextLowLine = lowSeverity.Current;
-                    if (mediumSeverity.MoveNext()) nextMediumLine = mediumSeverity.Current;
-                    if (highSeverity.MoveNext()) nextHighLine = highSeverity.Current;
-
-                    foreach (string line in fileTextLines)
-                    {
-                        if (nextLowLine == currentLine)
-                        {
-                            FileText.Inlines.Add(new Run(line + "\r\n") { FontWeight = FontWeights.Bold, Foreground = lowColor });
-                            if (lowSeverity.MoveNext()) nextLowLine = lowSeverity.Current;
-                            else nextLowLine = -1;
-                        }
-                        else if (nextMediumLine == currentLine)
-                        {
-                            FileText.Inlines.Add(new Run(line + "\r\n") { FontWeight = FontWeights.Bold, Foreground = mediumColor });
-                            if (mediumSeverity.MoveNext()) nextMediumLine = mediumSeverity.Current;
-                            else nextMediumLine = -1;
-                        }
-                        else if (nextHighLine == currentLine)
-                        {
-                            FileText.Inlines.Add(new Run(line + "\r\n") { FontWeight = FontWeights.Bold, Foreground = highColor });
-                            if (highSeverity.MoveNext()) nextHighLine = highSeverity.Current;
-                            else nextHighLine = -1;
-                        }
-                        else FileText.Inlines.Add(line + "\r\n");
-                        currentLine++;
-                    }
+                    WriteAnalysisFileText(fileText, lowSeverity, mediumSeverity, highSeverity);
                 }
-
-                FileTextHeadersRow.Height = new GridLength(105);
-                FileTextHeaders.Visibility = Visibility.Visible;
-                FileTextView.Visibility = Visibility.Visible;
             }
-            else
-            {
-                DispatcherTimer message = new DispatcherTimer(DispatcherPriority.Normal);
+            else StartFilePanelMessage("An error occurred while attempting to retrieve the file.");
 
-                FileTextMessage.Text = "Error: Unable to retrieve the file.";
-                FileTextMessage.Visibility = Visibility.Visible;
-                FileTextMessageRow.Height = new GridLength(100);
-
-                animate.Interval = TimeSpan.FromMilliseconds(5000);
-                animate.Tick += EndReadFileMessage;
-                animate.Start();
-            }
-
-            Explorer.IsEnabled = true;
-            BackButton.IsEnabled = true;
-            LeftAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Loading/loading-0.png", UriKind.Relative));
-            LeftPanel.MouseEnter -= MouseWait;
-            LeftPanel.MouseLeave -= MouseArrow;
-            ExplorerTab.MouseEnter -= MouseWait;
-            ExplorerTab.MouseLeave -= MouseArrow;
-            Mouse.OverrideCursor = Cursors.Arrow;
+            EnableNavigation();
         }
 
+        /* Attempts to display the text of the selected code file */
         private async void CodeButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: disable clicking code or analysis file buttons or back button --> ONLY DISABLE TEMPORARILY TO GET INFO?
-
-            DispatcherTimer animate = new DispatcherTimer(DispatcherPriority.Normal);
             StackPanel innerPanel = (StackPanel)((StackPanel)(sender as Button).Content).Children[1];
             string filename = ((TextBlock)innerPanel.Children[0]).Text;
             string language = ((TextBlock)innerPanel.Children[1]).Text;
@@ -775,7 +430,70 @@ namespace Client
             else if (type.Equals("C#")) fileType = "cs";
             else if (type.Equals("Java")) fileType = "java";
 
-            SetLastClickedButton(sender as Button);
+            DispatcherTimer animate = DisableNavigation(sender as Button);
+
+            getFileText = await Task.Run(() => app.RequestCodeFile(filename + "." + fileType, out fileText));
+
+            LeftAnimation.Visibility = Visibility.Collapsed;
+            animate.Stop();
+
+            if (getFileText)
+            {
+                SetFileTextHeader(filename, fileType, (SolidColorBrush)new BrushConverter().ConvertFrom("#40768C"));
+                FileText.Text = fileText;
+            }
+            else StartFilePanelMessage("An error occurred while attempting to retrieve the file.");
+
+            EnableNavigation();
+        }
+
+        /* Writes the text for an analysis file to the left FileText area */
+        private void WriteAnalysisFileText(string fileText, IEnumerator<int> lowSeverity, IEnumerator<int> mediumSeverity, IEnumerator<int> highSeverity)
+        {
+            SolidColorBrush lowColor = FindResource("LowSeverity") as SolidColorBrush;
+            SolidColorBrush mediumColor = FindResource("MediumSeverity") as SolidColorBrush;
+            SolidColorBrush highColor = FindResource("HighSeverity") as SolidColorBrush;
+            string[] fileTextLines = Regex.Split(fileText, "\r\n|\r|\n");
+            int currentLine = 1;
+            int nextLowLine = -1;
+            int nextMediumLine = -1;
+            int nextHighLine = -1;
+
+            if (lowSeverity.MoveNext()) nextLowLine = lowSeverity.Current;
+            if (mediumSeverity.MoveNext()) nextMediumLine = mediumSeverity.Current;
+            if (highSeverity.MoveNext()) nextHighLine = highSeverity.Current;
+
+            foreach (string line in fileTextLines)
+            {
+                if (nextLowLine == currentLine)
+                {
+                    FileText.Inlines.Add(new Run(line + "\r\n") { FontWeight = FontWeights.Bold, Foreground = lowColor });
+                    if (lowSeverity.MoveNext()) nextLowLine = lowSeverity.Current;
+                    else nextLowLine = -1;
+                }
+                else if (nextMediumLine == currentLine)
+                {
+                    FileText.Inlines.Add(new Run(line + "\r\n") { FontWeight = FontWeights.Bold, Foreground = mediumColor });
+                    if (mediumSeverity.MoveNext()) nextMediumLine = mediumSeverity.Current;
+                    else nextMediumLine = -1;
+                }
+                else if (nextHighLine == currentLine)
+                {
+                    FileText.Inlines.Add(new Run(line + "\r\n") { FontWeight = FontWeights.Bold, Foreground = highColor });
+                    if (highSeverity.MoveNext()) nextHighLine = highSeverity.Current;
+                    else nextHighLine = -1;
+                }
+                else FileText.Inlines.Add(line + "\r\n");
+                currentLine++;
+            }
+        }
+
+        /* Disables navigation tab while retrieving file text */
+        private DispatcherTimer DisableNavigation(Button button)
+        {
+            DispatcherTimer animate = new DispatcherTimer(DispatcherPriority.Normal);
+
+            SetLastClickedButton(button);
 
             Version.Text = "";
             Date.Text = "";
@@ -801,45 +519,17 @@ namespace Client
             FileTextHeadersRow.Height = new GridLength(0);
             LeftAnimation.Visibility = Visibility.Visible;
 
-            animate.Interval = TimeSpan.FromMilliseconds(50);
+            animate.Interval = TimeSpan.FromMilliseconds(10);
             animate.Tick += LoadAnimation;
             animate.Start();
 
-            getFileText = await Task.Run(() => app.RequestCodeFile(filename + "." + fileType, out fileText));
+            return animate;
+        }
 
-            LeftAnimation.Visibility = Visibility.Collapsed;
-            animate.Stop();
-
-            if (getFileText)
-            {
-                DateTime.TryParseExact(app.Directory.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
-                Version.Text = app.Directory.Attribute("number").Value;
-                Date.Text = date.ToString("d");
-                ProjectName.Text = app.Directory.Attribute("name").Value;
-                LFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#40768C");
-                RFileTypeBox.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#40768C");
-                LFileType.Text = type;
-                RFileType.Text = type;
-                FileName.Text = filename;
-                FileText.Text = fileText;
-
-                FileTextHeadersRow.Height = new GridLength(105);
-                FileTextHeaders.Visibility = Visibility.Visible;
-                FileTextView.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                DispatcherTimer message = new DispatcherTimer(DispatcherPriority.Normal);
-
-                FileTextMessage.Text = "Error: Unable to retrieve the file.";
-                FileTextMessage.Visibility = Visibility.Visible;
-                FileTextMessageRow.Height = new GridLength(100);
-
-                animate.Interval = TimeSpan.FromMilliseconds(5000);
-                animate.Tick += EndReadFileMessage;
-                animate.Start();
-            }
-
+        /* Enables navigation tab after file text is written */
+        private void EnableNavigation()
+        {
+            // TODO: reset scrollviewer position
             Explorer.IsEnabled = true;
             BackButton.IsEnabled = true;
             LeftAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Loading/loading-0.png", UriKind.Relative));
@@ -850,6 +540,58 @@ namespace Client
             Mouse.OverrideCursor = Cursors.Arrow;
         }
 
+        /* Disables upload tab while uploading files */
+        private void DisableUpload()
+        {
+            NewProjectName.Text = "";
+            UploadTab.MouseEnter += MouseWait;
+            UploadTab.MouseLeave += MouseArrow;
+            NewProjectButton.IsEnabled = false;
+            AddFileButton.IsEnabled = false;
+            UploadProjectButton.IsEnabled = false;
+            ResetButton.IsEnabled = false;
+            Projects.IsEnabled = false;
+            FileList.Children.Clear();
+            NewProjectPanel.Visibility = Visibility.Collapsed;
+            FileListGrid.Visibility = Visibility.Collapsed;
+            RightAnimation.Visibility = Visibility.Visible;
+        }
+
+        /* Enables upload tab after uploading files completed */
+        private void EnableUpload()
+        {
+            RightAnimation.Visibility = Visibility.Collapsed;
+            FileListGrid.Visibility = Visibility.Visible;
+            RightAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Uploading/uploading-0.png", UriKind.Relative));
+            UploadTab.MouseEnter -= MouseWait;
+            UploadTab.MouseLeave -= MouseArrow;
+            NewProjectButton.IsEnabled = true;
+            AddFileButton.IsEnabled = true;
+            UploadProjectButton.IsEnabled = true;
+            ResetButton.IsEnabled = true;
+            Projects.IsEnabled = true;
+            Projects.SelectedItem = null;
+            newFiles.Clear();
+        }
+
+        /* Renders the header for the FileText panel */
+        private void SetFileTextHeader(string filename, string filetype, SolidColorBrush fileTypeBackground)
+        {
+            DateTime.TryParseExact(app.Directory.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
+            Version.Text = app.Directory.Attribute("number").Value;
+            Date.Text = date.ToString("d");
+            ProjectName.Text = app.Directory.Attribute("name").Value;
+            LFileTypeBox.Background = fileTypeBackground;
+            RFileTypeBox.Background = fileTypeBackground;
+            LFileType.Text = filetype;
+            RFileType.Text = filetype;
+            FileName.Text = filename;
+            FileTextHeadersRow.Height = new GridLength(105);
+            FileTextHeaders.Visibility = Visibility.Visible;
+            FileTextView.Visibility = Visibility.Visible;
+        }
+
+        /* Increment to the next uploading animation */
         private void UploadAnimation(object sender, EventArgs e)
         {
             string source = RightAnimation.Source.ToString();
@@ -866,6 +608,7 @@ namespace Client
             }
         }
 
+        /* Increment to the next analyzing animation */
         private void AnalyzeAnimation(object sender, EventArgs e)
         {
             string source = RightAnimation.Source.ToString();
@@ -882,6 +625,7 @@ namespace Client
             }
         }
 
+        /* Increment to the next loading animation */
         private void LoadAnimation(object sender, EventArgs e)
         {
             string source = LeftAnimation.Source.ToString();
@@ -898,18 +642,53 @@ namespace Client
             }
         }
 
-        private void EndNewProjectMessage(object sender, EventArgs e)
+        /* Adds timed message to file reader panel */
+        private void StartFilePanelMessage(string message)
         {
-            ProjectExplorerGrid.RowDefinitions[0].Height = new GridLength(0);
-            FileListGrid.RowDefinitions[0].Height = new GridLength(0);
-            ProjectExplorerMessage.Text = "";
-            UploadProjectMessage.Text = "";
-            ProjectExplorerMessage.Visibility = Visibility.Collapsed;
-            UploadProjectMessage.Visibility = Visibility.Collapsed;
-            (sender as DispatcherTimer).Stop();
+            DispatcherTimer timer = new DispatcherTimer(DispatcherPriority.Normal);
+
+            FileTextMessage.Text = "";
+            FileTextMessage.Text = message;
+            FileTextMessage.Visibility = Visibility.Visible;
+            FileTextMessageRow.Height = new GridLength(30);
+
+            timer.Interval = TimeSpan.FromMilliseconds(5000);
+            timer.Tick += EndFilePanelMessage;
+            timer.Start();
         }
 
-        private void EndReadFileMessage(object sender, EventArgs e)
+        /* Adds timed message to the top of the file explorer tab */
+        private void StartExplorerTabMessage(string message, SolidColorBrush color)
+        {
+            DispatcherTimer timer = new DispatcherTimer(DispatcherPriority.Normal);
+
+            ProjectExplorerMessage.Text = "";
+            ProjectExplorerMessage.Inlines.Add(new Run(message) { Foreground = color });
+            ProjectExplorerMessage.Visibility = Visibility.Visible;
+            ProjectExplorerMessageRow.Height = new GridLength(30);
+
+            timer.Interval = TimeSpan.FromMilliseconds(5000);
+            timer.Tick += EndExplorerTabMessage;
+            timer.Start();
+        }
+
+        /* Adds timed message to the top of the upload tab */
+        private void StartUploadTabMessage(string message, SolidColorBrush color)
+        {
+            DispatcherTimer timer = new DispatcherTimer(DispatcherPriority.Normal);
+
+            UploadProjectMessage.Text = "";
+            UploadProjectMessage.Inlines.Add(new Run(message) { Foreground = color });
+            UploadProjectMessage.Visibility = Visibility.Visible;
+            UploadProjectMessageRow.Height = new GridLength(30);
+
+            timer.Interval = TimeSpan.FromMilliseconds(5000);
+            timer.Tick += EndUploadTabMessage;
+            timer.Start();
+        }
+
+        /* Ends a timed message on file reader panel */
+        private void EndFilePanelMessage(object sender, EventArgs e)
         {
             FileTextMessageRow.Height = new GridLength(0);
             FileTextMessage.Text = "";
@@ -917,23 +696,255 @@ namespace Client
             (sender as DispatcherTimer).Stop();
         }
 
-        private void EndNewUploadMessage(object sender, EventArgs e)
+        /* Ends a timed message on top of file explorer tab */
+        private void EndExplorerTabMessage(object sender, EventArgs e)
         {
-            ProjectExplorerGrid.RowDefinitions[0].Height = new GridLength(0);
-            FileListGrid.RowDefinitions[0].Height = new GridLength(0);
+            ProjectExplorerMessageRow.Height = new GridLength(0);
             ProjectExplorerMessage.Text = "";
-            UploadProjectMessage.Text = "";
             ProjectExplorerMessage.Visibility = Visibility.Collapsed;
+            (sender as DispatcherTimer).Stop();
+        }
+
+        /* Ends a timed message on top of upload tab */
+        private void EndUploadTabMessage(object sender, EventArgs e)
+        {
+            UploadProjectMessageRow.Height = new GridLength(0);
+            UploadProjectMessage.Text = "";
             UploadProjectMessage.Visibility = Visibility.Collapsed;
             (sender as DispatcherTimer).Stop();
         }
 
+        /* Populates the dropdown menu with the list of projects owned by this user */
+        private void SetProjects(List<XElement> projects)
+        {
+            foreach (XElement project in projects)
+                Projects.Items.Add(new ComboBoxItem
+                {
+                    Content = project.Attribute("name").Value,
+                    FontSize = 12,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Center
+                });
+        }
+
+        /* Renders the header and the directory or file buttons within the file explorer tab */
+        private void SetExplorer(XElement current, List<XElement> children)
+        {
+            int index = 0;
+
+            SetExplorerHeader(current, current.Name.ToString());
+
+            foreach (XElement child in children)
+            {
+                AddExplorerChild(child, Explorer.Children.Count, index);
+                index++;
+            }
+        }
+
+        /* Renders the header for the explorer tab */
+        private void SetExplorerHeader(XElement current, string type)
+        {
+            ExplorerHeader.Children.RemoveRange(0, ExplorerHeader.Children.Count - 1);
+            Explorer.Children.Clear();
+            DirectoryName.Text = "";
+
+            if (type.Equals("root")) DirectoryName.Text = "Users";
+            else SetSubdirectoryHeader(current, type);
+        }
+
+        /* Renders the header for the explorer tab for a user, project, or version directory */
+        private void SetSubdirectoryHeader(XElement current, string type)
+        {
+            StackPanel leftPanel = new StackPanel { Orientation = Orientation.Horizontal };
+            string left = "";
+
+            DirectoryName.Text = current.Attribute("name").Value;
+
+            DockPanel.SetDock(leftPanel, Dock.Left);
+            ExplorerHeader.Children.Insert(0, leftPanel);
+
+            if (type.Equals("user") || type.Equals("project"))
+                left = current.Name.ToString().Substring(0, 1).ToUpper() + current.Name.ToString().Substring(1);
+            else if (type.Equals("version")) SetVersionHeader(current);
+
+            leftPanel.Children.Add(new TextBlock
+            {
+                Text = left,
+                FontSize = 16,
+                FontWeight = FontWeights.Bold,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(10, 5, 10, 5),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Foreground = FindResource("TextColor") as SolidColorBrush
+            });
+
+            leftPanel.Children.Add(new Rectangle
+            {
+                Fill = FindResource("LineColor") as SolidColorBrush,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Width = 3
+            });
+        }
+
+        /* Partially renders the header for the explorer tab for a version directory */
+        private string SetVersionHeader(XElement current)
+        {
+            StackPanel rightPanel = new StackPanel { Orientation = Orientation.Horizontal };
+            string left = current.Attribute("number").Value;
+
+            DockPanel.SetDock(rightPanel, Dock.Right);
+            ExplorerHeader.Children.Insert(1, rightPanel);
+            DateTime.TryParseExact(current.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
+
+            rightPanel.Children.Add(new Rectangle
+            {
+                Fill = FindResource("LineColor") as SolidColorBrush,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Width = 3
+            });
+
+            rightPanel.Children.Add(new TextBlock
+            {
+                Text = date.ToString("d"),
+                FontSize = 16,
+                FontWeight = FontWeights.Bold,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(10, 5, 10, 5),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Foreground = FindResource("TextColor") as SolidColorBrush
+            });
+
+            return left;
+        }
+
+        /* Renders a child element (directory or file) in the explorer tab */
+        private void AddExplorerChild(XElement child, int insertIndex, int nameIndex)
+        {
+            StackPanel outerPanel = new StackPanel { Orientation = Orientation.Horizontal };
+            StackPanel innerPanel = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center };
+            Image image = new Image();
+            TextBlock header = new TextBlock { FontSize = 14, TextWrapping = TextWrapping.Wrap, Foreground = FindResource("TextColor") as SolidColorBrush };
+            Button button = new Button { Content = outerPanel, HorizontalAlignment = HorizontalAlignment.Left };
+            Border border = new Border { Child = button, Margin = new Thickness(10) };
+
+            string type = child.Name.ToString();
+
+            outerPanel.Children.Add(image);
+            outerPanel.Children.Add(innerPanel);
+            innerPanel.Children.Add(header);
+
+            if (type.Equals("user") || type.Equals("project") || type.Equals("version"))
+                SetExplorerChildDirectory(child, type, border, innerPanel, button, header, image, nameIndex);
+            else if (type.Equals("code") || type.Equals("analysis"))
+                SetExplorerChildFile(child, type, border, innerPanel, button, image, header, nameIndex);
+            else return;
+
+            Explorer.Children.Insert(insertIndex, border);
+        }
+
+        /* Partially renders a child directory element in the explorer tab */
+        private void SetExplorerChildDirectory(XElement child, string type, Border border, StackPanel innerPanel, Button button, TextBlock header, Image image, int index)
+        {
+            TextBlock line1 = new TextBlock { FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
+            TextBlock line2 = new TextBlock { FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
+
+            border.Height = 75;
+            border.Width = 260;
+            innerPanel.MaxWidth = 160;
+            button.Click += DirectoryButton_Click;
+            header.Text = child.Attribute("name").Value;
+            innerPanel.Children.Add(line1);
+            innerPanel.Children.Add(line2);
+
+            if (type.Equals("user")) SetExplorerChildUser(child, button, image, line1, line2, index);
+            else
+            {
+                TextBlock line3 = new TextBlock { FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
+
+                line1.Text = "Author: " + child.Attribute("author").Value;
+                innerPanel.Children.Add(line3);
+
+                if (type.Equals("project")) SetExplorerChildProject(child, button, image, line2, line3, index);
+                else if (type.Equals("version")) SetExplorerChildVersion(child, button, image, line2, line3);
+            }
+        }
+
+        /* Partially renders a child user directory element in the explorer tab */
+        private void SetExplorerChildUser(XElement child, Button button, Image image, TextBlock line1, TextBlock line2, int index)
+        {
+            DateTime.TryParseExact(child.Attribute("date").Value, "yyyyMMdd", null, DateTimeStyles.None, out DateTime date);
+            button.Name = "U" + index;
+            image.Source = new BitmapImage(new Uri("/Assets/Icons/user-directory.png", UriKind.Relative));
+            line1.Text = "Joined: " + date.ToString("d");
+            line2.Text = child.Attribute("projects").Value + " Projects";
+        }
+
+        /* Partially renders a child project directory element in the explorer tab */
+        private void SetExplorerChildProject(XElement child, Button button, Image image, TextBlock line2, TextBlock line3, int index)
+        {
+            button.Name = "P" + index;
+            image.Source = new BitmapImage(new Uri("/Assets/Icons/project-directory.png", UriKind.Relative));
+            DateTime.TryParseExact(child.Attribute("created").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
+            line2.Text = "Created: " + date.ToString("g");
+            DateTime.TryParseExact(child.Attribute("edited").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out date);
+            line3.Text = "Last Upload: " + date.ToString("g");
+        }
+
+        /* Partially renders a child version directory element in the explorer tab */
+        private void SetExplorerChildVersion(XElement child, Button button, Image image, TextBlock line2, TextBlock line3)
+        {
+            DateTime.TryParseExact(child.Attribute("date").Value, "yyyyMMddHHmm", null, DateTimeStyles.None, out DateTime date);
+            button.Name = "V" + child.Attribute("number").Value;
+            image.Source = new BitmapImage(new Uri("/Assets/Icons/version-directory.png", UriKind.Relative));
+            line2.Text = "Uploaded: " + date.ToString("g");
+            line3.Text = "Version: " + child.Attribute("number").Value;
+        }
+
+        /* Partially renders a child file element in the explorer tab */
+        private void SetExplorerChildFile(XElement child, string type, Border border, StackPanel innerPanel, Button button, Image image, TextBlock header, int index)
+        {
+            border.Height = 100;
+            border.Width = 210;
+            innerPanel.MaxWidth = 130;
+
+            if (type.Equals("code")) SetExplorerChildCode(child, innerPanel, button, image, header, index);
+            else if (type.Equals("analysis")) SetExplorerChildAnalysis(child, button, image, header, index);
+        }
+
+        /* Partially renders a child code file element in the explorer tab */
+        private void SetExplorerChildCode(XElement child, StackPanel innerPanel, Button button, Image image, TextBlock header, int index)
+        {
+            TextBlock line = new TextBlock { FontSize = 10, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.Light, Foreground = FindResource("TextColor") as SolidColorBrush };
+
+            button.Name = "C" + index;
+            button.Click += CodeButton_Click;
+            image.Source = new BitmapImage(new Uri("/Assets/Icons/file.png", UriKind.Relative));
+            header.Text = child.Attribute("name").Value;
+            innerPanel.Children.Add(line);
+
+            if (child.Attribute("type").Value.Equals("txt")) line.Text = "Language: Text";
+            else if (child.Attribute("type").Value.Equals("cs")) line.Text = "Language: C#";
+            else if (child.Attribute("type").Value.Equals("java")) line.Text = "Language: Java";
+        }
+
+        /* Partially renders a child analysis file element in the explorer tab */
+        private void SetExplorerChildAnalysis(XElement child, Button button, Image image, TextBlock header, int index)
+        {
+            button.Name = "A" + index;
+            button.Click += AnalysisButton_Click;
+            image.Source = new BitmapImage(new Uri("/Assets/Icons/xml-file.png", UriKind.Relative));
+            header.Text = char.ToUpper(child.Attribute("type").Value[0]) + child.Attribute("type").Value.Substring(1)
+                + Environment.NewLine + "Analysis";
+        }
+
+        /* Clears data associated with last clicked button */
         private void ClearLastClickedButton()
         {
             LastClickedButton.button = null;
             LastClickedButton.timestamp = 0;
         }
         
+        /* Sets clicked button and renders its clicked image and text color */
         private void SetLastClickedButton(Button button)
         {
             char type = button.Name[0];
@@ -964,6 +975,7 @@ namespace Client
             LastClickedButton.timestamp = DateTime.Now.Ticks;
         }
 
+        /* Resets the last clicked button to render its default image and text color */
         private void ResetLastClickedButton()
         {
             if (LastClickedButton.button == null) return;
@@ -985,8 +997,5 @@ namespace Client
                         ((TextBlock)child).Foreground = FindResource("TextColor") as SolidColorBrush;
             }
         }
-
-        private void MouseWait(object _sender, MouseEventArgs _e) => Mouse.OverrideCursor = Cursors.Wait;
-        private void MouseArrow(object _sender, MouseEventArgs _e) => Mouse.OverrideCursor = Cursors.Arrow;
     }
 }

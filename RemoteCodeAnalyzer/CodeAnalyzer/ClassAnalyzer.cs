@@ -1,22 +1,48 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿///////////////////////////////////////////////////////////////////////////////////////////
+///                                                                                     ///
+///  ClassAnalyzer.cs - Analyzes and stores all class relationship data                 ///
+///                                                                                     ///
+///  Language:      C# .Net Framework 4.7.2, Visual Studio 2019                         ///
+///  Platform:      Dell G5 5090, Intel Core i7-9700, 16GB RAM, Windows 10              ///
+///  Application:   RemoteCodeAnalyzer - Project #4 for CSE 681:                        ///
+///                 Software Modeling and Analysis, 2021                                ///
+///  Author:        Alifa Stith, Syracuse University, astith@syr.edu                    ///
+///                                                                                     ///
+///////////////////////////////////////////////////////////////////////////////////////////
+
+/*
+ *   Module Operations
+ *   -----------------
+ *   This class accepts a single class or interface and the text contained
+ *   within it to determine whether it has a relationship with any other class
+ *   or interface in the project. It then adds the relationship data to the
+ *   ProgramClass or ProgramInterface instance.
+ *   
+ *   The class's public method requires a completely populated collection of
+ *   project classes and interfaces, and should be run only after FileAnalyzer
+ *   has completed its analysis on all files in the project.
+ * 
+ *   Public Interface
+ *   ----------------
+ *   ClassAnalyzer classAnalyzer = new ClassAnalyzer((ProgramClassType) programClassType, (ProgramClassTypeCollection) programClassTypes);
+ *   classAnalyzer.ProcessRelationships();
+ */
+
 using System.IO;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CodeAnalyzer
 {
+    /* Processes all class and interface relationship data, filling all internal relationship lists */
     public class ClassAnalyzer
     {
         private int savedIndex = 0;
         private readonly ProgramClassType programClassType;
-        private readonly ProgramClassTypeCollection programClassTypeCollection;
+        private readonly ProgramClassTypeCollection programClassTypes;
 
-        public ClassAnalyzer(ProgramClassType programClassType, ProgramClassTypeCollection programClassTypeCollection)
+        public ClassAnalyzer(ProgramClassType programClassType, ProgramClassTypeCollection programClassTypes)
         {
             this.programClassType = programClassType;
-            this.programClassTypeCollection = programClassTypeCollection;
+            this.programClassTypes = programClassTypes;
         }
 
         /* Starts the relationship processor for a class or interface */
@@ -64,10 +90,10 @@ namespace CodeAnalyzer
                         }
 
                         // Entry might be a superclass - search the class list
-                        if (hasSuperclasses && !programClassType.Name.Equals(entry) && programClassTypeCollection.Contains(entry))
+                        if (hasSuperclasses && !programClassType.Name.Equals(entry) && programClassTypes.Contains(entry))
                         {
                             // Add to each other's lists
-                            ProgramClassType super = programClassTypeCollection[entry];
+                            ProgramClassType super = programClassTypes[entry];
                             super.SubClasses.Add(programClassType);
                             programClassType.SuperClasses.Add(super);
                         }
@@ -104,7 +130,7 @@ namespace CodeAnalyzer
             {
                 using (StreamReader reader = File.OpenText(programDataType.DirectoryPath + "\\" + programDataType.Name + ".txt"))
                 {
-                    // TODO: change this to just be called from the inheritance method?
+                    // TODO: change this to just be called from the inheritance method
                     if (programDataType.Equals(programClassType)) // Skip the inheritance information
                         for (int i = 0; i < savedIndex && !reader.EndOfStream; i++)
                             entry = reader.ReadLine();
@@ -114,9 +140,9 @@ namespace CodeAnalyzer
                         entry = reader.ReadLine();
 
                         // Check that "entry" is a different class/interface
-                        if (!programClassType.Name.Equals(entry) && programClassTypeCollection.Contains(entry))
+                        if (!programClassType.Name.Equals(entry) && programClassTypes.Contains(entry))
                         {
-                            ProgramClassType owned = programClassTypeCollection[entry];
+                            ProgramClassType owned = programClassTypes[entry];
 
                             // Check that "owned" is a class and is not already in this class's OwnedClasses list
                             if (!((ProgramClass)programClassType).OwnedClasses.Contains(owned) && owned.GetType() == typeof(ProgramClass))
@@ -141,9 +167,9 @@ namespace CodeAnalyzer
                 foreach (string parameter in ((ProgramFunction)programDataType).Parameters) // Search the parameters
                 {
                     // Check that "parameter" is a different class/interface
-                    if (!programClassType.Name.Equals(parameter) && programClassTypeCollection.Contains(parameter))
+                    if (!programClassType.Name.Equals(parameter) && programClassTypes.Contains(parameter))
                     {
-                        ProgramClassType used = programClassTypeCollection[parameter];
+                        ProgramClassType used = programClassTypes[parameter];
 
                         // Check that "used" is a class and is not already in this class's UsedClasses list
                         if (used.GetType() == typeof(ProgramClass) && !((ProgramClass)programClassType).UsedClasses.Contains(used))
@@ -157,9 +183,9 @@ namespace CodeAnalyzer
                 foreach (string returnType in ((ProgramFunction)programDataType).ReturnTypes) // Search the return types
                 {
                     // Check that "returnType" is a different class/interface
-                    if (!programClassType.Name.Equals(returnType) && programClassTypeCollection.Contains(returnType))
+                    if (!programClassType.Name.Equals(returnType) && programClassTypes.Contains(returnType))
                     {
-                        ProgramClassType used = programClassTypeCollection[returnType];
+                        ProgramClassType used = programClassTypes[returnType];
 
                         // Check that "used" is a class and is not already in this class's UsedClasses list
                         if (used.GetType() == typeof(ProgramClass) && !((ProgramClass)programClassType).UsedClasses.Contains(used))

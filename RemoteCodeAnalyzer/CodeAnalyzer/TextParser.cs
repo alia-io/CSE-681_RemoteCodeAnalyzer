@@ -1,11 +1,33 @@
-﻿using System;
+﻿///////////////////////////////////////////////////////////////////////////////////
+///                                                                             ///
+///  TextParser.cs - Parses a code file into a temp parsed file                 ///
+///                                                                             ///
+///  Language:      C# .Net Framework 4.7.2, Visual Studio 2019                 ///
+///  Platform:      Dell G5 5090, Intel Core i7-9700, 16GB RAM, Windows 10      ///
+///  Application:   RemoteCodeAnalyzer - Project #4 for CSE 681:                ///
+///                 Software Modeling and Analysis, 2021                        ///
+///  Author:        Alifa Stith, Syracuse University, astith@syr.edu            ///
+///                                                                             ///
+///////////////////////////////////////////////////////////////////////////////////
+
+/*
+ *   Module Operations
+ *   -----------------
+ *   This class reads each character of a code file to separate its data into
+ *   logical programming items. The data is saved to a temp file for future
+ *   code analysis. Words with only alphanumeric characters are parsed as a
+ *   single entity. Symbols are parsed as individual characters, or, if two
+ *   combined symbols have a valid syntactical meaning, as a two-character string.
+ *   New lines are preserved and denoted by a single space.
+ * 
+ *   Public Interface
+ *   ----------------
+ *   TextParser textParser = new TextParser((string) directoryPath, (string) fileName);
+ *   textParser.ProcessFile();
+ */
+
 using System.IO;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using Microsoft;
 
 namespace CodeAnalyzer
 {

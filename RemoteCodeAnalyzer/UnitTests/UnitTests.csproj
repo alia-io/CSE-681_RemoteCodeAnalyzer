@@ -188,11 +188,12 @@
   <ItemGroup>
     <Compile Include="CodeAnalyzerTests\ClassAnalyzerTests.cs" />
     <Compile Include="CodeAnalyzerTests\FileAnalyzerTests.cs" />
-    <Compile Include="RequestTests.cs" />
+    <Compile Include="ServerTests\AuthenticationTests.cs" />
     <Compile Include="CodeAnalyzerTests\TextParserTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CodeAnalyzerTests\ControlFlowScopeRulesTests.cs" />
     <Compile Include="CodeAnalyzerTests\CustomCollectionsTests.cs" />
+    <Compile Include="ServerTests\NavigationTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Client\Client.csproj">

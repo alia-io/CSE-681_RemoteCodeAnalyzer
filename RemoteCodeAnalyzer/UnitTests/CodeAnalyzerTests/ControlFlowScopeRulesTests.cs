@@ -6,21 +6,6 @@ using CodeAnalyzer;
 namespace UnitTests.CodeAnalyzerTests
 {
     [TestClass]
-    public class FunctionScopeRulesTests
-    {
-        [TestMethod]
-        public void ConstructorRule1()
-        {
-            string[] input = { "public", "Pet",
-                "(", "int", "locationX", ",", "int", "locationY", ",", "int", "speed", ",", "int", "price", ")",
-                ":", "base", "(", "locationX", ",", "locationY", ",", "speed", ")", "{" };
-
-            //TODO:
-            Assert.AreEqual(0, 0);
-        }
-    }
-
-    [TestClass]
     public class ControlFlowScopeRulesTests
     {
         [TestMethod]
@@ -132,6 +117,21 @@ namespace UnitTests.CodeAnalyzerTests
             }
 
             CollectionAssert.AreEqual(expectedScopes, actualScopes);
+        }
+    }
+
+    [TestClass]
+    public class FunctionScopeRulesTests
+    {
+        [TestMethod]
+        public void ConstructorRule1()
+        {
+            string[] input = { "public", "Pet",
+                "(", "int", "locationX", ",", "int", "locationY", ",", "int", "speed", ",", "int", "price", ")",
+                ":", "base", "(", "locationX", ",", "locationY", ",", "speed", ")", "{" };
+
+            //TODO:
+            Assert.AreEqual(0, 0);
         }
     }
 }

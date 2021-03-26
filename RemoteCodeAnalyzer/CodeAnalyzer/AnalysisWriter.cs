@@ -1,13 +1,45 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿///////////////////////////////////////////////////////////////////////////////////////////
+///                                                                                     ///
+///  AnalysisWriter.cs - Reads ProgramType data, writes and saves XML analysis files    ///
+///                                                                                     ///
+///  Language:      C# .Net Framework 4.7.2, Visual Studio 2019                         ///
+///  Platform:      Dell G5 5090, Intel Core i7-9700, 16GB RAM, Windows 10              ///
+///  Application:   RemoteCodeAnalyzer - Project #4 for CSE 681:                        ///
+///                 Software Modeling and Analysis, 2021                                ///
+///  Author:        Alifa Stith, Syracuse University, astith@syr.edu                    ///
+///                                                                                     ///
+///////////////////////////////////////////////////////////////////////////////////////////
+
+/*
+ *   Module Operations
+ *   -----------------
+ *   This module handles all operations requiring construction of the XML analysis files,
+ *   as well as the XML metadata file for the project. There are two analysis files: function
+ *   analysis and relationship analysis. Function analysis includes the size and complexity
+ *   of each function in the project, and relationship analysis displays the types of relationships
+ *   between each class and interface in the project. Both analysis files maintain the hierarchical
+ *   structure of each file, represented by the XML hierarchy. The metadata file contains lists of
+ *   line numbers thought to be potentially problematic within the analysis files. These
+ *   problematic areas are based on having large function size, high function complexity, or
+ *   many relationships. The metadata file's purpose is to be referred to when rendering these
+ *   problematic lines client-side with bold and colored text.
+ * 
+ *   Public Interface
+ *   ----------------
+ *   FunctionAnalysisWriter.WriteOutput((ConcurrentOrderedList) processedFileList, (string) directoryPath, (string) projectName, (string) versionNumber);
+ *   RelationshipAnalysisWriter.WriteOutput((ConcurrentOrderedList) processedFileList, (string) directoryPath, (string) projectName, (string) versionNumber);
+ *   AnalysisMetadataWriter.WriteMetadata((string) directoryPath);
+ */
+
+using System;
 using System.Xml;
+using System.Linq;
 using System.Xml.Linq;
+using System.Collections.Generic;
 
 namespace CodeAnalyzer
 {
+    /* Writes the function analysis XML file */
     public static class FunctionAnalysisWriter
     {
         /* Creates the new XML document, adds all elements, and saves the document */
@@ -63,6 +95,7 @@ namespace CodeAnalyzer
         }
     }
 
+    /* Writes the relationship analysis XML file */
     public static class RelationshipAnalysisWriter
     {
         /* Creates the new XML document, adds all elements, and saves the document */
@@ -158,9 +191,10 @@ namespace CodeAnalyzer
         }
     }
 
+    /* Writes the analysis metadata XML file */
     public static class AnalysisMetadataWriter
     {
-        /* Writes the metadata file - contains "severity" information for elements in code analysis */
+        /* Creates the XML document, adds all elements using the analysis documents, and saves the document */
         public static void WriteMetadata(string directoryPath)
         {
             XDocument functions;
@@ -204,6 +238,7 @@ namespace CodeAnalyzer
             }
         }
 
+        /* Adds lines from function analysis file with low, medium, and high severity, according to function size and complexity */
         private static void WriteFunctionSeverity(XElement metadata, XElement analysis)
         {
             IEnumerable<XElement> functions = analysis.Descendants("function");
@@ -255,6 +290,7 @@ namespace CodeAnalyzer
             }
         }
 
+        /* Adds lines from relationship analysis file with low, medium, and high severity, according to the number of relationships */
         private static void WriteRelationshipSeverity(XElement metadata, XElement analysis)
         {
             IEnumerable<XElement> classesAndInterfaces = from XElement element in analysis.Descendants()
@@ -280,27 +316,9 @@ namespace CodeAnalyzer
 
                 _relationships = relationships.Count();
 
-                if (_relationships > 15)
-                {
-                    high.Add(new XElement("line", (classOrInterface as IXmlLineInfo).LineNumber));
-
-                    //foreach (XElement relationship in relationships)
-                        //high.Add(new XElement("line", (relationship as IXmlLineInfo).LineNumber));
-                }
-                else if (_relationships > 10)
-                {
-                    medium.Add(new XElement("line", (classOrInterface as IXmlLineInfo).LineNumber));
-
-                    //foreach (XElement relationship in relationships)
-                        //medium.Add(new XElement("line", (relationship as IXmlLineInfo).LineNumber));
-                }
-                else if (_relationships > 5)
-                {
-                    low.Add(new XElement("line", (classOrInterface as IXmlLineInfo).LineNumber));
-
-                    //foreach (XElement relationship in relationships)
-                        //low.Add(new XElement("line", (relationship as IXmlLineInfo).LineNumber));
-                }
+                if (_relationships > 15) high.Add(new XElement("line", (classOrInterface as IXmlLineInfo).LineNumber));
+                else if (_relationships > 10) medium.Add(new XElement("line", (classOrInterface as IXmlLineInfo).LineNumber));
+                else if (_relationships > 5) low.Add(new XElement("line", (classOrInterface as IXmlLineInfo).LineNumber));
             }
         }
     }

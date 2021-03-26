@@ -96,9 +96,9 @@
                                 <Rectangle Fill="{StaticResource LineColor}" HorizontalAlignment="Stretch" Height="5"/>
                             </StackPanel>
 
-                            <Grid x:Name="ProjectExplorerGrid" Grid.Row="1" Grid.ColumnSpan="2" Margin="20,5,20,20">
+                            <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="20,5,20,20">
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="0"/>
+                                    <RowDefinition x:Name="ProjectExplorerMessageRow" Height="0"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
                                 
@@ -146,7 +146,7 @@
 
                             <Grid x:Name="FileListGrid" Grid.Row="1" Visibility="Visible">
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="0"/>
+                                    <RowDefinition x:Name="UploadProjectMessageRow" Height="0"/>
                                     <RowDefinition Height="0"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
