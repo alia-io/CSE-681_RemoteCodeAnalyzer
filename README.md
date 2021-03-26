@@ -52,6 +52,10 @@ Describe your project
 The following tools were used in this project:
 
 - [C#](https://docs.microsoft.com/en-us/dotnet/csharp/)
+- [.Net Framework](https://docs.microsoft.com/en-us/dotnet/framework/)
+- [Windows Presentation Foundation (WPF)](https://docs.microsoft.com/en-us/dotnet/desktop/wpf/?view=netdesktop-5.0)
+- [Windows Communcation Foundation (WCF)](https://docs.microsoft.com/en-us/dotnet/framework/wcf/)
+- [MSTest](https://docs.microsoft.com/en-us/visualstudio/test/using-microsoft-visualstudio-testtools-unittesting-members-in-unit-tests?view=vs-2019)
 
 
 ## :white_check_mark: Requirements ##
