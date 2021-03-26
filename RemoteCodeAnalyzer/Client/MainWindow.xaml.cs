@@ -38,7 +38,6 @@ using System.Windows.Threading;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using RCALibrary;
-using System.Diagnostics;
 
 namespace Client
 {
@@ -150,7 +149,10 @@ namespace Client
             if (newProject != null)
             {
                 if (app.Directory.Name.ToString().Equals("user") && app.Directory.Attribute("name").Value.Equals(app.User))
+                {
                     AddExplorerChild(newProject, 0, Explorer.Children.Count); // Add new project to Explorer view
+                    ProjectExplorerView.ScrollToTop();
+                }
 
                 // Add new project to Projects dropdown and select it
                 Projects.Items.Insert(0, new ComboBoxItem { Content = newProject.Attribute("name").Value, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Center });
@@ -189,6 +191,7 @@ namespace Client
                         AddToFileList(filename, i + currentCount);
                     }
                 }
+                FileListView.ScrollToBottom();
             }
         }
 
@@ -320,10 +323,14 @@ namespace Client
             {
                 if (app.Directory.Name.ToString().Equals("project") && app.Directory.Attribute("author").Value.Equals(app.User)
                     && app.Directory.Attribute("name").Value.Equals(newVersion.Attribute("name").Value))
-                        AddExplorerChild(newVersion, 0, Explorer.Children.Count); // Add new version to Explorer view
+                {
+                    AddExplorerChild(newVersion, 0, Explorer.Children.Count); // Add new version to Explorer view
+                    ProjectExplorerView.ScrollToTop();
+                }
 
                 StartUploadTabMessage("New files uploaded!", (SolidColorBrush)new BrushConverter().ConvertFrom("#40C5B5"));
                 StartExplorerTabMessage("New files uploaded!", (SolidColorBrush)new BrushConverter().ConvertFrom("#40C5B5"));
+                FileListView.ScrollToTop();
             }
         }
 
@@ -339,6 +346,7 @@ namespace Client
             UploadProjectMessageRow.Height = new GridLength(0);
             NewProjectPanel.Visibility = Visibility.Collapsed;
             UploadProjectMessage.Visibility = Visibility.Collapsed;
+            FileListView.ScrollToTop();
         }
 
         /* Attempts to navigate into the selected directory */
@@ -379,8 +387,6 @@ namespace Client
             string fileText = "";
             XElement metadata = null;
 
-            Trace.WriteLine("Original gui thread: " + Task.CurrentId);
-
             DisableNavigation(sender as Button, out DispatcherTimer animate);
 
             getFileText = await Task.Run(() => app.RequestAnalysisFile(filename, out fileText, out metadata));
@@ -412,13 +418,15 @@ namespace Client
                 }
             });
 
-            if (getFileText) SetFileTextHeader(analysisType + " Analysis", "XML", (SolidColorBrush)new BrushConverter().ConvertFrom("#2A9D8F"));
+            if (getFileText)
+            {
+                SetFileTextHeader(analysisType + " Analysis", "XML", (SolidColorBrush)new BrushConverter().ConvertFrom("#2A9D8F"));
+                FileTextView.ScrollToTop();
+            }
             else StartFilePanelMessage("An error occurred while attempting to retrieve the file.");
 
             LeftAnimation.Visibility = Visibility.Collapsed;
-            Trace.WriteLine("Stopping animation");
             animate.Stop();
-
             EnableNavigation();
         }
 
@@ -441,16 +449,16 @@ namespace Client
 
             getFileText = await Task.Run(() => app.RequestCodeFile(filename + "." + fileType, out fileText));
 
-            LeftAnimation.Visibility = Visibility.Collapsed;
-            animate.Stop();
-
             if (getFileText)
             {
                 SetFileTextHeader(filename, fileType, (SolidColorBrush)new BrushConverter().ConvertFrom("#40768C"));
                 FileText.Text = fileText;
+                FileTextView.ScrollToTop();
             }
             else StartFilePanelMessage("An error occurred while attempting to retrieve the file.");
 
+            LeftAnimation.Visibility = Visibility.Collapsed;
+            animate.Stop();
             EnableNavigation();
         }
 
@@ -643,7 +651,6 @@ namespace Client
                 if (int.TryParse(source.Substring(index, source.Length - index - 4), out int number))
                 {
                     if (++number > 15) number = 0;
-                    Trace.WriteLine("number = " + number);
                     LeftAnimation.Source = new BitmapImage(new Uri("/Assets/Animations/Loading/loading-" + number + ".png", UriKind.Relative));
                 }
             }
@@ -746,6 +753,8 @@ namespace Client
                 AddExplorerChild(child, Explorer.Children.Count, index);
                 index++;
             }
+
+            ProjectExplorerView.ScrollToTop();
         }
 
         /* Renders the header for the explorer tab */

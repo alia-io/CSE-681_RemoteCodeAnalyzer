@@ -39,12 +39,10 @@ using System;
 using System.IO;
 using System.Windows;
 using System.Xml.Linq;
-using System.Threading;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.ServiceModel;
 using RCALibrary;
-using System.Threading.Tasks;
 
 namespace Client
 {
@@ -296,8 +294,6 @@ namespace Client
         /* Sends requests to read a file to the server, then sends file metadata ReadFile request to server */
         public bool RequestAnalysisFile(string filename, out string fileText, out XElement metadata)
         {
-            Trace.WriteLine("Request thread: " + Task.CurrentId);
-
             string user = Directory.Attribute("author").Value;
             string project = Directory.Attribute("name").Value;
             string version = Directory.Attribute("number").Value;
@@ -316,8 +312,6 @@ namespace Client
             {
                 Trace.WriteLine("Unable to connect to readfile service: {0}", e.ToString());
             }
-
-            Trace.WriteLine("Completed request");
             
             return true;
         }
@@ -325,8 +319,6 @@ namespace Client
         /* Sends requests to read a file to the server */
         public bool RequestCodeFile(string filename, out string fileText)
         {
-            Trace.WriteLine("Request thread: " + Task.CurrentId);
-
             string user = Directory.Attribute("author").Value;
             string project = Directory.Attribute("name").Value;
             string version = Directory.Attribute("number").Value;

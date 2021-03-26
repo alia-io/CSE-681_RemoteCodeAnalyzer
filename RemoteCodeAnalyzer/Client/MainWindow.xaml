@@ -103,7 +103,7 @@
                                 </Grid.RowDefinitions>
                                 
                                 <TextBlock x:Name="ProjectExplorerMessage" Grid.Row="0" Text="message" HorizontalAlignment="Center" FontSize="14" FontWeight="Bold" Margin="0,0,0,10" Visibility="Collapsed"/>
-                                <ScrollViewer Grid.Row="1" VerticalAlignment="Stretch" Grid.ColumnSpan="2">
+                                <ScrollViewer x:Name="ProjectExplorerView" Grid.Row="1" VerticalAlignment="Stretch" Grid.ColumnSpan="2">
                                     <WrapPanel x:Name="Explorer" Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10"/>
                                         <!--Populated programmatically with directories or files-->
                                 </ScrollViewer>
@@ -174,7 +174,7 @@
                                     <TextBox x:Name="NewProjectName" KeyDown="NewProjectName_KeyDown" Text="" Cursor="IBeam" FontSize="18" Margin="10,0,10,0" TextWrapping="NoWrap" VerticalContentAlignment="Center" Background="#FF3F3F3F" Foreground="{StaticResource TextColor}" BorderBrush="#888888"/>
                                 </DockPanel>
 
-                                <ScrollViewer Grid.Row="2" Margin="20,5,20,20">
+                                <ScrollViewer x:Name="FileListView" Grid.Row="2" Margin="20,5,20,20">
                                     <StackPanel x:Name="FileList"/>
                                         <!--Populated programmatically with file names-->
                                 </ScrollViewer>
