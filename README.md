@@ -32,11 +32,11 @@
   <a href="#rocket-technologies">Technologies</a> &#xa0; | &#xa0;
   <a href="#white_check_mark-requirements">Requirements</a> &#xa0; | &#xa0;
   <a href="#checkered_flag-starting">Starting</a> &#xa0; | &#xa0;
-  <a href="https://github.com/silver-lotus" target="_blank">Author</a> &#xa0; | &#xa0;
-  <a href="https://www.youtube.com/watch?v=qRalXBGUWpA&t" target="_blank">Demo Video</a>
+  <a href="https://github.com/silver-lotus" target="_blank">Author</a>
 </p>
 
-[![Remote Code Analyzer Demo](http://img.youtube.com/vi/qRalXBGUWpA/0.jpg)](http://www.youtube.com/watch?v=qRalXBGUWpA "Remote Code Analyzer Demo")
+## :movie_camera: Demo Video ##
+  [![Remote Code Analyzer Demo](http://img.youtube.com/vi/qRalXBGUWpA/0.jpg)](http://www.youtube.com/watch?v=qRalXBGUWpA "Remote Code Analyzer Demo")
 
 <br>
 
