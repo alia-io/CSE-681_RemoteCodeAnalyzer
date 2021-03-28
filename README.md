@@ -34,7 +34,7 @@
   <a href="#checkered_flag-starting">Starting</a> &#xa0; | &#xa0;
   <a href="https://github.com/silver-lotus" target="_blank">Author</a>
 </p>
-<img src="./clientView.png" alt="Code Analyzer" />
+<img src="./client_view.png" alt="Code Analyzer" />
 <br>
 
 ## :dart: About ##
