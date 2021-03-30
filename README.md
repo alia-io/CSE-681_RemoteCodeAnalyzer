@@ -36,7 +36,7 @@
 </p>
 
 ## :movie_camera: Demo Video ##
-  [![Remote Code Analyzer Demo](http://img.youtube.com/vi/qRalXBGUWpA/0.jpg)](http://www.youtube.com/watch?v=qRalXBGUWpA "Remote Code Analyzer Demo")
+  [![Remote Code Analyzer Demo](client_view.png)](http://www.youtube.com/watch?v=qRalXBGUWpA "Remote Code Analyzer Demo")
 
 <br>
 
