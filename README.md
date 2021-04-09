@@ -4,7 +4,7 @@
 
 </div>
 
-<h1 align="center">Code Analyzer</h1>
+<h1 align="center">Remote Code Analyzer</h1>
 
 <p align="center">
   <img alt="Github top language" src="https://img.shields.io/github/languages/top/silver-lotus/CSE-681_RemoteCodeAnalyzer?color=56BEB8">
